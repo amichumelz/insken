@@ -1,0 +1,53 @@
+// Prisma schema for ASEAN MSME A.I. Skills Training Program
+// Operations & Data Intelligence Agent
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Master participant registry — IC Number is the ONLY primary unique key
+model Participant {
+  id             String    @id @default(cuid())
+  participantId  String    @unique // human-facing ID: ASEAN-00001
+  icNumber       String    @unique // National IC / Passport — primary key per PRD
+  name           String
+  email          String
+  phone          String
+  sector         String   // Retail, F&B, Professional Services, Tech, Manufacturing, Agriculture
+  region         String   // KL, JHR, PNG, SBH, SWK
+  preferredMode  String   // Physical | Online
+  finalMode      String   // Registered_Physical | Registered_Online
+  status         String   // DUPLICATE_ENTRY | Registered_Physical | Registered_Online | Attended_Physical | Attended_Online
+  checkInAt      DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([region, status])
+  @@index([status])
+  @@index([sector])
+}
+
+model Alert {
+  id          String   @id @default(cuid())
+  type        String   // CAPACITY_80 | CAPACITY_FULL | MARKETING_LAG | MILESTONE_25 | MILESTONE_50 | MILESTONE_75 | MILESTONE_100 | DUPLICATE_BLOCKED
+  region      String?
+  message     String
+  severity    String   // info | warning | critical | success
+  metadata    String?  // JSON string with extra context
+  resolved    Boolean  @default(false)
+  triggeredAt DateTime @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String   // REGISTER | DUPLICATE_BLOCKED | CHECKIN | CAPACITY_FALLBACK
+  participant String?
+  icNumber    String?
+  detail      String
+  createdAt   DateTime @default(now())
+}

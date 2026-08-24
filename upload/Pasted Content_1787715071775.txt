@@ -1,0 +1,901 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Attendance Tracking &amp; Asset Generation | ASEAN MSME A.I. Skills Training Program</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-background": "#1a1c1f",
+                      "outline-variant": "#c3c6d1",
+                      "secondary": "#775a19",
+                      "surface": "#f9f9fe",
+                      "tertiary-fixed-dim": "#ffb690",
+                      "on-secondary": "#ffffff",
+                      "secondary-fixed": "#ffdea5",
+                      "surface-variant": "#e2e2e7",
+                      "tertiary": "#381300",
+                      "surface-dim": "#dad9de",
+                      "on-secondary-fixed": "#261900",
+                      "primary-fixed-dim": "#a7c8ff",
+                      "inverse-primary": "#a7c8ff",
+                      "surface-tint": "#3a5f94",
+                      "primary-container": "#003366",
+                      "on-primary-container": "#799dd6",
+                      "surface-bright": "#f9f9fe",
+                      "inverse-surface": "#2f3034",
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "primary": "#001e40",
+                      "error-container": "#ffdad6",
+                      "on-error": "#ffffff",
+                      "outline": "#737780",
+                      "on-secondary-container": "#785a1a",
+                      "surface-container-highest": "#e2e2e7",
+                      "surface-container-low": "#f4f3f8",
+                      "on-primary-fixed": "#001b3c",
+                      "tertiary-fixed": "#ffdbca",
+                      "secondary-fixed-dim": "#e9c176",
+                      "surface-container": "#eeedf2",
+                      "on-primary": "#ffffff",
+                      "on-surface": "#1a1c1f",
+                      "background": "#f9f9fe",
+                      "primary-fixed": "#d5e3ff",
+                      "inverse-on-surface": "#f1f0f5",
+                      "on-secondary-fixed-variant": "#5d4201",
+                      "on-tertiary-fixed": "#341100",
+                      "on-tertiary-fixed-variant": "#723610",
+                      "error": "#ba1a1a",
+                      "secondary-container": "#fed488",
+                      "on-error-container": "#93000a",
+                      "surface-container-high": "#e8e8ed",
+                      "tertiary-container": "#592300",
+                      "on-surface-variant": "#43474f",
+                      "on-tertiary-container": "#d8885c",
+                      "on-primary-fixed-variant": "#1f477b"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "container-max": "1280px",
+                      "xl": "32px",
+                      "sm": "8px",
+                      "md": "16px",
+                      "3xl": "64px",
+                      "2xl": "48px",
+                      "gutter": "24px",
+                      "lg": "24px",
+                      "xs": "4px",
+                      "base": "4px"
+              },
+              "fontFamily": {
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "data-mono": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Inter"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Inter"
+                      ],
+                      "title-md": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "data-mono": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "title-md": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+        }
+        
+        .pulse-dot {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 150, 136, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(0, 150, 136, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 150, 136, 0); }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.5s ease-out forwards;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        @keyframes fadeInUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .flow-line {
+            stroke-dasharray: 10;
+            animation: dash 10s linear infinite;
+        }
+        @keyframes dash {
+            to { stroke-dashoffset: -100; }
+        }
+      </style>
+</head>
+<body class="bg-background text-on-background min-h-screen font-body-lg antialiased">
+<!-- TopNavBar -->
+<nav class="hidden md:flex justify-between items-center w-full px-lg h-16 max-w-container-max mx-auto bg-surface dark:bg-surface-dim border-b border-outline-variant dark:border-outline fixed top-0 left-0 right-0 z-50">
+<div class="flex items-center gap-md">
+<img src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5Krkgzkr6MGVQIEQvO19kQfvPYk8RSsfHGPBPHHxVeiYZQAMUVQiUX9_F0fvT0fSlOOA_ZSBotWpjEhx4JH4f6ecoN7sVCTbeof7fkxc58Zh6ATuor6s4WlhDJYrmgDxIu6sNdWS9cRnxPdsovANeVOluI9tAwsK-lsLRW90kGiqIUHurS3LEUhBiSBPTtv6yjoMTMyfMzE9fL7pOlurA1C5HQd4ss1DLpjOjLcAfpkZhJAb5G3V51QvDQpKw40Be" alt="ASEAN MSME Logo" class="h-10 w-auto object-contain">
+</div>
+<div class="flex items-center gap-lg">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant" data-icon="search">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container rounded-lg border-none focus:ring-2 focus:ring-primary w-64 text-body-sm font-body-sm transition-all duration-200 focus:w-80" placeholder="Search records..." type="text">
+</div>
+<div class="flex items-center gap-sm">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors rounded-full" title="notifications">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors rounded-full" title="settings">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors rounded-full" title="help">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+</div>
+<img alt="Executive User Avatar" class="w-8 h-8 rounded-full object-cover border border-outline-variant" data-alt="A professional headshot of a business executive in a modern, well-lit office setting. The executive is wearing a tailored navy suit and smiling confidently. The lighting is soft and natural, creating a trustworthy and approachable Corporate Modern aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbibyZUNwaK0FHE8L2dmRTGjeQNmp2Y7ehARtHOzHtrR_3zKWUvuQRidIiwGTyWSd_Jko3sKwCU2rJ5ME4kI1cfc9lHCsi_BRCiuXY7upxVOEOON4dRLACO7bJPV2CPxqNurxFqj2AFFt0aA2JOFJnkCqYl5zOTmZcDGHp8nXdQXoVqr0Mq7llbIFbdf_tLRFfyG12y8yeWpnzWvHGVydouyjRbwzg0Qbq_sW4dpVaMhODvAax000">
+</div>
+</nav>
+<!-- SideNavBar & Main Content Wrapper -->
+<div class="flex pt-16 md:h-screen overflow-hidden">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col p-md z-40 bg-surface-container dark:bg-inverse-surface border-r border-outline-variant bg-surface-container-low dark:bg-surface-container-highest fixed left-0 top-16 h-[calc(100vh-4rem)] w-64">
+<div class="mb-lg px-md pt-sm">
+<div class="flex items-center gap-sm mb-xs"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDr3XbsjGSxiMDtrN63rH_p0n0-vkjLgp1CRe4W_nlEgE4I3CZBd1qiLZjF9FwXtH8GTfQYMoJ6rUxmcP5GxmXbSQ1m4CShtOCqQYIyXYC27BUQJ1Uo37zjlfd3uZnD2J-9mv4Ve-panF3yYTMUBUunK5xFN1EDPx9QBlb9qzN7KYi44DVRFmpIz52qvJVL5lBDBW-6D8wwkVvym8GyVy_ZBm9rFO5Gq_w-3LDUyHumINFWkLbsuOef4jsnqavmqIwA" alt="Intelligence Portal Logo" class="h-10 w-auto object-contain"></div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">GMT+8 Digital Dashboard</span>
+</div>
+<nav class="flex-1 flex flex-col gap-sm">
+<a class="flex items-center gap-md text-on-surface-variant dark:text-surface-variant px-md py-sm hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-all rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-body-lg text-body-lg">Executive Overview</span>
+</a>
+<a class="flex items-center gap-md text-on-surface-variant dark:text-surface-variant px-md py-sm hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-all rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-body-lg text-body-lg">Participant Directory</span>
+</a>
+<a class="flex items-center gap-md bg-secondary-container dark:bg-secondary text-on-secondary-container dark:text-on-secondary rounded-xl px-md py-sm Active: scale-95 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="fact_check" data-weight="fill" style="font-variation-settings: 'FILL' 1;">fact_check</span>
+<span class="font-body-lg text-body-lg font-medium">Attendance Tracking</span>
+</a>
+<a class="flex items-center gap-md text-on-surface-variant dark:text-surface-variant px-md py-sm hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-all rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-body-lg text-body-lg">Reports</span>
+</a>
+</nav>
+<div class="mt-auto flex flex-col gap-sm border-t border-outline-variant pt-md">
+<a class="flex items-center gap-md text-on-surface-variant dark:text-surface-variant px-md py-sm hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-all rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="contact_support">contact_support</span>
+<span class="font-body-lg text-body-lg">Support</span>
+</a>
+<a class="flex items-center gap-md text-on-surface-variant dark:text-surface-variant px-md py-sm hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-all rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-body-lg text-body-lg">Sign Out</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 w-full md:ml-64 overflow-y-auto bg-background p-4 md:p-lg">
+<div class="max-w-container-max mx-auto space-y-lg pb-24 md:pb-8">
+<!-- Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-outline-variant pb-md">
+<div>
+<h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg font-bold text-on-background">Live Attendance Tracking</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant mt-1">Real-time asset generation and monitoring.</p>
+</div>
+<div class="flex items-center gap-sm">
+<div class="flex items-center gap-2 bg-surface-container-high px-3 py-1.5 rounded-full">
+<div class="w-2.5 h-2.5 rounded-full bg-[#10B981] pulse-dot"></div>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">System Active</span>
+</div>
+</div>
+</div>
+<!-- Main Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Left Column: Status & Live Feed (8 cols) -->
+<div class="lg:col-span-8 flex flex-col gap-gutter">
+<!-- Top Stats Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+<div class="bg-white border border-outline-variant rounded-lg p-md">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-title-md text-title-md text-on-surface-variant">Total Attended</h3>
+<span class="material-symbols-outlined text-outline-variant" data-icon="group">group</span>
+</div>
+<div class="font-headline-lg text-headline-lg text-on-background font-bold" id="counter-total">1,321</div>
+<div class="flex items-center gap-1 mt-2">
+<span class="material-symbols-outlined text-[#10B981] text-sm" data-icon="trending_up">trending_up</span>
+<span class="font-label-caps text-label-caps text-[#10B981]">+12% vs last hour</span>
+</div>
+</div>
+<div class="bg-white border border-outline-variant rounded-lg p-md">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-title-md text-title-md text-on-surface-variant">Attended Physical</h3>
+<span class="material-symbols-outlined text-outline-variant" data-icon="meeting_room">meeting_room</span>
+</div>
+<div class="font-headline-lg text-headline-lg text-on-background font-bold text-primary">892</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant mt-2">Jakarta Convention Center</div>
+</div>
+<div class="bg-white border border-outline-variant rounded-lg p-md">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-title-md text-title-md text-on-surface-variant">Attended Online</h3>
+<span class="material-symbols-outlined text-outline-variant" data-icon="devices">devices</span>
+</div>
+<div class="font-headline-lg text-headline-lg text-on-background font-bold text-secondary">356</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant mt-2">ASEAN Virtual Hub</div>
+</div>
+</div>
+<!-- Asset Generation Flow -->
+<div class="bg-white border border-outline-variant rounded-lg p-md overflow-hidden relative">
+<h2 class="font-title-md text-title-md font-semibold text-on-background mb-lg">Agentic Workflow: Asset Generation</h2>
+<div class="flex flex-col md:flex-row items-center justify-between gap-4 relative z-10">
+<!-- Step 1 -->
+<div class="flex flex-col items-center text-center flex-1">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant mb-2 z-10">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="database">database</span>
+</div>
+<span class="font-label-caps text-label-caps uppercase text-on-surface-variant mb-1">Step 1</span>
+<span class="font-title-md text-body-lg font-medium text-on-background">Data Ingestion</span>
+</div>
+<span class="material-symbols-outlined text-outline-variant hidden md:block" data-icon="arrow_forward">arrow_forward</span>
+<!-- Step 2 -->
+<div class="flex flex-col items-center text-center flex-1">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant mb-2 z-10">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="verified">verified</span>
+</div>
+<span class="font-label-caps text-label-caps uppercase text-on-surface-variant mb-1">Step 2</span>
+<span class="font-title-md text-body-lg font-medium text-on-background">Validation</span>
+</div>
+<span class="material-symbols-outlined text-outline-variant hidden md:block" data-icon="arrow_forward">arrow_forward</span>
+<!-- Step 3 -->
+<div class="flex flex-col items-center text-center flex-1">
+<div class="w-12 h-12 rounded-full bg-primary-container flex items-center justify-center border border-primary mb-2 z-10 relative">
+<div class="absolute inset-0 rounded-full border-2 border-primary animate-ping opacity-20"></div>
+<span class="material-symbols-outlined text-on-primary-container" data-icon="qr_code">qr_code</span>
+</div>
+<span class="font-label-caps text-label-caps uppercase text-primary mb-1">Step 3</span>
+<span class="font-title-md text-body-lg font-medium text-on-background">QR Payload</span>
+</div>
+<span class="material-symbols-outlined text-outline-variant hidden md:block" data-icon="arrow_forward">arrow_forward</span>
+<!-- Step 4 -->
+<div class="flex flex-col items-center text-center flex-1">
+<div class="w-12 h-12 rounded-full bg-[#E5F6EE] flex items-center justify-center border border-[#10B981] mb-2 z-10">
+<span class="material-symbols-outlined text-[#10B981]" data-icon="chat">chat</span>
+</div>
+<span class="font-label-caps text-label-caps uppercase text-[#10B981] mb-1">Final</span>
+<span class="font-title-md text-body-lg font-medium text-on-background">WhatsApp Disp.</span>
+</div>
+</div>
+<!-- Connecting Line Background (Desktop) -->
+<div class="hidden md:block absolute top-[4.5rem] left-12 right-12 h-0.5 bg-surface-container-high z-0">
+<div class="h-full bg-primary w-2/3 opacity-50 relative overflow-hidden rounded-full">
+<div class="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent translate-x-[-100%] animate-[shimmer_2s_infinite]"></div>
+</div>
+</div>
+</div>
+<!-- Live Check-In Feed -->
+<div class="bg-white border border-outline-variant rounded-lg p-0 overflow-hidden flex flex-col flex-1">
+<div class="p-md border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest">
+<h2 class="font-title-md text-title-md font-semibold text-on-background">Live 'Check-In' Feed</h2>
+<button class="text-primary font-body-sm text-body-sm font-medium hover:underline flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="pause">pause</span> Pause Feed
+                                </button>
+</div>
+<div class="flex-1 overflow-y-auto max-h-[400px] p-sm space-y-1" id="live-feed-container"><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+                    </div>
+                    <div>
+                        <div class="font-body-sm font-semibold text-on-surface">David Lee</div>
+                        <div class="font-body-sm text-xs text-on-surface-variant">Agriculture • ASN-24-4349</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+                        Attended_Online
+                    </div>
+                    <div class="font-data-mono text-xs text-outline-variant block">11:19:07 AM</div>
+                </div>
+            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+                    </div>
+                    <div>
+                        <div class="font-body-sm font-semibold text-on-surface">Budi Santoso</div>
+                        <div class="font-body-sm text-xs text-on-surface-variant">Manufacturing • ASN-24-3617</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+                        Attended_Online
+                    </div>
+                    <div class="font-data-mono text-xs text-outline-variant block">11:19:03 AM</div>
+                </div>
+            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+                    </div>
+                    <div>
+                        <div class="font-body-sm font-semibold text-on-surface">David Lee</div>
+                        <div class="font-body-sm text-xs text-on-surface-variant">Manufacturing • ASN-24-9680</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+                        Attended_Online
+                    </div>
+                    <div class="font-data-mono text-xs text-outline-variant block">11:19:00 AM</div>
+                </div>
+            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+                    </div>
+                    <div>
+                        <div class="font-body-sm font-semibold text-on-surface">Nguyen Van A</div>
+                        <div class="font-body-sm text-xs text-on-surface-variant">Agriculture • ASN-24-4595</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+                        Attended_Online
+                    </div>
+                    <div class="font-data-mono text-xs text-outline-variant block">11:18:56 AM</div>
+                </div>
+            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined text-sm" data-icon="meeting_room">meeting_room</span>
+                    </div>
+                    <div>
+                        <div class="font-body-sm font-semibold text-on-surface">Maria Santos</div>
+                        <div class="font-body-sm text-xs text-on-surface-variant">Tech • ASN-24-4040</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-label-caps text-[10px] uppercase text-primary bg-primary-fixed px-2 py-0.5 rounded inline-block mb-1">
+                        Attended_Physical
+                    </div>
+                    <div class="font-data-mono text-xs text-outline-variant block">11:18:52 AM</div>
+                </div>
+            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+                    </div>
+                    <div>
+                        <div class="font-body-sm font-semibold text-on-surface">Nguyen Van A</div>
+                        <div class="font-body-sm text-xs text-on-surface-variant">Retail • ASN-24-9119</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+                        Attended_Online
+                    </div>
+                    <div class="font-data-mono text-xs text-outline-variant block">11:18:49 AM</div>
+                </div>
+            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined text-sm" data-icon="meeting_room">meeting_room</span>
+                    </div>
+                    <div>
+                        <div class="font-body-sm font-semibold text-on-surface">David Lee</div>
+                        <div class="font-body-sm text-xs text-on-surface-variant">Manufacturing • ASN-24-1167</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-label-caps text-[10px] uppercase text-primary bg-primary-fixed px-2 py-0.5 rounded inline-block mb-1">
+                        Attended_Physical
+                    </div>
+                    <div class="font-data-mono text-xs text-outline-variant block">11:18:45 AM</div>
+                </div>
+            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined text-sm" data-icon="meeting_room">meeting_room</span>
+                    </div>
+                    <div>
+                        <div class="font-body-sm font-semibold text-on-surface">David Lee</div>
+                        <div class="font-body-sm text-xs text-on-surface-variant">Retail • ASN-24-1540</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-label-caps text-[10px] uppercase text-primary bg-primary-fixed px-2 py-0.5 rounded inline-block mb-1">
+                        Attended_Physical
+                    </div>
+                    <div class="font-data-mono text-xs text-outline-variant block">11:18:42 AM</div>
+                </div>
+            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+                    </div>
+                    <div>
+                        <div class="font-body-sm font-semibold text-on-surface">Ahmad Rizki</div>
+                        <div class="font-body-sm text-xs text-on-surface-variant">Retail • ASN-24-6187</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+                        Attended_Online
+                    </div>
+                    <div class="font-data-mono text-xs text-outline-variant block">11:18:38 AM</div>
+                </div>
+            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+                    </div>
+                    <div>
+                        <div class="font-body-sm font-semibold text-on-surface">Ahmad Rizki</div>
+                        <div class="font-body-sm text-xs text-on-surface-variant">Agriculture • ASN-24-4165</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+                        Attended_Online
+                    </div>
+                    <div class="font-data-mono text-xs text-outline-variant block">11:18:35 AM</div>
+                </div>
+            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined text-sm" data-icon="meeting_room">meeting_room</span>
+                    </div>
+                    <div>
+                        <div class="font-body-sm font-semibold text-on-surface">Chaiwat P.</div>
+                        <div class="font-body-sm text-xs text-on-surface-variant">Manufacturing • ASN-24-1610</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-label-caps text-[10px] uppercase text-primary bg-primary-fixed px-2 py-0.5 rounded inline-block mb-1">
+                        Attended_Physical
+                    </div>
+                    <div class="font-data-mono text-xs text-outline-variant block">11:18:31 AM</div>
+                </div>
+            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+                    </div>
+                    <div>
+                        <div class="font-body-sm font-semibold text-on-surface">Ahmad Rizki</div>
+                        <div class="font-body-sm text-xs text-on-surface-variant">Retail • ASN-24-3563</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+                        Attended_Online
+                    </div>
+                    <div class="font-data-mono text-xs text-outline-variant block">11:18:28 AM</div>
+                </div>
+            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+                    </div>
+                    <div>
+                        <div class="font-body-sm font-semibold text-on-surface">Ahmad Rizki</div>
+                        <div class="font-body-sm text-xs text-on-surface-variant">Manufacturing • ASN-24-9640</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+                        Attended_Online
+                    </div>
+                    <div class="font-data-mono text-xs text-outline-variant block">11:18:24 AM</div>
+                </div>
+            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined text-sm" data-icon="meeting_room">meeting_room</span>
+                    </div>
+                    <div>
+                        <div class="font-body-sm font-semibold text-on-surface">Ahmad Rizki</div>
+                        <div class="font-body-sm text-xs text-on-surface-variant">Agriculture • ASN-24-1537</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-label-caps text-[10px] uppercase text-primary bg-primary-fixed px-2 py-0.5 rounded inline-block mb-1">
+                        Attended_Physical
+                    </div>
+                    <div class="font-data-mono text-xs text-outline-variant block">11:18:21 AM</div>
+                </div>
+            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined text-sm" data-icon="meeting_room">meeting_room</span>
+                    </div>
+                    <div>
+                        <div class="font-body-sm font-semibold text-on-surface">Ahmad Rizki</div>
+                        <div class="font-body-sm text-xs text-on-surface-variant">Retail • ASN-24-1092</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-label-caps text-[10px] uppercase text-primary bg-primary-fixed px-2 py-0.5 rounded inline-block mb-1">
+                        Attended_Physical
+                    </div>
+                    <div class="font-data-mono text-xs text-outline-variant block">11:18:17 AM</div>
+                </div>
+            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+                    </div>
+                    <div>
+                        <div class="font-body-sm font-semibold text-on-surface">Nguyen Van A</div>
+                        <div class="font-body-sm text-xs text-on-surface-variant">Agriculture • ASN-24-3079</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+                        Attended_Online
+                    </div>
+                    <div class="font-data-mono text-xs text-outline-variant block">11:18:14 AM</div>
+                </div>
+            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined text-sm" data-icon="meeting_room">meeting_room</span>
+                    </div>
+                    <div>
+                        <div class="font-body-sm font-semibold text-on-surface">Siti Nurhaliza</div>
+                        <div class="font-body-sm text-xs text-on-surface-variant">Manufacturing • ASN-24-2206</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-label-caps text-[10px] uppercase text-primary bg-primary-fixed px-2 py-0.5 rounded inline-block mb-1">
+                        Attended_Physical
+                    </div>
+                    <div class="font-data-mono text-xs text-outline-variant block">11:18:10 AM</div>
+                </div>
+            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+                    </div>
+                    <div>
+                        <div class="font-body-sm font-semibold text-on-surface">Ahmad Rizki</div>
+                        <div class="font-body-sm text-xs text-on-surface-variant">Agriculture • ASN-24-2138</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+                        Attended_Online
+                    </div>
+                    <div class="font-data-mono text-xs text-outline-variant block">11:18:07 AM</div>
+                </div>
+            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined text-sm" data-icon="meeting_room">meeting_room</span>
+                    </div>
+                    <div>
+                        <div class="font-body-sm font-semibold text-on-surface">Nguyen Van A</div>
+                        <div class="font-body-sm text-xs text-on-surface-variant">Retail • ASN-24-6077</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-label-caps text-[10px] uppercase text-primary bg-primary-fixed px-2 py-0.5 rounded inline-block mb-1">
+                        Attended_Physical
+                    </div>
+                    <div class="font-data-mono text-xs text-outline-variant block">11:18:03 AM</div>
+                </div>
+            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+                    </div>
+                    <div>
+                        <div class="font-body-sm font-semibold text-on-surface">Siti Nurhaliza</div>
+                        <div class="font-body-sm text-xs text-on-surface-variant">Retail • ASN-24-7123</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+                        Attended_Online
+                    </div>
+                    <div class="font-data-mono text-xs text-outline-variant block">11:18:00 AM</div>
+                </div>
+            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined text-sm" data-icon="meeting_room">meeting_room</span>
+                    </div>
+                    <div>
+                        <div class="font-body-sm font-semibold text-on-surface">Chaiwat P.</div>
+                        <div class="font-body-sm text-xs text-on-surface-variant">Manufacturing • ASN-24-9625</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-label-caps text-[10px] uppercase text-primary bg-primary-fixed px-2 py-0.5 rounded inline-block mb-1">
+                        Attended_Physical
+                    </div>
+                    <div class="font-data-mono text-xs text-outline-variant block">11:17:56 AM</div>
+                </div>
+            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+                    </div>
+                    <div>
+                        <div class="font-body-sm font-semibold text-on-surface">Budi Santoso</div>
+                        <div class="font-body-sm text-xs text-on-surface-variant">Manufacturing • ASN-24-7676</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+                        Attended_Online
+                    </div>
+                    <div class="font-data-mono text-xs text-outline-variant block">11:17:53 AM</div>
+                </div>
+            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+                    </div>
+                    <div>
+                        <div class="font-body-sm font-semibold text-on-surface">Siti Nurhaliza</div>
+                        <div class="font-body-sm text-xs text-on-surface-variant">Manufacturing • ASN-24-9015</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+                        Attended_Online
+                    </div>
+                    <div class="font-data-mono text-xs text-outline-variant block">11:17:49 AM</div>
+                </div>
+            </div></div>
+</div>
+</div>
+<!-- Right Column: WhatsApp Mockup (4 cols) -->
+<div class="lg:col-span-4 flex flex-col items-center">
+<div class="sticky top-24 w-full max-w-[320px]">
+<h3 class="font-title-md text-title-md font-semibold text-on-background mb-4 text-center">Asset Delivery Preview</h3>
+<!-- Phone Mockup -->
+<div class="bg-black rounded-[2.5rem] p-3 shadow-xl border-4 border-surface-container-highest relative mx-auto h-[600px] flex flex-col">
+<!-- Phone Notch -->
+<div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-black rounded-b-xl z-20"></div>
+<!-- Screen -->
+<div class="bg-[#EFEAE2] flex-1 rounded-[2rem] overflow-hidden flex flex-col relative">
+<!-- WhatsApp Header -->
+<div class="bg-[#075E54] text-white p-3 pt-6 flex items-center gap-3 z-10 shadow-sm">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+<div class="w-8 h-8 rounded-full bg-white flex items-center justify-center">
+<span class="material-symbols-outlined text-[#075E54] text-sm" data-icon="smart_toy">smart_toy</span>
+</div>
+<div>
+<div class="font-title-md text-sm font-semibold">ASEAN A.I. Bot</div>
+<div class="text-xs opacity-80">business account</div>
+</div>
+</div>
+<!-- WhatsApp Background Pattern -->
+<div class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+CiAgPHBhdGggZD0iTTIwIDIwTDAgMEg0MEwyMCAyMHoiIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMC4wNSIvPgo8L3N2Zz4=')]"></div>
+<!-- Chat Area -->
+<div class="flex-1 p-3 overflow-y-auto z-10 flex flex-col gap-3 justify-end pb-4">
+<!-- Message Bubble -->
+<div class="bg-white rounded-lg rounded-tl-none p-2 shadow-sm max-w-[90%] fade-in-up">
+<div class="text-[#075E54] text-xs font-semibold mb-1">ASEAN MSME Bot</div>
+<p class="font-body-sm text-[13px] leading-relaxed text-on-surface mb-2">
+                                                ✅ Check-in successful! Welcome to the ASEAN MSME A.I. Skills Training.
+                                            </p>
+<!-- Ticket Asset -->
+<div class="bg-surface-container-low border border-outline-variant rounded-md p-3 mb-2 flex flex-col items-center">
+<div class="text-[10px] uppercase font-bold text-on-surface-variant tracking-wider mb-2">Digital Pass</div>
+<!-- Simulated QR Code -->
+<div class="w-32 h-32 bg-white p-2 border border-outline-variant mb-2">
+<div class="w-full h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNMCAwaDQwdjQwSDB6bTEwIDEwaDIwdjIwSDEwem01MCAwaDQwdjQwaC00MHptMTAgMTBoMjB2MjBoLTIwek0wIDYwaDQwdjQwaC00MHptMTAgMTBoMjB2MjBoLTIwem01MCAwaDIwdjIwaC0yMHptMTAgMzBoMjB2MTBoLTIwek01MCAwaDIwdjEwaC0yMHptMCAyMGgyMHYxMGgtMjB6IiBmaWxsPSIjMDAwIi8+PC9zdmc+')] bg-contain bg-center bg-no-repeat opacity-80"></div>
+</div>
+<div class="font-data-mono text-xs font-semibold text-primary">ID: ASN-24-8892</div>
+</div>
+<p class="font-body-sm text-[13px] text-on-surface mb-1">
+<strong>Name:</strong> Sarah Wijaya<br>
+<strong>Sector:</strong> Tech / E-commerce<br>
+<strong>Track:</strong> Advanced AI
+                                            </p>
+<div class="text-right text-[10px] text-outline-variant mt-1">10:42 AM</div>
+</div>
+</div>
+<!-- Input Area -->
+<div class="bg-[#F0F0F0] p-2 flex items-center gap-2 z-10 border-t border-[#d1d7db]">
+<span class="material-symbols-outlined text-outline-variant" data-icon="add">add</span>
+<div class="flex-1 bg-white rounded-full py-1.5 px-4 text-body-sm text-outline-variant">Type a message</div>
+<div class="w-8 h-8 rounded-full bg-[#00A884] text-white flex items-center justify-center">
+<span class="material-symbols-outlined text-sm" data-icon="mic">mic</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Script for Live Feed Simulation -->
+<script>
+        const feedContainer = document.getElementById('live-feed-container');
+        const counterEl = document.getElementById('counter-total');
+        
+        const names = ['Ahmad Rizki', 'Maria Santos', 'Nguyen Van A', 'Siti Nurhaliza', 'David Lee', 'Chaiwat P.', 'Budi Santoso'];
+        const sectors = ['Agriculture', 'Retail', 'Tech', 'Manufacturing'];
+        const types = ['Physical', 'Online'];
+        
+        let count = 1248;
+
+        function createFeedItem() {
+            const name = names[Math.floor(Math.random() * names.length)];
+            const sector = sectors[Math.floor(Math.random() * sectors.length)];
+            const type = types[Math.floor(Math.random() * types.length)];
+            const isPhysical = type === 'Physical';
+            
+            const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+            
+            const div = document.createElement('div');
+            div.className = 'flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up';
+            
+            div.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-${isPhysical ? 'primary' : 'secondary'}-container flex items-center justify-center text-${isPhysical ? 'primary' : 'secondary'}">
+                        <span class="material-symbols-outlined text-sm" data-icon="${isPhysical ? 'meeting_room' : 'devices'}">${isPhysical ? 'meeting_room' : 'devices'}</span>
+                    </div>
+                    <div>
+                        <div class="font-body-sm font-semibold text-on-surface">${name}</div>
+                        <div class="font-body-sm text-xs text-on-surface-variant">${sector} • ASN-24-${Math.floor(1000 + Math.random() * 9000)}</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-label-caps text-[10px] uppercase ${isPhysical ? 'text-primary bg-primary-fixed' : 'text-secondary bg-secondary-fixed'} px-2 py-0.5 rounded inline-block mb-1">
+                        Attended_${type}
+                    </div>
+                    <div class="font-data-mono text-xs text-outline-variant block">${time}</div>
+                </div>
+            `;
+            
+            return div;
+        }
+
+        // Initialize feed with some items
+        for(let i=0; i<6; i++) {
+            const item = createFeedItem();
+            item.style.animation = 'none'; // remove animation for initial load
+            item.style.opacity = '1';
+            feedContainer.appendChild(item);
+        }
+
+        // Simulate live updates
+        setInterval(() => {
+            const newItem = createFeedItem();
+            feedContainer.insertBefore(newItem, feedContainer.firstChild);
+            
+            // Keep max items to prevent infinite scroll
+            if(feedContainer.children.length > 20) {
+                feedContainer.removeChild(feedContainer.lastChild);
+            }
+            
+            // Update counter occasionally
+            if(Math.random() > 0.5) {
+                count++;
+                counterEl.innerText = count.toLocaleString();
+            }
+            
+        }, 3500);
+        
+        // CSS specific to tailwind arbitrary values added via JS
+        tailwind.config.theme.extend.keyframes = {
+            shimmer: {
+                '100%': { transform: 'translateX(100%)' }
+            }
+        };
+    </script>
+
+
+</body></html>
