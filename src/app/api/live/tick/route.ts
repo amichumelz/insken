@@ -201,7 +201,7 @@ export async function POST() {
   }
 
   // ── 4) Occasionally nudge trainer KPIs (small live updates) ──────────
-  if (Math.random() < 0.15) {
+  if (Math.random() < 0.08) {
     // Persist a KPI delta in AuditLog so trainers API can pick it up
     const coachId = Math.random() < 0.5 ? 'coach-a' : 'coach-b';
     const delta = randInt(1, 2);

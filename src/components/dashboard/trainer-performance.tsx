@@ -207,7 +207,9 @@ function CoachProfileHeader({ trainer }: { trainer: Trainer }) {
           <Star className="h-5 w-5 fill-amber-500 text-amber-500" />
           <div>
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Avg Rating</div>
-            <div className="text-base font-bold tabular-nums">{trainer.kpi.avgRating.toFixed(1)}</div>
+            <div className="text-base font-bold tabular-nums">
+              {trainer.kpi.avgRating > 0 ? trainer.kpi.avgRating.toFixed(1) : '—'}
+            </div>
           </div>
         </div>
       </CardContent>
@@ -292,7 +294,9 @@ function TrainerKpiCards({ kpi }: { kpi: Trainer['kpi'] }) {
           </div>
         </div>
         <div className="mt-2 flex items-baseline gap-1">
-          <span className="text-2xl font-bold tabular-nums">{kpi.avgRating.toFixed(1)}</span>
+          <span className="text-2xl font-bold tabular-nums">
+            {kpi.avgRating > 0 ? kpi.avgRating.toFixed(1) : '—'}
+          </span>
           <span className="text-xs text-muted-foreground">/ 5.0</span>
         </div>
         <div className="mt-1 text-[11px] text-muted-foreground">participant satisfaction</div>
@@ -326,9 +330,10 @@ function TrainerPerformanceChart({ performance }: { performance: Trainer['perfor
   const avgAttendance = Math.round(
     performance.reduce((s, p) => s + p.attendance, 0) / performance.length,
   );
-  const avgRating = (
-    performance.reduce((s, p) => s + p.rating, 0) / performance.length
-  ).toFixed(2);
+  const ratingSum = performance.reduce((s, p) => s + p.rating, 0);
+  const avgRating = ratingSum > 0
+    ? (ratingSum / performance.length).toFixed(2)
+    : '—';
 
   return (
     <Card className="h-full">

@@ -75,6 +75,52 @@ export async function GET() {
     }
   }
 
+  // KPI baseline = 0. Everything grows via the live ticker's TRAINER_KPI events.
+  // Each session conducted adds ~25 participants. Attendance/completion rates
+  // only "appear" once the first session has been conducted (i.e. > 0 sessions).
+  // Avg rating is 0 until the first feedback entry, then settles to ~4.5-4.7.
+  // Response time is 0 until the first session, then jumps to 12-22 mins.
+
+  const buildKpi = (coachId: 'coach-a' | 'coach-b', baseAttendance: number, baseCompletion: number, baseRating: number, baseResponseMins: number) => {
+    const sessions = kpiDeltas[coachId].sessions;
+    const participants = sessions * 25;
+    const hasFirstSession = sessions > 0;
+    const hasFirstFeedback = kpiDeltas[coachId].ratingN > 0;
+    return {
+      sessionsConducted: sessions,
+      totalParticipants: participants,
+      attendanceRate: hasFirstSession ? baseAttendance : 0,
+      completionRate: hasFirstSession ? baseCompletion : 0,
+      avgRating: hasFirstFeedback
+        ? Math.max(1, Math.min(5, baseRating + kpiDeltas[coachId].ratingSum / kpiDeltas[coachId].ratingN))
+        : 0,
+      responseTimeMins: hasFirstSession ? baseResponseMins : 0,
+    };
+  };
+
+  const buildPerformance = (coachId: 'coach-a' | 'coach-b', baseRating: number) => {
+    const sessions = kpiDeltas[coachId].sessions;
+    const hasFirstSession = sessions > 0;
+    const hasFirstFeedback = kpiDeltas[coachId].ratingN > 0;
+    const months = [
+      'Sep 25', 'Oct 25', 'Nov 25', 'Dec 25',
+      'Jan 26', 'Feb 26', 'Mar 26', 'Apr 26',
+      'May 26', 'Jun 26', 'Jul 26', 'Aug 26',
+    ];
+    // All months start at 0; only the current month (Aug 26) grows via live ticker
+    return months.map((month) => {
+      const isCurrent = month === 'Aug 26';
+      return {
+        month,
+        sessions: isCurrent ? sessions : 0,
+        attendance: isCurrent && hasFirstSession ? 92 : 0,
+        rating: isCurrent && hasFirstFeedback
+          ? Math.max(1, Math.min(5, baseRating + kpiDeltas[coachId].ratingSum / kpiDeltas[coachId].ratingN))
+          : 0,
+      };
+    });
+  };
+
   const trainers: Trainer[] = [
     {
       id: 'coach-a',
@@ -84,31 +130,8 @@ export async function GET() {
       initials: 'MO',
       color: 'from-blue-500 to-indigo-600',
       joinedAt: '2024-03-15',
-      kpi: {
-        sessionsConducted: 48 + kpiDeltas['coach-a'].sessions,
-        totalParticipants: 1240 + kpiDeltas['coach-a'].sessions * 26,
-        attendanceRate: 92,
-        completionRate: 87,
-        avgRating:
-          kpiDeltas['coach-a'].ratingN > 0
-            ? Math.max(1, Math.min(5, 4.7 + kpiDeltas['coach-a'].ratingSum / kpiDeltas['coach-a'].ratingN))
-            : 4.7,
-        responseTimeMins: 14,
-      },
-      performance: [
-        { month: 'Sep 25', sessions: 3, attendance: 88, rating: 4.5 },
-        { month: 'Oct 25', sessions: 4, attendance: 90, rating: 4.6 },
-        { month: 'Nov 25', sessions: 4, attendance: 89, rating: 4.5 },
-        { month: 'Dec 25', sessions: 3, attendance: 91, rating: 4.7 },
-        { month: 'Jan 26', sessions: 4, attendance: 92, rating: 4.7 },
-        { month: 'Feb 26', sessions: 5, attendance: 93, rating: 4.8 },
-        { month: 'Mar 26', sessions: 4, attendance: 92, rating: 4.7 },
-        { month: 'Apr 26', sessions: 4, attendance: 91, rating: 4.6 },
-        { month: 'May 26', sessions: 5, attendance: 93, rating: 4.8 },
-        { month: 'Jun 26', sessions: 4, attendance: 92, rating: 4.7 },
-        { month: 'Jul 26', sessions: 4, attendance: 94, rating: 4.9 },
-        { month: 'Aug 26', sessions: 4 + kpiDeltas['coach-a'].sessions, attendance: 92, rating: kpiDeltas['coach-a'].ratingN > 0 ? Math.max(1, Math.min(5, 4.7 + kpiDeltas['coach-a'].ratingSum / kpiDeltas['coach-a'].ratingN)) : 4.7 },
-      ],
+      kpi: buildKpi('coach-a', 92, 87, 4.7, 14),
+      performance: buildPerformance('coach-a', 4.7),
       preFeedback: [...liveFeedback['coach-a'].pre, ...[
         {
           id: 'pre-a-1',
@@ -202,31 +225,8 @@ export async function GET() {
       initials: 'DA',
       color: 'from-amber-500 to-orange-600',
       joinedAt: '2024-06-02',
-      kpi: {
-        sessionsConducted: 41 + kpiDeltas['coach-b'].sessions,
-        totalParticipants: 980 + kpiDeltas['coach-b'].sessions * 24,
-        attendanceRate: 88,
-        completionRate: 82,
-        avgRating:
-          kpiDeltas['coach-b'].ratingN > 0
-            ? Math.max(1, Math.min(5, 4.5 + kpiDeltas['coach-b'].ratingSum / kpiDeltas['coach-b'].ratingN))
-            : 4.5,
-        responseTimeMins: 22,
-      },
-      performance: [
-        { month: 'Sep 25', sessions: 2, attendance: 82, rating: 4.2 },
-        { month: 'Oct 25', sessions: 3, attendance: 84, rating: 4.3 },
-        { month: 'Nov 25', sessions: 3, attendance: 85, rating: 4.3 },
-        { month: 'Dec 25', sessions: 3, attendance: 86, rating: 4.4 },
-        { month: 'Jan 26', sessions: 4, attendance: 87, rating: 4.4 },
-        { month: 'Feb 26', sessions: 4, attendance: 88, rating: 4.5 },
-        { month: 'Mar 26', sessions: 3, attendance: 87, rating: 4.4 },
-        { month: 'Apr 26', sessions: 4, attendance: 88, rating: 4.5 },
-        { month: 'May 26', sessions: 3, attendance: 89, rating: 4.6 },
-        { month: 'Jun 26', sessions: 4, attendance: 90, rating: 4.6 },
-        { month: 'Jul 26', sessions: 4, attendance: 88, rating: 4.5 },
-        { month: 'Aug 26', sessions: 4 + kpiDeltas['coach-b'].sessions, attendance: 88, rating: kpiDeltas['coach-b'].ratingN > 0 ? Math.max(1, Math.min(5, 4.5 + kpiDeltas['coach-b'].ratingSum / kpiDeltas['coach-b'].ratingN)) : 4.5 },
-      ],
+      kpi: buildKpi('coach-b', 88, 82, 4.5, 22),
+      performance: buildPerformance('coach-b', 4.5),
       preFeedback: [...liveFeedback['coach-b'].pre, ...[
         {
           id: 'pre-b-1',
