@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const REFRESH_INTERVAL_MS = 10000; // 10 seconds — feels "live" without hammering the DB
+const REFRESH_INTERVAL_MS = 30000; // 30 seconds — gentle cadence (the live ticker also drives refreshes)
 
 export function LiveAttendanceTracking({ refreshTick = 0 }: { refreshTick?: number }) {
   const [data, setData] = useState<LiveCheckinsResponse | null>(null);

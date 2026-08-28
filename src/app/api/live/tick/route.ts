@@ -73,8 +73,8 @@ export async function POST() {
   const totalSoFar = await db.participant.count();
   const REGIONS = Object.values(REGION_CONFIG);
 
-  // ── 1) Register 1-3 new participants per tick ─────────────────────────
-  const regCount = randInt(1, 3);
+  // ── 1) Register 1 new participant per tick (slow, deliberate growth) ──
+  const regCount = 1;
   for (let i = 0; i < regCount; i++) {
     const region = rand(REGIONS);
     const seed = (totalSoFar + i + 1) * 17 + Math.floor(now / 1000) + i;
@@ -82,9 +82,9 @@ export async function POST() {
     const sector = rand(SECTORS);
     const ic = `${String(70 + randInt(0, 25)).padStart(2, '0')}${String(randInt(1, 12)).padStart(2, '0')}${String(randInt(1, 28)).padStart(2, '0')}-${rand(['14', '01', '07', '12', '13'])}-${String(randInt(1000, 9999)).padStart(4, '0')}-${String(randInt(0, 9))}`;
 
-    // ~15% chance of duplicate (use an existing IC)
+    // ~10% chance of duplicate (use an existing IC)
     let useExisting = false;
-    if (Math.random() < 0.15) {
+    if (Math.random() < 0.10) {
       const existing = await db.participant.findFirst({ orderBy: { createdAt: 'desc' }, take: 1 });
       if (existing) {
         await db.auditLog.create({
@@ -152,14 +152,14 @@ export async function POST() {
     events.push({ kind: 'register', detail: `${name} → ${safeParticipantId} (${region.code}, ${finalMode.replace('Registered_', '')})` });
   }
 
-  // ── 2) Check-in 2-6 pending participants per tick ────────────────────
+  // ── 2) Check-in 1-2 pending participants per tick ───────────────────
   const pending = await db.participant.findMany({
     where: { status: { in: ['Registered_Physical', 'Registered_Online'] } },
     take: 50,
     orderBy: { createdAt: 'desc' },
     select: { id: true, name: true, status: true, finalMode: true, participantId: true, region: true },
   });
-  const checkinCount = Math.min(randInt(2, 6), pending.length);
+  const checkinCount = Math.min(randInt(1, 2), pending.length);
   for (let i = 0; i < checkinCount; i++) {
     const p = pending[i];
     if (!p) break;
@@ -183,7 +183,7 @@ export async function POST() {
   // Trainer feedback is stored statically in the trainers API; we persist
   // a "live feedback" ringbuffer in AuditLog so the trainers API can surface
   // the most recent few on top of the static list.
-  if (Math.random() < 0.6) {
+  if (Math.random() < 0.35) {
     const coachId = Math.random() < 0.5 ? 'coach-a' : 'coach-b';
     const phase = Math.random() < 0.5 ? 'pre' : 'post';
     const name = `${rand(FIRST_NAMES)} ${rand(LAST_NAMES)}`;
@@ -201,7 +201,7 @@ export async function POST() {
   }
 
   // ── 4) Occasionally nudge trainer KPIs (small live updates) ──────────
-  if (Math.random() < 0.25) {
+  if (Math.random() < 0.15) {
     // Persist a KPI delta in AuditLog so trainers API can pick it up
     const coachId = Math.random() < 0.5 ? 'coach-a' : 'coach-b';
     const delta = randInt(1, 2);

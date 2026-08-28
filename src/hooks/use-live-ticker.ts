@@ -22,7 +22,7 @@ export interface LiveTickResponse {
   summary: LiveTickSummary;
 }
 
-const TICK_INTERVAL_MS = 5000; // 5 seconds
+const TICK_INTERVAL_MS = 12000; // 12 seconds — slow, deliberate live cadence
 
 /**
  * Drives the "live" feel of the whole dashboard. Every TICK_INTERVAL_MS,
