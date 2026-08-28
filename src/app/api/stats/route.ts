@@ -28,6 +28,23 @@ export async function GET() {
   });
   const attendedMap = new Map(attendedByRegion.map((r) => [r.region, r._count._all]));
 
+  // Attended breakdown by region + status (Physical vs Online) — used by Regional Progress Grid
+  const attendedByRegionStatus = await db.participant.groupBy({
+    by: ['region', 'status'],
+    where: { status: { in: ['Attended_Physical', 'Attended_Online'] } },
+    _count: { _all: true },
+  });
+  const attendedPhysicalMap = new Map(
+    attendedByRegionStatus
+      .filter((r) => r.status === 'Attended_Physical')
+      .map((r) => [r.region, r._count._all]),
+  );
+  const attendedOnlineMap = new Map(
+    attendedByRegionStatus
+      .filter((r) => r.status === 'Attended_Online')
+      .map((r) => [r.region, r._count._all]),
+  );
+
   const regionStats = REGIONS.map((r) => {
     const rows = regionRows.filter((x) => x.region === r.code);
     const physical =
@@ -36,6 +53,8 @@ export async function GET() {
       rows.find((x) => x.finalMode === 'Registered_Online')?._count._all ?? 0;
     const total = physical + online;
     const attended = attendedMap.get(r.code) ?? 0;
+    const attendedPhysical = attendedPhysicalMap.get(r.code) ?? 0;
+    const attendedOnline = attendedOnlineMap.get(r.code) ?? 0;
     const physicalPct = Math.round((physical / r.physicalCap) * 100);
     const totalPct = Math.round((total / r.total) * 100);
     const attendedPct = total > 0 ? Math.round((attended / total) * 100) : 0;
@@ -50,6 +69,8 @@ export async function GET() {
       name: r.name,
       physical,
       online,
+      attendedPhysical,
+      attendedOnline,
       total,
       physicalCap: r.physicalCap,
       onlineTarget: r.onlineTarget,
@@ -73,27 +94,36 @@ export async function GET() {
     pct: Math.round((s._count._all / totalParticipants) * 100),
   }));
 
-  const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+  // Monthly registration trend — last 12 months
+  const twelveMonthsAgo = new Date();
+  twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 11);
+  twelveMonthsAgo.setDate(1);
+  twelveMonthsAgo.setHours(0, 0, 0, 0);
+
   const recent = await db.participant.findMany({
-    where: { createdAt: { gte: fourteenDaysAgo } },
+    where: { createdAt: { gte: twelveMonthsAgo } },
     select: { createdAt: true, region: true, finalMode: true },
   });
-  const dayMap = new Map<string, { date: string; total: number; physical: number; online: number }>();
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
-    const key = d.toISOString().slice(0, 10);
-    dayMap.set(key, { date: key, total: 0, physical: 0, online: 0 });
+
+  // Build month buckets from 12 months ago to current month
+  const monthMap = new Map<string, { month: string; total: number; physical: number; online: number }>();
+  const now = new Date();
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const label = d.toLocaleString('en-US', { month: 'short', year: '2-digit' });
+    monthMap.set(key, { month: label, total: 0, physical: 0, online: 0 });
   }
   for (const p of recent) {
-    const key = p.createdAt.toISOString().slice(0, 10);
-    const entry = dayMap.get(key);
+    const key = `${p.createdAt.getFullYear()}-${String(p.createdAt.getMonth() + 1).padStart(2, '0')}`;
+    const entry = monthMap.get(key);
     if (entry) {
       entry.total += 1;
       if (p.finalMode === 'Registered_Physical') entry.physical += 1;
       else entry.online += 1;
     }
   }
-  const trend = Array.from(dayMap.values());
+  const trend = Array.from(monthMap.values());
 
   const milestonePcts = [0.25, 0.5, 0.75, 1];
   const milestones = milestonePcts.map((p) => ({

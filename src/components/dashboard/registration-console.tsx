@@ -22,9 +22,12 @@ import {
   Loader2,
   ShieldCheck,
   Route,
+  Send,
+  Smartphone,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RegisterResponse, WorkflowStep } from '@/lib/types';
+import { WhatsAppPreview } from './whatsapp-preview';
 
 const SECTORS = [
   'Retail',
@@ -118,10 +121,21 @@ export function RegistrationConsole() {
     });
   };
 
+  const regionName = response?.participant
+    ? REGIONS.find((r) => r.code === response.participant!.region)?.name ?? response.participant.region
+    : '';
+
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+    <div
+      className={cn(
+        'grid grid-cols-1 gap-4',
+        response?.ok && response.qrDataUrl && response.whatsapp
+          ? 'lg:grid-cols-12'
+          : 'lg:grid-cols-5',
+      )}
+    >
       {/* Left: Registration form */}
-      <Card className="lg:col-span-2">
+      <Card className={cn(response?.ok && response.qrDataUrl ? 'lg:col-span-4' : 'lg:col-span-2')}>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <UserPlus className="h-4 w-4 text-primary" />
@@ -259,7 +273,7 @@ export function RegistrationConsole() {
       </Card>
 
       {/* Right: Workflow log + result */}
-      <Card className="lg:col-span-3">
+      <Card className={cn(response?.ok && response.qrDataUrl ? 'lg:col-span-5' : 'lg:col-span-3')}>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <Route className="h-4 w-4 text-primary" />
@@ -385,6 +399,59 @@ export function RegistrationConsole() {
           )}
         </CardContent>
       </Card>
+
+      {/* WhatsApp delivery preview — only rendered after a successful registration with QR asset */}
+      {response?.ok && response.qrDataUrl && response.whatsapp && response.participant && (
+        <Card className="lg:col-span-3">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Smartphone className="h-4 w-4 text-emerald-600" />
+              WhatsApp Asset Delivery
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Live dispatch via WhatsApp Business API · template{' '}
+              <code className="rounded bg-muted px-1 py-0.5 font-mono text-[10px]">
+                {response.whatsapp.template}
+              </code>
+            </p>
+          </CardHeader>
+          <CardContent>
+            <WhatsAppPreview
+              participant={response.participant}
+              qrDataUrl={response.qrDataUrl}
+              whatsapp={response.whatsapp}
+              capacityRouted={!!response.capacityRouted}
+              regionName={regionName}
+            />
+
+            {/* Dispatch meta */}
+            <div className="mt-4 space-y-2 rounded-lg border border-emerald-200 bg-emerald-50/60 p-2.5 text-[11px] dark:border-emerald-900/60 dark:bg-emerald-950/20">
+              <div className="flex items-center gap-1.5 font-semibold text-emerald-700 dark:text-emerald-300">
+                <Send className="h-3 w-3" />
+                Dispatch Confirmation
+              </div>
+              <div className="grid grid-cols-1 gap-x-3 gap-y-1 text-[11px] sm:grid-cols-2">
+                <MetaRow label="Recipient" value={response.whatsapp.recipient || '—'} />
+                <MetaRow
+                  label="Dispatched"
+                  value={new Date(response.whatsapp.dispatchedAt).toLocaleString('en-MY', { hour12: false })}
+                />
+                <MetaRow label="Template" value={response.whatsapp.template} mono />
+                <MetaRow label="QR Payload" value={response.qrPayload ?? ''} mono />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function MetaRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={cn('truncate font-medium', mono && 'font-mono text-[10px]')}>{value}</span>
     </div>
   );
 }

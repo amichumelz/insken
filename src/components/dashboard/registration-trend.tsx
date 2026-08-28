@@ -3,8 +3,8 @@
 import { TrendPoint } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  AreaChart,
-  Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -15,7 +15,11 @@ import {
 import { Activity } from 'lucide-react';
 
 export function RegistrationTrend({ trend }: { trend: TrendPoint[] }) {
-  const total14 = trend.reduce((s, t) => s + t.total, 0);
+  const total12 = trend.reduce((s, t) => s + t.total, 0);
+  const peakMonth = trend.reduce(
+    (max, t) => (t.total > max.total ? t : max),
+    { month: '—', total: 0, physical: 0, online: 0 },
+  );
 
   return (
     <Card className="h-full">
@@ -26,41 +30,45 @@ export function RegistrationTrend({ trend }: { trend: TrendPoint[] }) {
             Registration Velocity
           </CardTitle>
           <div className="text-right">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">14-day intake</div>
-            <div className="text-sm font-semibold tabular-nums">{total14.toLocaleString()}</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Peak month</div>
+            <div className="text-sm font-semibold tabular-nums">
+              {peakMonth.month} <span className="text-muted-foreground">·</span>{' '}
+              <span className="text-primary">{peakMonth.total.toLocaleString()}</span>
+            </div>
           </div>
         </div>
+        <p className="text-xs text-muted-foreground">Monthly registrations · last 12 months ({total12.toLocaleString()} total)</p>
       </CardHeader>
       <CardContent>
-        <div className="h-[220px]">
+        <div className="h-[240px]">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={trend} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+            <BarChart data={trend} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <defs>
-                <linearGradient id="physicalGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#1E3A8A" stopOpacity={0.45} />
-                  <stop offset="100%" stopColor="#1E3A8A" stopOpacity={0.02} />
+                <linearGradient id="physicalBarReg" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#1E3A8A" stopOpacity={0.95} />
+                  <stop offset="100%" stopColor="#1E3A8A" stopOpacity={0.55} />
                 </linearGradient>
-                <linearGradient id="onlineGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#D4A017" stopOpacity={0.45} />
-                  <stop offset="100%" stopColor="#D4A017" stopOpacity={0.02} />
+                <linearGradient id="onlineBarReg" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#D4A017" stopOpacity={0.95} />
+                  <stop offset="100%" stopColor="#D4A017" stopOpacity={0.55} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(120,120,120,0.12)" vertical={false} />
               <XAxis
-                dataKey="date"
-                tickFormatter={(d) => d.slice(5).replace('-', '/')}
+                dataKey="month"
                 tick={{ fontSize: 10, fill: '#6b7280' }}
                 tickLine={false}
                 axisLine={false}
-                interval={1}
+                interval={0}
               />
               <YAxis
                 tick={{ fontSize: 10, fill: '#6b7280' }}
                 tickLine={false}
                 axisLine={false}
-                width={28}
+                width={32}
               />
               <Tooltip
+                cursor={{ fill: 'rgba(120,120,120,0.06)' }}
                 contentStyle={{
                   background: 'rgba(11, 31, 58, 0.96)',
                   border: 'none',
@@ -74,29 +82,16 @@ export function RegistrationTrend({ trend }: { trend: TrendPoint[] }) {
                   `${value.toLocaleString()} regs`,
                   name === 'physical' ? 'Physical' : 'Online',
                 ]}
+                labelFormatter={(label) => `Month ${label}`}
               />
               <Legend
                 iconType="circle"
                 wrapperStyle={{ fontSize: 11, paddingTop: 6 }}
                 formatter={(value) => (value === 'physical' ? 'Physical' : 'Online')}
               />
-              <Area
-                type="monotone"
-                dataKey="physical"
-                stackId="1"
-                stroke="#1E3A8A"
-                strokeWidth={2}
-                fill="url(#physicalGrad)"
-              />
-              <Area
-                type="monotone"
-                dataKey="online"
-                stackId="1"
-                stroke="#D4A017"
-                strokeWidth={2}
-                fill="url(#onlineGrad)"
-              />
-            </AreaChart>
+              <Bar dataKey="physical" stackId="a" fill="url(#physicalBarReg)" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="online" stackId="a" fill="url(#onlineBarReg)" radius={[4, 4, 0, 0]} />
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </CardContent>

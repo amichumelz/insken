@@ -46,6 +46,16 @@ export async function GET() {
         detail: `Physical seats sold out (${physical}/${r.physicalCap}). All new leads are auto-falling back to Online. Continuing Physical-targeted ad spend wastes ~RM 3,200 / day at current CPL.`,
         action: 'Pause Physical-mode campaigns · Shift budget to Online-mode creative',
       });
+    } else if (physicalPct >= 0.95) {
+      // 95% threshold: shift to online sessions — pre-emptive recommendation before hard cap hits.
+      recs.push({
+        id: `rec-${r.code}-physical-95`,
+        priority: 'high',
+        region: r.code,
+        title: `Shift ${r.name} to Online sessions (physical at 95%)`,
+        detail: `${r.name} physical capacity at ${Math.round(physicalPct * 100)}% (${physical}/${r.physicalCap}). Activate pre-emptive Online-mode routing before seats fully sell out. Estimated ${r.physicalCap - physical} seats remaining — at current velocity (~8/day) physical will close in ~${Math.max(1, Math.ceil((r.physicalCap - physical) / 8))} days.`,
+        action: `Enable auto-fallback Online routing for new ${r.code} registrations · pause Physical ad bids`,
+      });
     } else if (physicalPct >= 0.8) {
       recs.push({
         id: `rec-${r.code}-physical-warn`,

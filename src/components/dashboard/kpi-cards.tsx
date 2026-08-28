@@ -9,7 +9,6 @@ import {
   ShieldCheck,
   QrCode,
   AlertTriangle,
-  TrendingUp,
   Target,
 } from 'lucide-react';
 
@@ -21,7 +20,7 @@ const fmt = (n: number) => n.toLocaleString('en-US');
 
 export function KpiCards({ global }: KpiCardsProps) {
   return (
-    <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-3 xl:grid-cols-6">
+    <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-3 xl:grid-cols-5">
       {/* Total registrations + global progress */}
       <Card className="relative overflow-hidden p-4 md:col-span-2 lg:col-span-1 xl:col-span-2">
         <div className="absolute inset-0 bg-navy-gradient pointer-events-none" />
@@ -52,23 +51,6 @@ export function KpiCards({ global }: KpiCardsProps) {
               </span>
             ))}
           </div>
-        </div>
-      </Card>
-
-      {/* Attended */}
-      <Card className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Attended
-          </div>
-          <div className="rounded-lg bg-emerald-500/10 p-1.5">
-            <TrendingUp className="h-4 w-4 text-emerald-600" />
-          </div>
-        </div>
-        <div className="mt-2 text-2xl font-bold tabular-nums">{fmt(global.attended)}</div>
-        <div className="mt-1 text-xs text-muted-foreground">
-          <span className="text-emerald-600">{global.attendedPhysical.toLocaleString()}</span> Phys ·{' '}
-          <span className="text-sky-600">{global.attendedOnline.toLocaleString()}</span> Online
         </div>
       </Card>
 

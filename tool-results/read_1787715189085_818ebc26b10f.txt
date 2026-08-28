@@ -1,0 +1,901 @@
+     1→<!DOCTYPE html><html lang="en"><head>
+     2→<meta charset="utf-8">
+     3→<meta content="width=device-width, initial-scale=1.0" name="viewport">
+     4→<title>Attendance Tracking &amp; Asset Generation | ASEAN MSME A.I. Skills Training Program</title>
+     5→<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+     6→<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet">
+     7→<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+     8→<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+     9→<script id="tailwind-config">
+    10→        tailwind.config = {
+    11→          darkMode: "class",
+    12→          theme: {
+    13→            extend: {
+    14→              "colors": {
+    15→                      "on-background": "#1a1c1f",
+    16→                      "outline-variant": "#c3c6d1",
+    17→                      "secondary": "#775a19",
+    18→                      "surface": "#f9f9fe",
+    19→                      "tertiary-fixed-dim": "#ffb690",
+    20→                      "on-secondary": "#ffffff",
+    21→                      "secondary-fixed": "#ffdea5",
+    22→                      "surface-variant": "#e2e2e7",
+    23→                      "tertiary": "#381300",
+    24→                      "surface-dim": "#dad9de",
+    25→                      "on-secondary-fixed": "#261900",
+    26→                      "primary-fixed-dim": "#a7c8ff",
+    27→                      "inverse-primary": "#a7c8ff",
+    28→                      "surface-tint": "#3a5f94",
+    29→                      "primary-container": "#003366",
+    30→                      "on-primary-container": "#799dd6",
+    31→                      "surface-bright": "#f9f9fe",
+    32→                      "inverse-surface": "#2f3034",
+    33→                      "surface-container-lowest": "#ffffff",
+    34→                      "on-tertiary": "#ffffff",
+    35→                      "primary": "#001e40",
+    36→                      "error-container": "#ffdad6",
+    37→                      "on-error": "#ffffff",
+    38→                      "outline": "#737780",
+    39→                      "on-secondary-container": "#785a1a",
+    40→                      "surface-container-highest": "#e2e2e7",
+    41→                      "surface-container-low": "#f4f3f8",
+    42→                      "on-primary-fixed": "#001b3c",
+    43→                      "tertiary-fixed": "#ffdbca",
+    44→                      "secondary-fixed-dim": "#e9c176",
+    45→                      "surface-container": "#eeedf2",
+    46→                      "on-primary": "#ffffff",
+    47→                      "on-surface": "#1a1c1f",
+    48→                      "background": "#f9f9fe",
+    49→                      "primary-fixed": "#d5e3ff",
+    50→                      "inverse-on-surface": "#f1f0f5",
+    51→                      "on-secondary-fixed-variant": "#5d4201",
+    52→                      "on-tertiary-fixed": "#341100",
+    53→                      "on-tertiary-fixed-variant": "#723610",
+    54→                      "error": "#ba1a1a",
+    55→                      "secondary-container": "#fed488",
+    56→                      "on-error-container": "#93000a",
+    57→                      "surface-container-high": "#e8e8ed",
+    58→                      "tertiary-container": "#592300",
+    59→                      "on-surface-variant": "#43474f",
+    60→                      "on-tertiary-container": "#d8885c",
+    61→                      "on-primary-fixed-variant": "#1f477b"
+    62→              },
+    63→              "borderRadius": {
+    64→                      "DEFAULT": "0.125rem",
+    65→                      "lg": "0.25rem",
+    66→                      "xl": "0.5rem",
+    67→                      "full": "0.75rem"
+    68→              },
+    69→              "spacing": {
+    70→                      "container-max": "1280px",
+    71→                      "xl": "32px",
+    72→                      "sm": "8px",
+    73→                      "md": "16px",
+    74→                      "3xl": "64px",
+    75→                      "2xl": "48px",
+    76→                      "gutter": "24px",
+    77→                      "lg": "24px",
+    78→                      "xs": "4px",
+    79→                      "base": "4px"
+    80→              },
+    81→              "fontFamily": {
+    82→                      "headline-md": [
+    83→                              "Inter"
+    84→                      ],
+    85→                      "headline-lg": [
+    86→                              "Inter"
+    87→                      ],
+    88→                      "data-mono": [
+    89→                              "Inter"
+    90→                      ],
+    91→                      "headline-lg-mobile": [
+    92→                              "Inter"
+    93→                      ],
+    94→                      "label-caps": [
+    95→                              "Inter"
+    96→                      ],
+    97→                      "body-sm": [
+    98→                              "Inter"
+    99→                      ],
+   100→                      "body-lg": [
+   101→                              "Inter"
+   102→                      ],
+   103→                      "display-lg": [
+   104→                              "Inter"
+   105→                      ],
+   106→                      "title-md": [
+   107→                              "Inter"
+   108→                      ]
+   109→              },
+   110→              "fontSize": {
+   111→                      "headline-md": [
+   112→                              "24px",
+   113→                              {
+   114→                                      "lineHeight": "32px",
+   115→                                      "fontWeight": "600"
+   116→                              }
+   117→                      ],
+   118→                      "headline-lg": [
+   119→                              "32px",
+   120→                              {
+   121→                                      "lineHeight": "40px",
+   122→                                      "letterSpacing": "-0.01em",
+   123→                                      "fontWeight": "600"
+   124→                              }
+   125→                      ],
+   126→                      "data-mono": [
+   127→                              "14px",
+   128→                              {
+   129→                                      "lineHeight": "20px",
+   130→                                      "letterSpacing": "-0.01em",
+   131→                                      "fontWeight": "500"
+   132→                              }
+   133→                      ],
+   134→                      "headline-lg-mobile": [
+   135→                              "24px",
+   136→                              {
+   137→                                      "lineHeight": "32px",
+   138→                                      "fontWeight": "600"
+   139→                              }
+   140→                      ],
+   141→                      "label-caps": [
+   142→                              "12px",
+   143→                              {
+   144→                                      "lineHeight": "16px",
+   145→                                      "letterSpacing": "0.05em",
+   146→                                      "fontWeight": "700"
+   147→                              }
+   148→                      ],
+   149→                      "body-sm": [
+   150→                              "14px",
+   151→                              {
+   152→                                      "lineHeight": "20px",
+   153→                                      "fontWeight": "400"
+   154→                              }
+   155→                      ],
+   156→                      "body-lg": [
+   157→                              "16px",
+   158→                              {
+   159→                                      "lineHeight": "24px",
+   160→                                      "fontWeight": "400"
+   161→                              }
+   162→                      ],
+   163→                      "display-lg": [
+   164→                              "48px",
+   165→                              {
+   166→                                      "lineHeight": "56px",
+   167→                                      "letterSpacing": "-0.02em",
+   168→                                      "fontWeight": "700"
+   169→                              }
+   170→                      ],
+   171→                      "title-md": [
+   172→                              "18px",
+   173→                              {
+   174→                                      "lineHeight": "24px",
+   175→                                      "fontWeight": "600"
+   176→                              }
+   177→                      ]
+   178→              }
+   179→      },
+   180→          },
+   181→        }
+   182→      </script>
+   183→<style>
+   184→        .glass-card {
+   185→            background: rgba(255, 255, 255, 0.7);
+   186→            backdrop-filter: blur(10px);
+   187→            border: 1px solid rgba(255, 255, 255, 0.5);
+   188→            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+   189→        }
+   190→        
+   191→        .pulse-dot {
+   192→            animation: pulse 2s infinite;
+   193→        }
+   194→
+   195→        @keyframes pulse {
+   196→            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 150, 136, 0.7); }
+   197→            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(0, 150, 136, 0); }
+   198→            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 150, 136, 0); }
+   199→        }
+   200→
+   201→        .fade-in-up {
+   202→            animation: fadeInUp 0.5s ease-out forwards;
+   203→            opacity: 0;
+   204→            transform: translateY(10px);
+   205→        }
+   206→
+   207→        @keyframes fadeInUp {
+   208→            to { opacity: 1; transform: translateY(0); }
+   209→        }
+   210→        
+   211→        .flow-line {
+   212→            stroke-dasharray: 10;
+   213→            animation: dash 10s linear infinite;
+   214→        }
+   215→        @keyframes dash {
+   216→            to { stroke-dashoffset: -100; }
+   217→        }
+   218→      </style>
+   219→</head>
+   220→<body class="bg-background text-on-background min-h-screen font-body-lg antialiased">
+   221→<!-- TopNavBar -->
+   222→<nav class="hidden md:flex justify-between items-center w-full px-lg h-16 max-w-container-max mx-auto bg-surface dark:bg-surface-dim border-b border-outline-variant dark:border-outline fixed top-0 left-0 right-0 z-50">
+   223→<div class="flex items-center gap-md">
+   224→<img src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5Krkgzkr6MGVQIEQvO19kQfvPYk8RSsfHGPBPHHxVeiYZQAMUVQiUX9_F0fvT0fSlOOA_ZSBotWpjEhx4JH4f6ecoN7sVCTbeof7fkxc58Zh6ATuor6s4WlhDJYrmgDxIu6sNdWS9cRnxPdsovANeVOluI9tAwsK-lsLRW90kGiqIUHurS3LEUhBiSBPTtv6yjoMTMyfMzE9fL7pOlurA1C5HQd4ss1DLpjOjLcAfpkZhJAb5G3V51QvDQpKw40Be" alt="ASEAN MSME Logo" class="h-10 w-auto object-contain">
+   225→</div>
+   226→<div class="flex items-center gap-lg">
+   227→<div class="relative">
+   228→<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant" data-icon="search">search</span>
+   229→<input class="pl-10 pr-4 py-2 bg-surface-container rounded-lg border-none focus:ring-2 focus:ring-primary w-64 text-body-sm font-body-sm transition-all duration-200 focus:w-80" placeholder="Search records..." type="text">
+   230→</div>
+   231→<div class="flex items-center gap-sm">
+   232→<button class="p-2 text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors rounded-full" title="notifications">
+   233→<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+   234→</button>
+   235→<button class="p-2 text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors rounded-full" title="settings">
+   236→<span class="material-symbols-outlined" data-icon="settings">settings</span>
+   237→</button>
+   238→<button class="p-2 text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors rounded-full" title="help">
+   239→<span class="material-symbols-outlined" data-icon="help">help</span>
+   240→</button>
+   241→</div>
+   242→<img alt="Executive User Avatar" class="w-8 h-8 rounded-full object-cover border border-outline-variant" data-alt="A professional headshot of a business executive in a modern, well-lit office setting. The executive is wearing a tailored navy suit and smiling confidently. The lighting is soft and natural, creating a trustworthy and approachable Corporate Modern aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbibyZUNwaK0FHE8L2dmRTGjeQNmp2Y7ehARtHOzHtrR_3zKWUvuQRidIiwGTyWSd_Jko3sKwCU2rJ5ME4kI1cfc9lHCsi_BRCiuXY7upxVOEOON4dRLACO7bJPV2CPxqNurxFqj2AFFt0aA2JOFJnkCqYl5zOTmZcDGHp8nXdQXoVqr0Mq7llbIFbdf_tLRFfyG12y8yeWpnzWvHGVydouyjRbwzg0Qbq_sW4dpVaMhODvAax000">
+   243→</div>
+   244→</nav>
+   245→<!-- SideNavBar & Main Content Wrapper -->
+   246→<div class="flex pt-16 md:h-screen overflow-hidden">
+   247→<!-- SideNavBar -->
+   248→<aside class="hidden md:flex flex-col p-md z-40 bg-surface-container dark:bg-inverse-surface border-r border-outline-variant bg-surface-container-low dark:bg-surface-container-highest fixed left-0 top-16 h-[calc(100vh-4rem)] w-64">
+   249→<div class="mb-lg px-md pt-sm">
+   250→<div class="flex items-center gap-sm mb-xs"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDr3XbsjGSxiMDtrN63rH_p0n0-vkjLgp1CRe4W_nlEgE4I3CZBd1qiLZjF9FwXtH8GTfQYMoJ6rUxmcP5GxmXbSQ1m4CShtOCqQYIyXYC27BUQJ1Uo37zjlfd3uZnD2J-9mv4Ve-panF3yYTMUBUunK5xFN1EDPx9QBlb9qzN7KYi44DVRFmpIz52qvJVL5lBDBW-6D8wwkVvym8GyVy_ZBm9rFO5Gq_w-3LDUyHumINFWkLbsuOef4jsnqavmqIwA" alt="Intelligence Portal Logo" class="h-10 w-auto object-contain"></div>
+   251→<span class="font-body-sm text-body-sm text-on-surface-variant">GMT+8 Digital Dashboard</span>
+   252→</div>
+   253→<nav class="flex-1 flex flex-col gap-sm">
+   254→<a class="flex items-center gap-md text-on-surface-variant dark:text-surface-variant px-md py-sm hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-all rounded-xl" href="#">
+   255→<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+   256→<span class="font-body-lg text-body-lg">Executive Overview</span>
+   257→</a>
+   258→<a class="flex items-center gap-md text-on-surface-variant dark:text-surface-variant px-md py-sm hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-all rounded-xl" href="#">
+   259→<span class="material-symbols-outlined" data-icon="group">group</span>
+   260→<span class="font-body-lg text-body-lg">Participant Directory</span>
+   261→</a>
+   262→<a class="flex items-center gap-md bg-secondary-container dark:bg-secondary text-on-secondary-container dark:text-on-secondary rounded-xl px-md py-sm Active: scale-95 duration-200" href="#">
+   263→<span class="material-symbols-outlined" data-icon="fact_check" data-weight="fill" style="font-variation-settings: 'FILL' 1;">fact_check</span>
+   264→<span class="font-body-lg text-body-lg font-medium">Attendance Tracking</span>
+   265→</a>
+   266→<a class="flex items-center gap-md text-on-surface-variant dark:text-surface-variant px-md py-sm hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-all rounded-xl" href="#">
+   267→<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+   268→<span class="font-body-lg text-body-lg">Reports</span>
+   269→</a>
+   270→</nav>
+   271→<div class="mt-auto flex flex-col gap-sm border-t border-outline-variant pt-md">
+   272→<a class="flex items-center gap-md text-on-surface-variant dark:text-surface-variant px-md py-sm hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-all rounded-xl" href="#">
+   273→<span class="material-symbols-outlined" data-icon="contact_support">contact_support</span>
+   274→<span class="font-body-lg text-body-lg">Support</span>
+   275→</a>
+   276→<a class="flex items-center gap-md text-on-surface-variant dark:text-surface-variant px-md py-sm hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-all rounded-xl" href="#">
+   277→<span class="material-symbols-outlined" data-icon="logout">logout</span>
+   278→<span class="font-body-lg text-body-lg">Sign Out</span>
+   279→</a>
+   280→</div>
+   281→</aside>
+   282→<!-- Main Content Area -->
+   283→<main class="flex-1 w-full md:ml-64 overflow-y-auto bg-background p-4 md:p-lg">
+   284→<div class="max-w-container-max mx-auto space-y-lg pb-24 md:pb-8">
+   285→<!-- Header -->
+   286→<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-outline-variant pb-md">
+   287→<div>
+   288→<h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg font-bold text-on-background">Live Attendance Tracking</h1>
+   289→<p class="font-body-lg text-body-lg text-on-surface-variant mt-1">Real-time asset generation and monitoring.</p>
+   290→</div>
+   291→<div class="flex items-center gap-sm">
+   292→<div class="flex items-center gap-2 bg-surface-container-high px-3 py-1.5 rounded-full">
+   293→<div class="w-2.5 h-2.5 rounded-full bg-[#10B981] pulse-dot"></div>
+   294→<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">System Active</span>
+   295→</div>
+   296→</div>
+   297→</div>
+   298→<!-- Main Grid -->
+   299→<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+   300→<!-- Left Column: Status & Live Feed (8 cols) -->
+   301→<div class="lg:col-span-8 flex flex-col gap-gutter">
+   302→<!-- Top Stats Cards -->
+   303→<div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+   304→<div class="bg-white border border-outline-variant rounded-lg p-md">
+   305→<div class="flex justify-between items-start mb-2">
+   306→<h3 class="font-title-md text-title-md text-on-surface-variant">Total Attended</h3>
+   307→<span class="material-symbols-outlined text-outline-variant" data-icon="group">group</span>
+   308→</div>
+   309→<div class="font-headline-lg text-headline-lg text-on-background font-bold" id="counter-total">1,321</div>
+   310→<div class="flex items-center gap-1 mt-2">
+   311→<span class="material-symbols-outlined text-[#10B981] text-sm" data-icon="trending_up">trending_up</span>
+   312→<span class="font-label-caps text-label-caps text-[#10B981]">+12% vs last hour</span>
+   313→</div>
+   314→</div>
+   315→<div class="bg-white border border-outline-variant rounded-lg p-md">
+   316→<div class="flex justify-between items-start mb-2">
+   317→<h3 class="font-title-md text-title-md text-on-surface-variant">Attended Physical</h3>
+   318→<span class="material-symbols-outlined text-outline-variant" data-icon="meeting_room">meeting_room</span>
+   319→</div>
+   320→<div class="font-headline-lg text-headline-lg text-on-background font-bold text-primary">892</div>
+   321→<div class="font-body-sm text-body-sm text-on-surface-variant mt-2">Jakarta Convention Center</div>
+   322→</div>
+   323→<div class="bg-white border border-outline-variant rounded-lg p-md">
+   324→<div class="flex justify-between items-start mb-2">
+   325→<h3 class="font-title-md text-title-md text-on-surface-variant">Attended Online</h3>
+   326→<span class="material-symbols-outlined text-outline-variant" data-icon="devices">devices</span>
+   327→</div>
+   328→<div class="font-headline-lg text-headline-lg text-on-background font-bold text-secondary">356</div>
+   329→<div class="font-body-sm text-body-sm text-on-surface-variant mt-2">ASEAN Virtual Hub</div>
+   330→</div>
+   331→</div>
+   332→<!-- Asset Generation Flow -->
+   333→<div class="bg-white border border-outline-variant rounded-lg p-md overflow-hidden relative">
+   334→<h2 class="font-title-md text-title-md font-semibold text-on-background mb-lg">Agentic Workflow: Asset Generation</h2>
+   335→<div class="flex flex-col md:flex-row items-center justify-between gap-4 relative z-10">
+   336→<!-- Step 1 -->
+   337→<div class="flex flex-col items-center text-center flex-1">
+   338→<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant mb-2 z-10">
+   339→<span class="material-symbols-outlined text-on-surface-variant" data-icon="database">database</span>
+   340→</div>
+   341→<span class="font-label-caps text-label-caps uppercase text-on-surface-variant mb-1">Step 1</span>
+   342→<span class="font-title-md text-body-lg font-medium text-on-background">Data Ingestion</span>
+   343→</div>
+   344→<span class="material-symbols-outlined text-outline-variant hidden md:block" data-icon="arrow_forward">arrow_forward</span>
+   345→<!-- Step 2 -->
+   346→<div class="flex flex-col items-center text-center flex-1">
+   347→<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant mb-2 z-10">
+   348→<span class="material-symbols-outlined text-on-surface-variant" data-icon="verified">verified</span>
+   349→</div>
+   350→<span class="font-label-caps text-label-caps uppercase text-on-surface-variant mb-1">Step 2</span>
+   351→<span class="font-title-md text-body-lg font-medium text-on-background">Validation</span>
+   352→</div>
+   353→<span class="material-symbols-outlined text-outline-variant hidden md:block" data-icon="arrow_forward">arrow_forward</span>
+   354→<!-- Step 3 -->
+   355→<div class="flex flex-col items-center text-center flex-1">
+   356→<div class="w-12 h-12 rounded-full bg-primary-container flex items-center justify-center border border-primary mb-2 z-10 relative">
+   357→<div class="absolute inset-0 rounded-full border-2 border-primary animate-ping opacity-20"></div>
+   358→<span class="material-symbols-outlined text-on-primary-container" data-icon="qr_code">qr_code</span>
+   359→</div>
+   360→<span class="font-label-caps text-label-caps uppercase text-primary mb-1">Step 3</span>
+   361→<span class="font-title-md text-body-lg font-medium text-on-background">QR Payload</span>
+   362→</div>
+   363→<span class="material-symbols-outlined text-outline-variant hidden md:block" data-icon="arrow_forward">arrow_forward</span>
+   364→<!-- Step 4 -->
+   365→<div class="flex flex-col items-center text-center flex-1">
+   366→<div class="w-12 h-12 rounded-full bg-[#E5F6EE] flex items-center justify-center border border-[#10B981] mb-2 z-10">
+   367→<span class="material-symbols-outlined text-[#10B981]" data-icon="chat">chat</span>
+   368→</div>
+   369→<span class="font-label-caps text-label-caps uppercase text-[#10B981] mb-1">Final</span>
+   370→<span class="font-title-md text-body-lg font-medium text-on-background">WhatsApp Disp.</span>
+   371→</div>
+   372→</div>
+   373→<!-- Connecting Line Background (Desktop) -->
+   374→<div class="hidden md:block absolute top-[4.5rem] left-12 right-12 h-0.5 bg-surface-container-high z-0">
+   375→<div class="h-full bg-primary w-2/3 opacity-50 relative overflow-hidden rounded-full">
+   376→<div class="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent translate-x-[-100%] animate-[shimmer_2s_infinite]"></div>
+   377→</div>
+   378→</div>
+   379→</div>
+   380→<!-- Live Check-In Feed -->
+   381→<div class="bg-white border border-outline-variant rounded-lg p-0 overflow-hidden flex flex-col flex-1">
+   382→<div class="p-md border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest">
+   383→<h2 class="font-title-md text-title-md font-semibold text-on-background">Live 'Check-In' Feed</h2>
+   384→<button class="text-primary font-body-sm text-body-sm font-medium hover:underline flex items-center gap-1">
+   385→<span class="material-symbols-outlined text-sm" data-icon="pause">pause</span> Pause Feed
+   386→                                </button>
+   387→</div>
+   388→<div class="flex-1 overflow-y-auto max-h-[400px] p-sm space-y-1" id="live-feed-container"><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+   389→                <div class="flex items-center gap-3">
+   390→                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+   391→                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+   392→                    </div>
+   393→                    <div>
+   394→                        <div class="font-body-sm font-semibold text-on-surface">David Lee</div>
+   395→                        <div class="font-body-sm text-xs text-on-surface-variant">Agriculture • ASN-24-4349</div>
+   396→                    </div>
+   397→                </div>
+   398→                <div class="text-right">
+   399→                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+   400→                        Attended_Online
+   401→                    </div>
+   402→                    <div class="font-data-mono text-xs text-outline-variant block">11:19:07 AM</div>
+   403→                </div>
+   404→            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+   405→                <div class="flex items-center gap-3">
+   406→                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+   407→                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+   408→                    </div>
+   409→                    <div>
+   410→                        <div class="font-body-sm font-semibold text-on-surface">Budi Santoso</div>
+   411→                        <div class="font-body-sm text-xs text-on-surface-variant">Manufacturing • ASN-24-3617</div>
+   412→                    </div>
+   413→                </div>
+   414→                <div class="text-right">
+   415→                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+   416→                        Attended_Online
+   417→                    </div>
+   418→                    <div class="font-data-mono text-xs text-outline-variant block">11:19:03 AM</div>
+   419→                </div>
+   420→            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+   421→                <div class="flex items-center gap-3">
+   422→                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+   423→                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+   424→                    </div>
+   425→                    <div>
+   426→                        <div class="font-body-sm font-semibold text-on-surface">David Lee</div>
+   427→                        <div class="font-body-sm text-xs text-on-surface-variant">Manufacturing • ASN-24-9680</div>
+   428→                    </div>
+   429→                </div>
+   430→                <div class="text-right">
+   431→                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+   432→                        Attended_Online
+   433→                    </div>
+   434→                    <div class="font-data-mono text-xs text-outline-variant block">11:19:00 AM</div>
+   435→                </div>
+   436→            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+   437→                <div class="flex items-center gap-3">
+   438→                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+   439→                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+   440→                    </div>
+   441→                    <div>
+   442→                        <div class="font-body-sm font-semibold text-on-surface">Nguyen Van A</div>
+   443→                        <div class="font-body-sm text-xs text-on-surface-variant">Agriculture • ASN-24-4595</div>
+   444→                    </div>
+   445→                </div>
+   446→                <div class="text-right">
+   447→                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+   448→                        Attended_Online
+   449→                    </div>
+   450→                    <div class="font-data-mono text-xs text-outline-variant block">11:18:56 AM</div>
+   451→                </div>
+   452→            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+   453→                <div class="flex items-center gap-3">
+   454→                    <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-primary">
+   455→                        <span class="material-symbols-outlined text-sm" data-icon="meeting_room">meeting_room</span>
+   456→                    </div>
+   457→                    <div>
+   458→                        <div class="font-body-sm font-semibold text-on-surface">Maria Santos</div>
+   459→                        <div class="font-body-sm text-xs text-on-surface-variant">Tech • ASN-24-4040</div>
+   460→                    </div>
+   461→                </div>
+   462→                <div class="text-right">
+   463→                    <div class="font-label-caps text-[10px] uppercase text-primary bg-primary-fixed px-2 py-0.5 rounded inline-block mb-1">
+   464→                        Attended_Physical
+   465→                    </div>
+   466→                    <div class="font-data-mono text-xs text-outline-variant block">11:18:52 AM</div>
+   467→                </div>
+   468→            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+   469→                <div class="flex items-center gap-3">
+   470→                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+   471→                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+   472→                    </div>
+   473→                    <div>
+   474→                        <div class="font-body-sm font-semibold text-on-surface">Nguyen Van A</div>
+   475→                        <div class="font-body-sm text-xs text-on-surface-variant">Retail • ASN-24-9119</div>
+   476→                    </div>
+   477→                </div>
+   478→                <div class="text-right">
+   479→                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+   480→                        Attended_Online
+   481→                    </div>
+   482→                    <div class="font-data-mono text-xs text-outline-variant block">11:18:49 AM</div>
+   483→                </div>
+   484→            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+   485→                <div class="flex items-center gap-3">
+   486→                    <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-primary">
+   487→                        <span class="material-symbols-outlined text-sm" data-icon="meeting_room">meeting_room</span>
+   488→                    </div>
+   489→                    <div>
+   490→                        <div class="font-body-sm font-semibold text-on-surface">David Lee</div>
+   491→                        <div class="font-body-sm text-xs text-on-surface-variant">Manufacturing • ASN-24-1167</div>
+   492→                    </div>
+   493→                </div>
+   494→                <div class="text-right">
+   495→                    <div class="font-label-caps text-[10px] uppercase text-primary bg-primary-fixed px-2 py-0.5 rounded inline-block mb-1">
+   496→                        Attended_Physical
+   497→                    </div>
+   498→                    <div class="font-data-mono text-xs text-outline-variant block">11:18:45 AM</div>
+   499→                </div>
+   500→            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+   501→                <div class="flex items-center gap-3">
+   502→                    <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-primary">
+   503→                        <span class="material-symbols-outlined text-sm" data-icon="meeting_room">meeting_room</span>
+   504→                    </div>
+   505→                    <div>
+   506→                        <div class="font-body-sm font-semibold text-on-surface">David Lee</div>
+   507→                        <div class="font-body-sm text-xs text-on-surface-variant">Retail • ASN-24-1540</div>
+   508→                    </div>
+   509→                </div>
+   510→                <div class="text-right">
+   511→                    <div class="font-label-caps text-[10px] uppercase text-primary bg-primary-fixed px-2 py-0.5 rounded inline-block mb-1">
+   512→                        Attended_Physical
+   513→                    </div>
+   514→                    <div class="font-data-mono text-xs text-outline-variant block">11:18:42 AM</div>
+   515→                </div>
+   516→            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+   517→                <div class="flex items-center gap-3">
+   518→                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+   519→                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+   520→                    </div>
+   521→                    <div>
+   522→                        <div class="font-body-sm font-semibold text-on-surface">Ahmad Rizki</div>
+   523→                        <div class="font-body-sm text-xs text-on-surface-variant">Retail • ASN-24-6187</div>
+   524→                    </div>
+   525→                </div>
+   526→                <div class="text-right">
+   527→                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+   528→                        Attended_Online
+   529→                    </div>
+   530→                    <div class="font-data-mono text-xs text-outline-variant block">11:18:38 AM</div>
+   531→                </div>
+   532→            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+   533→                <div class="flex items-center gap-3">
+   534→                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+   535→                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+   536→                    </div>
+   537→                    <div>
+   538→                        <div class="font-body-sm font-semibold text-on-surface">Ahmad Rizki</div>
+   539→                        <div class="font-body-sm text-xs text-on-surface-variant">Agriculture • ASN-24-4165</div>
+   540→                    </div>
+   541→                </div>
+   542→                <div class="text-right">
+   543→                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+   544→                        Attended_Online
+   545→                    </div>
+   546→                    <div class="font-data-mono text-xs text-outline-variant block">11:18:35 AM</div>
+   547→                </div>
+   548→            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+   549→                <div class="flex items-center gap-3">
+   550→                    <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-primary">
+   551→                        <span class="material-symbols-outlined text-sm" data-icon="meeting_room">meeting_room</span>
+   552→                    </div>
+   553→                    <div>
+   554→                        <div class="font-body-sm font-semibold text-on-surface">Chaiwat P.</div>
+   555→                        <div class="font-body-sm text-xs text-on-surface-variant">Manufacturing • ASN-24-1610</div>
+   556→                    </div>
+   557→                </div>
+   558→                <div class="text-right">
+   559→                    <div class="font-label-caps text-[10px] uppercase text-primary bg-primary-fixed px-2 py-0.5 rounded inline-block mb-1">
+   560→                        Attended_Physical
+   561→                    </div>
+   562→                    <div class="font-data-mono text-xs text-outline-variant block">11:18:31 AM</div>
+   563→                </div>
+   564→            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+   565→                <div class="flex items-center gap-3">
+   566→                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+   567→                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+   568→                    </div>
+   569→                    <div>
+   570→                        <div class="font-body-sm font-semibold text-on-surface">Ahmad Rizki</div>
+   571→                        <div class="font-body-sm text-xs text-on-surface-variant">Retail • ASN-24-3563</div>
+   572→                    </div>
+   573→                </div>
+   574→                <div class="text-right">
+   575→                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+   576→                        Attended_Online
+   577→                    </div>
+   578→                    <div class="font-data-mono text-xs text-outline-variant block">11:18:28 AM</div>
+   579→                </div>
+   580→            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+   581→                <div class="flex items-center gap-3">
+   582→                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+   583→                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+   584→                    </div>
+   585→                    <div>
+   586→                        <div class="font-body-sm font-semibold text-on-surface">Ahmad Rizki</div>
+   587→                        <div class="font-body-sm text-xs text-on-surface-variant">Manufacturing • ASN-24-9640</div>
+   588→                    </div>
+   589→                </div>
+   590→                <div class="text-right">
+   591→                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+   592→                        Attended_Online
+   593→                    </div>
+   594→                    <div class="font-data-mono text-xs text-outline-variant block">11:18:24 AM</div>
+   595→                </div>
+   596→            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+   597→                <div class="flex items-center gap-3">
+   598→                    <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-primary">
+   599→                        <span class="material-symbols-outlined text-sm" data-icon="meeting_room">meeting_room</span>
+   600→                    </div>
+   601→                    <div>
+   602→                        <div class="font-body-sm font-semibold text-on-surface">Ahmad Rizki</div>
+   603→                        <div class="font-body-sm text-xs text-on-surface-variant">Agriculture • ASN-24-1537</div>
+   604→                    </div>
+   605→                </div>
+   606→                <div class="text-right">
+   607→                    <div class="font-label-caps text-[10px] uppercase text-primary bg-primary-fixed px-2 py-0.5 rounded inline-block mb-1">
+   608→                        Attended_Physical
+   609→                    </div>
+   610→                    <div class="font-data-mono text-xs text-outline-variant block">11:18:21 AM</div>
+   611→                </div>
+   612→            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+   613→                <div class="flex items-center gap-3">
+   614→                    <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-primary">
+   615→                        <span class="material-symbols-outlined text-sm" data-icon="meeting_room">meeting_room</span>
+   616→                    </div>
+   617→                    <div>
+   618→                        <div class="font-body-sm font-semibold text-on-surface">Ahmad Rizki</div>
+   619→                        <div class="font-body-sm text-xs text-on-surface-variant">Retail • ASN-24-1092</div>
+   620→                    </div>
+   621→                </div>
+   622→                <div class="text-right">
+   623→                    <div class="font-label-caps text-[10px] uppercase text-primary bg-primary-fixed px-2 py-0.5 rounded inline-block mb-1">
+   624→                        Attended_Physical
+   625→                    </div>
+   626→                    <div class="font-data-mono text-xs text-outline-variant block">11:18:17 AM</div>
+   627→                </div>
+   628→            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+   629→                <div class="flex items-center gap-3">
+   630→                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+   631→                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+   632→                    </div>
+   633→                    <div>
+   634→                        <div class="font-body-sm font-semibold text-on-surface">Nguyen Van A</div>
+   635→                        <div class="font-body-sm text-xs text-on-surface-variant">Agriculture • ASN-24-3079</div>
+   636→                    </div>
+   637→                </div>
+   638→                <div class="text-right">
+   639→                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+   640→                        Attended_Online
+   641→                    </div>
+   642→                    <div class="font-data-mono text-xs text-outline-variant block">11:18:14 AM</div>
+   643→                </div>
+   644→            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+   645→                <div class="flex items-center gap-3">
+   646→                    <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-primary">
+   647→                        <span class="material-symbols-outlined text-sm" data-icon="meeting_room">meeting_room</span>
+   648→                    </div>
+   649→                    <div>
+   650→                        <div class="font-body-sm font-semibold text-on-surface">Siti Nurhaliza</div>
+   651→                        <div class="font-body-sm text-xs text-on-surface-variant">Manufacturing • ASN-24-2206</div>
+   652→                    </div>
+   653→                </div>
+   654→                <div class="text-right">
+   655→                    <div class="font-label-caps text-[10px] uppercase text-primary bg-primary-fixed px-2 py-0.5 rounded inline-block mb-1">
+   656→                        Attended_Physical
+   657→                    </div>
+   658→                    <div class="font-data-mono text-xs text-outline-variant block">11:18:10 AM</div>
+   659→                </div>
+   660→            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+   661→                <div class="flex items-center gap-3">
+   662→                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+   663→                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+   664→                    </div>
+   665→                    <div>
+   666→                        <div class="font-body-sm font-semibold text-on-surface">Ahmad Rizki</div>
+   667→                        <div class="font-body-sm text-xs text-on-surface-variant">Agriculture • ASN-24-2138</div>
+   668→                    </div>
+   669→                </div>
+   670→                <div class="text-right">
+   671→                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+   672→                        Attended_Online
+   673→                    </div>
+   674→                    <div class="font-data-mono text-xs text-outline-variant block">11:18:07 AM</div>
+   675→                </div>
+   676→            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+   677→                <div class="flex items-center gap-3">
+   678→                    <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-primary">
+   679→                        <span class="material-symbols-outlined text-sm" data-icon="meeting_room">meeting_room</span>
+   680→                    </div>
+   681→                    <div>
+   682→                        <div class="font-body-sm font-semibold text-on-surface">Nguyen Van A</div>
+   683→                        <div class="font-body-sm text-xs text-on-surface-variant">Retail • ASN-24-6077</div>
+   684→                    </div>
+   685→                </div>
+   686→                <div class="text-right">
+   687→                    <div class="font-label-caps text-[10px] uppercase text-primary bg-primary-fixed px-2 py-0.5 rounded inline-block mb-1">
+   688→                        Attended_Physical
+   689→                    </div>
+   690→                    <div class="font-data-mono text-xs text-outline-variant block">11:18:03 AM</div>
+   691→                </div>
+   692→            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+   693→                <div class="flex items-center gap-3">
+   694→                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+   695→                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+   696→                    </div>
+   697→                    <div>
+   698→                        <div class="font-body-sm font-semibold text-on-surface">Siti Nurhaliza</div>
+   699→                        <div class="font-body-sm text-xs text-on-surface-variant">Retail • ASN-24-7123</div>
+   700→                    </div>
+   701→                </div>
+   702→                <div class="text-right">
+   703→                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+   704→                        Attended_Online
+   705→                    </div>
+   706→                    <div class="font-data-mono text-xs text-outline-variant block">11:18:00 AM</div>
+   707→                </div>
+   708→            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+   709→                <div class="flex items-center gap-3">
+   710→                    <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-primary">
+   711→                        <span class="material-symbols-outlined text-sm" data-icon="meeting_room">meeting_room</span>
+   712→                    </div>
+   713→                    <div>
+   714→                        <div class="font-body-sm font-semibold text-on-surface">Chaiwat P.</div>
+   715→                        <div class="font-body-sm text-xs text-on-surface-variant">Manufacturing • ASN-24-9625</div>
+   716→                    </div>
+   717→                </div>
+   718→                <div class="text-right">
+   719→                    <div class="font-label-caps text-[10px] uppercase text-primary bg-primary-fixed px-2 py-0.5 rounded inline-block mb-1">
+   720→                        Attended_Physical
+   721→                    </div>
+   722→                    <div class="font-data-mono text-xs text-outline-variant block">11:17:56 AM</div>
+   723→                </div>
+   724→            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+   725→                <div class="flex items-center gap-3">
+   726→                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+   727→                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+   728→                    </div>
+   729→                    <div>
+   730→                        <div class="font-body-sm font-semibold text-on-surface">Budi Santoso</div>
+   731→                        <div class="font-body-sm text-xs text-on-surface-variant">Manufacturing • ASN-24-7676</div>
+   732→                    </div>
+   733→                </div>
+   734→                <div class="text-right">
+   735→                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+   736→                        Attended_Online
+   737→                    </div>
+   738→                    <div class="font-data-mono text-xs text-outline-variant block">11:17:53 AM</div>
+   739→                </div>
+   740→            </div><div class="flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up">
+   741→                <div class="flex items-center gap-3">
+   742→                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+   743→                        <span class="material-symbols-outlined text-sm" data-icon="devices">devices</span>
+   744→                    </div>
+   745→                    <div>
+   746→                        <div class="font-body-sm font-semibold text-on-surface">Siti Nurhaliza</div>
+   747→                        <div class="font-body-sm text-xs text-on-surface-variant">Manufacturing • ASN-24-9015</div>
+   748→                    </div>
+   749→                </div>
+   750→                <div class="text-right">
+   751→                    <div class="font-label-caps text-[10px] uppercase text-secondary bg-secondary-fixed px-2 py-0.5 rounded inline-block mb-1">
+   752→                        Attended_Online
+   753→                    </div>
+   754→                    <div class="font-data-mono text-xs text-outline-variant block">11:17:49 AM</div>
+   755→                </div>
+   756→            </div></div>
+   757→</div>
+   758→</div>
+   759→<!-- Right Column: WhatsApp Mockup (4 cols) -->
+   760→<div class="lg:col-span-4 flex flex-col items-center">
+   761→<div class="sticky top-24 w-full max-w-[320px]">
+   762→<h3 class="font-title-md text-title-md font-semibold text-on-background mb-4 text-center">Asset Delivery Preview</h3>
+   763→<!-- Phone Mockup -->
+   764→<div class="bg-black rounded-[2.5rem] p-3 shadow-xl border-4 border-surface-container-highest relative mx-auto h-[600px] flex flex-col">
+   765→<!-- Phone Notch -->
+   766→<div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-black rounded-b-xl z-20"></div>
+   767→<!-- Screen -->
+   768→<div class="bg-[#EFEAE2] flex-1 rounded-[2rem] overflow-hidden flex flex-col relative">
+   769→<!-- WhatsApp Header -->
+   770→<div class="bg-[#075E54] text-white p-3 pt-6 flex items-center gap-3 z-10 shadow-sm">
+   771→<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+   772→<div class="w-8 h-8 rounded-full bg-white flex items-center justify-center">
+   773→<span class="material-symbols-outlined text-[#075E54] text-sm" data-icon="smart_toy">smart_toy</span>
+   774→</div>
+   775→<div>
+   776→<div class="font-title-md text-sm font-semibold">ASEAN A.I. Bot</div>
+   777→<div class="text-xs opacity-80">business account</div>
+   778→</div>
+   779→</div>
+   780→<!-- WhatsApp Background Pattern -->
+   781→<div class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+CiAgPHBhdGggZD0iTTIwIDIwTDAgMEg0MEwyMCAyMHoiIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMC4wNSIvPgo8L3N2Zz4=')]"></div>
+   782→<!-- Chat Area -->
+   783→<div class="flex-1 p-3 overflow-y-auto z-10 flex flex-col gap-3 justify-end pb-4">
+   784→<!-- Message Bubble -->
+   785→<div class="bg-white rounded-lg rounded-tl-none p-2 shadow-sm max-w-[90%] fade-in-up">
+   786→<div class="text-[#075E54] text-xs font-semibold mb-1">ASEAN MSME Bot</div>
+   787→<p class="font-body-sm text-[13px] leading-relaxed text-on-surface mb-2">
+   788→                                                ✅ Check-in successful! Welcome to the ASEAN MSME A.I. Skills Training.
+   789→                                            </p>
+   790→<!-- Ticket Asset -->
+   791→<div class="bg-surface-container-low border border-outline-variant rounded-md p-3 mb-2 flex flex-col items-center">
+   792→<div class="text-[10px] uppercase font-bold text-on-surface-variant tracking-wider mb-2">Digital Pass</div>
+   793→<!-- Simulated QR Code -->
+   794→<div class="w-32 h-32 bg-white p-2 border border-outline-variant mb-2">
+   795→<div class="w-full h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNMCAwaDQwdjQwSDB6bTEwIDEwaDIwdjIwSDEwem01MCAwaDQwdjQwaC00MHptMTAgMTBoMjB2MjBoLTIwek0wIDYwaDQwdjQwaC00MHptMTAgMTBoMjB2MjBoLTIwem01MCAwaDIwdjIwaC0yMHptMTAgMzBoMjB2MTBoLTIwek01MCAwaDIwdjEwaC0yMHptMCAyMGgyMHYxMGgtMjB6IiBmaWxsPSIjMDAwIi8+PC9zdmc+')] bg-contain bg-center bg-no-repeat opacity-80"></div>
+   796→</div>
+   797→<div class="font-data-mono text-xs font-semibold text-primary">ID: ASN-24-8892</div>
+   798→</div>
+   799→<p class="font-body-sm text-[13px] text-on-surface mb-1">
+   800→<strong>Name:</strong> Sarah Wijaya<br>
+   801→<strong>Sector:</strong> Tech / E-commerce<br>
+   802→<strong>Track:</strong> Advanced AI
+   803→                                            </p>
+   804→<div class="text-right text-[10px] text-outline-variant mt-1">10:42 AM</div>
+   805→</div>
+   806→</div>
+   807→<!-- Input Area -->
+   808→<div class="bg-[#F0F0F0] p-2 flex items-center gap-2 z-10 border-t border-[#d1d7db]">
+   809→<span class="material-symbols-outlined text-outline-variant" data-icon="add">add</span>
+   810→<div class="flex-1 bg-white rounded-full py-1.5 px-4 text-body-sm text-outline-variant">Type a message</div>
+   811→<div class="w-8 h-8 rounded-full bg-[#00A884] text-white flex items-center justify-center">
+   812→<span class="material-symbols-outlined text-sm" data-icon="mic">mic</span>
+   813→</div>
+   814→</div>
+   815→</div>
+   816→</div>
+   817→</div>
+   818→</div>
+   819→</div>
+   820→</div>
+   821→</main>
+   822→</div>
+   823→<!-- Script for Live Feed Simulation -->
+   824→<script>
+   825→        const feedContainer = document.getElementById('live-feed-container');
+   826→        const counterEl = document.getElementById('counter-total');
+   827→        
+   828→        const names = ['Ahmad Rizki', 'Maria Santos', 'Nguyen Van A', 'Siti Nurhaliza', 'David Lee', 'Chaiwat P.', 'Budi Santoso'];
+   829→        const sectors = ['Agriculture', 'Retail', 'Tech', 'Manufacturing'];
+   830→        const types = ['Physical', 'Online'];
+   831→        
+   832→        let count = 1248;
+   833→
+   834→        function createFeedItem() {
+   835→            const name = names[Math.floor(Math.random() * names.length)];
+   836→            const sector = sectors[Math.floor(Math.random() * sectors.length)];
+   837→            const type = types[Math.floor(Math.random() * types.length)];
+   838→            const isPhysical = type === 'Physical';
+   839→            
+   840→            const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+   841→            
+   842→            const div = document.createElement('div');
+   843→            div.className = 'flex items-center justify-between p-3 bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-surface-container rounded fade-in-up';
+   844→            
+   845→            div.innerHTML = `
+   846→                <div class="flex items-center gap-3">
+   847→                    <div class="w-10 h-10 rounded-full bg-${isPhysical ? 'primary' : 'secondary'}-container flex items-center justify-center text-${isPhysical ? 'primary' : 'secondary'}">
+   848→                        <span class="material-symbols-outlined text-sm" data-icon="${isPhysical ? 'meeting_room' : 'devices'}">${isPhysical ? 'meeting_room' : 'devices'}</span>
+   849→                    </div>
+   850→                    <div>
+   851→                        <div class="font-body-sm font-semibold text-on-surface">${name}</div>
+   852→                        <div class="font-body-sm text-xs text-on-surface-variant">${sector} • ASN-24-${Math.floor(1000 + Math.random() * 9000)}</div>
+   853→                    </div>
+   854→                </div>
+   855→                <div class="text-right">
+   856→                    <div class="font-label-caps text-[10px] uppercase ${isPhysical ? 'text-primary bg-primary-fixed' : 'text-secondary bg-secondary-fixed'} px-2 py-0.5 rounded inline-block mb-1">
+   857→                        Attended_${type}
+   858→                    </div>
+   859→                    <div class="font-data-mono text-xs text-outline-variant block">${time}</div>
+   860→                </div>
+   861→            `;
+   862→            
+   863→            return div;
+   864→        }
+   865→
+   866→        // Initialize feed with some items
+   867→        for(let i=0; i<6; i++) {
+   868→            const item = createFeedItem();
+   869→            item.style.animation = 'none'; // remove animation for initial load
+   870→            item.style.opacity = '1';
+   871→            feedContainer.appendChild(item);
+   872→        }
+   873→
+   874→        // Simulate live updates
+   875→        setInterval(() => {
+   876→            const newItem = createFeedItem();
+   877→            feedContainer.insertBefore(newItem, feedContainer.firstChild);
+   878→            
+   879→            // Keep max items to prevent infinite scroll
+   880→            if(feedContainer.children.length > 20) {
+   881→                feedContainer.removeChild(feedContainer.lastChild);
+   882→            }
+   883→            
+   884→            // Update counter occasionally
+   885→            if(Math.random() > 0.5) {
+   886→                count++;
+   887→                counterEl.innerText = count.toLocaleString();
+   888→            }
+   889→            
+   890→        }, 3500);
+   891→        
+   892→        // CSS specific to tailwind arbitrary values added via JS
+   893→        tailwind.config.theme.extend.keyframes = {
+   894→            shimmer: {
+   895→                '100%': { transform: 'translateX(100%)' }
+   896→            }
+   897→        };
+   898→    </script>
+   899→
+   900→
+   901→</body></html>

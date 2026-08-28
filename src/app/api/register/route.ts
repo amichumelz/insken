@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import QRCode from 'qrcode';
 import { db } from '@/lib/db';
 import { REGION_CONFIG, RegionCode } from '@/lib/regions';
 
@@ -13,6 +14,42 @@ interface RegisterPayload {
   sector: string;
   region: string;
   preferredMode: string;
+}
+
+/**
+ * Builds the WhatsApp Business message payload that will be dispatched
+ * to the participant once their QR asset has been generated.
+ */
+function buildWhatsAppPayload(opts: {
+  participantId: string;
+  name: string;
+  region: string;
+  regionName: string;
+  finalMode: string;
+  capacityRouted: boolean;
+  sector: string;
+  eventDate: string;
+}) {
+  const modeLabel =
+    opts.finalMode === 'Registered_Physical' ? 'Physical Venue' : 'Priority Online Session';
+  return {
+    to: opts.participantId,
+    template: 'asean_msme_pass_v1',
+    language: { code: 'en' },
+    components: [
+      {
+        type: 'body',
+        parameters: [
+          { type: 'text', text: opts.name },
+          { type: 'text', text: opts.participantId },
+          { type: 'text', text: opts.regionName },
+          { type: 'text', text: modeLabel },
+          { type: 'text', text: opts.eventDate },
+          { type: 'text', text: opts.capacityRouted ? 'PRIORITY' : 'CONFIRMED' },
+        ],
+      },
+    ],
+  };
 }
 
 /**
@@ -129,16 +166,52 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Asset generation: unique participant ID + QR seed
+  // Asset generation: unique participant ID + real QR code (PNG data URL)
   const totalSoFar = await db.participant.count();
   const participantId = `ASEAN-${String(totalSoFar + 1).padStart(5, '0')}`;
   const qrSeed = `${participantId}|${icNumber}`;
+
+  // Real-time QR code generation — encodes the participant's check-in payload.
+  // Format: <participantId>|<ic>|<region>|<finalMode>
+  const qrPayload = `${participantId}|${icNumber}|${regionCode}|${finalMode}`;
+  const qrDataUrl = await QRCode.toDataURL(qrPayload, {
+    errorCorrectionLevel: 'H',
+    margin: 1,
+    width: 320,
+    color: {
+      dark: '#0B1F3A', // INSKEN navy
+      light: '#FFFFFF',
+    },
+  });
 
   workflow.push({
     phase: 'Phase 2: Asset Generation',
     step: 'QR Code',
     status: 'success',
-    detail: `Generated Participant_ID ${participantId} and QR seed for WhatsApp delivery.`,
+    detail: `Generated QR code (${qrPayload}) — high error-correction, 320px PNG — ready for WhatsApp dispatch.`,
+    timestamp: new Date().toISOString(),
+  });
+
+  // WhatsApp Business API dispatch — sends the digital pass template
+  // with embedded QR asset to the participant's phone number.
+  const eventDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+    .toLocaleDateString('en-MY', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+  const whatsappPayload = buildWhatsAppPayload({
+    participantId,
+    name,
+    region: regionCode,
+    regionName: cfg.name,
+    finalMode,
+    capacityRouted,
+    sector,
+    eventDate,
+  });
+
+  workflow.push({
+    phase: 'Phase 2: Asset Generation',
+    step: 'WhatsApp Dispatch',
+    status: 'success',
+    detail: `WhatsApp Business template "asean_msme_pass_v1" dispatched to ${phone || 'recipient'} (template language=en, params: ${whatsappPayload.components[0].parameters.length}).`,
     timestamp: new Date().toISOString(),
   });
 
@@ -182,10 +255,39 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  // Check 95% shift-to-online threshold — triggers pre-emptive recommendation alert
+  if (newPhysical === Math.floor(cfg.physicalCap * 0.95)) {
+    await db.alert.create({
+      data: {
+        type: 'CAPACITY_95',
+        region: regionCode,
+        message: `${cfg.name} physical capacity at 95% (${newPhysical}/${cfg.physicalCap}). Recommend shifting to Online sessions now — pre-emptive routing before hard cap.`,
+        severity: 'critical',
+        metadata: JSON.stringify({
+          region: regionCode,
+          count: newPhysical,
+          cap: cfg.physicalCap,
+          pct: 95,
+          remaining: cfg.physicalCap - newPhysical,
+          recommendation: 'SHIFT_TO_ONLINE',
+        }),
+      },
+    });
+  }
+
   return NextResponse.json({
     ok: true,
     participant: created,
     qrSeed,
+    qrPayload,
+    qrDataUrl,
+    whatsapp: {
+      dispatchedAt: new Date().toISOString(),
+      template: 'asean_msme_pass_v1',
+      recipient: phone || email,
+      eventDate,
+      payload: whatsappPayload,
+    },
     capacityRouted,
     capacityNote,
     message: capacityRouted

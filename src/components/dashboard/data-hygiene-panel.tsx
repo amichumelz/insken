@@ -13,7 +13,13 @@ interface AuditEntry {
   createdAt: string;
 }
 
-export function DataHygienePanel({ duplicateBlocked }: { duplicateBlocked: number }) {
+export function DataHygienePanel({
+  duplicateBlocked,
+  refreshTick = 0,
+}: {
+  duplicateBlocked: number;
+  refreshTick?: number;
+}) {
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,15 +29,18 @@ export function DataHygienePanel({ duplicateBlocked }: { duplicateBlocked: numbe
       try {
         const res = await fetch('/api/audit?action=DUPLICATE_BLOCKED&limit=20', { cache: 'no-store' });
         const data = await res.json();
-        if (!cancelled) setEntries(data.logs ?? []);
-      } finally {
+        if (!cancelled) {
+          setEntries(data.logs ?? []);
+          setLoading(false);
+        }
+      } catch {
         if (!cancelled) setLoading(false);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refreshTick]);
 
   return (
     <Card className="h-full">

@@ -2,31 +2,42 @@
 
 import { RegionStat } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, AlertTriangle, XCircle, TrendingDown } from 'lucide-react';
+import { Circle, XCircle } from 'lucide-react';
 
+/**
+ * Neutral status badge — shows only Ongoing / Closed with no percentage reference.
+ * The underlying state (Normal / Warn / LowVelocity / Full) is still computed from
+ * capacity rules in the API, but the visual label is intentionally neutral:
+ *   - Full         → "Closed"  (red dot)
+ *   - Anything else → "Ongoing" (emerald dot)
+ */
 const STATE_META: Record<
   RegionStat['state'],
-  { label: string; tone: string; icon: React.ElementType }
+  { label: string; tone: string; icon: React.ElementType; dotTone: string }
 > = {
   Normal: {
-    label: 'Normal',
+    label: 'Ongoing',
     tone: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
-    icon: CheckCircle2,
+    icon: Circle,
+    dotTone: 'bg-emerald-500',
   },
   Warn: {
-    label: '80% Warn',
-    tone: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800',
-    icon: AlertTriangle,
-  },
-  Full: {
-    label: 'Full',
-    tone: 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800',
-    icon: XCircle,
+    label: 'Ongoing',
+    tone: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
+    icon: Circle,
+    dotTone: 'bg-emerald-500',
   },
   LowVelocity: {
-    label: 'Low Velocity',
-    tone: 'bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800',
-    icon: TrendingDown,
+    label: 'Ongoing',
+    tone: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
+    icon: Circle,
+    dotTone: 'bg-emerald-500',
+  },
+  Full: {
+    label: 'Closed',
+    tone: 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800',
+    icon: XCircle,
+    dotTone: 'bg-rose-500',
   },
 };
 

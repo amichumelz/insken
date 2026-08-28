@@ -128,6 +128,19 @@ async function main() {
           ? new Date(Date.now() - (seed % 7) * 24 * 60 * 60 * 1000 - (seed % 1440) * 60 * 1000)
           : null;
 
+      // Spread createdAt across the last 12 months — most volume in the recent months
+      // (simulating a real program ramp-up).
+      const monthOffset = Math.floor((seed % 12)); // 0..11 months ago
+      const dayInMonth = (seed % 28) + 1;
+      const now = new Date();
+      const createdDate = new Date(
+        now.getFullYear(),
+        now.getMonth() - monthOffset,
+        dayInMonth,
+        seed % 24,
+        (seed * 7) % 60,
+      );
+
       await db.participant.create({
         data: {
           participantId: `ASEAN-${String(counter).padStart(5, '0')}`,
@@ -141,6 +154,7 @@ async function main() {
           finalMode,
           status,
           checkInAt,
+          createdAt: createdDate,
         },
       });
     }

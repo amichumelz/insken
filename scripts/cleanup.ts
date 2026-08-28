@@ -7,7 +7,7 @@ import { db } from '../src/lib/db';
 async function main() {
   console.log('🧹 Removing test participants created during verification...');
   const testIds = await db.participant.findMany({
-    where: { name: { in: ['Test Participant Demo', 'Duplicate Test'] } },
+    where: { name: { in: ['Test Participant Demo', 'Duplicate Test', 'QR Demo Participant', 'Duplicate User'] } },
     select: { id: true, participantId: true, name: true },
   });
   for (const t of testIds) {

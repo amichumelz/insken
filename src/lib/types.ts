@@ -20,6 +20,8 @@ export interface RegionStat {
   name: string;
   physical: number;
   online: number;
+  attendedPhysical: number;
+  attendedOnline: number;
   total: number;
   physicalCap: number;
   onlineTarget: number;
@@ -38,7 +40,7 @@ export interface SectorStat {
 }
 
 export interface TrendPoint {
-  date: string;
+  month: string;
   total: number;
   physical: number;
   online: number;
@@ -96,11 +98,112 @@ export interface WorkflowStep {
   timestamp: string;
 }
 
+export interface WhatsAppDispatch {
+  dispatchedAt: string;
+  template: string;
+  recipient: string;
+  eventDate: string;
+  payload: unknown;
+}
+
+export interface LiveCheckin {
+  participantId: string;
+  name: string;
+  sector: string;
+  region: string;
+  status: 'Attended_Physical' | 'Attended_Online';
+  checkInAt: string;
+}
+
+export interface LiveVelocityPoint {
+  hour: string;
+  physical: number;
+  online: number;
+  total: number;
+}
+
+export interface LiveRegionAttendance {
+  code: string;
+  name: string;
+  today: number;
+  allTime: number;
+}
+
+export interface LiveCheckinsResponse {
+  timestamp: string;
+  today: {
+    total: number;
+    physical: number;
+    online: number;
+    peakHour: string;
+    peakHourCount: number;
+  };
+  allTime: {
+    total: number;
+    physical: number;
+    online: number;
+  };
+  velocity: LiveVelocityPoint[];
+  regionAttendance: LiveRegionAttendance[];
+  feed: LiveCheckin[];
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Trainer Performance types
+// ─────────────────────────────────────────────────────────────────────
+
+export interface TrainerKpi {
+  sessionsConducted: number;
+  totalParticipants: number;
+  attendanceRate: number;       // %
+  completionRate: number;        // %
+  avgRating: number;            // out of 5
+  responseTimeMins: number;     // avg time to respond to participant queries
+}
+
+export interface TrainerPerformancePoint {
+  month: string;
+  sessions: number;
+  attendance: number;           // %
+  rating: number;               // out of 5
+}
+
+export interface TrainerFeedback {
+  id: string;
+  participantName: string;
+  participantId: string;
+  session: string;
+  rating: number;                // out of 5
+  comment: string;
+  submittedAt: string;
+}
+
+export interface Trainer {
+  id: string;
+  name: string;
+  role: string;
+  specialty: string;
+  initials: string;
+  color: string;                // tailwind gradient classes for avatar
+  joinedAt: string;
+  kpi: TrainerKpi;
+  performance: TrainerPerformancePoint[];
+  preFeedback: TrainerFeedback[];
+  postFeedback: TrainerFeedback[];
+}
+
+export interface TrainersResponse {
+  trainers: Trainer[];
+}
+
 export interface RegisterResponse {
   ok: boolean;
   participant?: Participant;
   existing?: Participant;
   qrSeed?: string;
+  qrPayload?: string;
+  qrDataUrl?: string;
+  whatsapp?: WhatsAppDispatch;
   capacityRouted?: boolean;
   capacityNote?: string;
   message?: string;

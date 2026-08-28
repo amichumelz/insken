@@ -6,34 +6,35 @@ import { KpiCards } from '@/components/dashboard/kpi-cards';
 import { RegionalProgressGrid } from '@/components/dashboard/regional-progress-grid';
 import { SectoralBreakdown } from '@/components/dashboard/sectoral-breakdown';
 import { RegistrationTrend } from '@/components/dashboard/registration-trend';
-import { IntelligenceRecommendations } from '@/components/dashboard/intelligence-recommendations';
 import { DataHygienePanel } from '@/components/dashboard/data-hygiene-panel';
 import { RegistrationConsole } from '@/components/dashboard/registration-console';
-import { AlertsPanel } from '@/components/dashboard/alerts-panel';
 import { CheckinConsole } from '@/components/dashboard/checkin-console';
-import { RegionalCapacityDetail } from '@/components/dashboard/regional-capacity-detail';
 import { ParticipantsTable } from '@/components/dashboard/participants-table';
+import { LiveAttendanceTracking } from '@/components/dashboard/live-attendance-tracking';
+import { TrainerPerformance } from '@/components/dashboard/trainer-performance';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useLiveTicker } from '@/hooks/use-live-ticker';
 import {
   LayoutDashboard,
   UserPlus,
-  MapPin,
-  Bell,
   QrCode,
   Users,
   RefreshCw,
   Sparkles,
+  GraduationCap,
+  Radio,
+  Pause,
+  Play,
 } from 'lucide-react';
 
-type TabId = 'dashboard' | 'register' | 'regions' | 'alerts' | 'checkin' | 'registry';
+type TabId = 'dashboard' | 'trainers' | 'register' | 'checkin' | 'registry';
 
 const TABS: Array<{ id: TabId; label: string; icon: React.ElementType }> = [
   { id: 'dashboard', label: 'Executive Dashboard', icon: LayoutDashboard },
+  { id: 'trainers',  label: 'Trainer Performance', icon: GraduationCap },
   { id: 'register',  label: 'Registration',         icon: UserPlus },
-  { id: 'regions',   label: 'Regional Capacity',     icon: MapPin },
-  { id: 'alerts',    label: 'Alerts',                icon: Bell },
   { id: 'checkin',   label: 'Attendance Check-in',   icon: QrCode },
   { id: 'registry',  label: 'Registry',              icon: Users },
 ];
@@ -42,6 +43,7 @@ export default function Home() {
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<TabId>('dashboard');
+  const [refreshTick, setRefreshTick] = useState(0); // bump to force live components to refetch
 
   const loadStats = useCallback(async () => {
     setLoading(true);
@@ -56,18 +58,37 @@ export default function Home() {
     }
   }, []);
 
+  // Live ticker — fires every 5s, mutates the DB, and forces refetches everywhere
+  const { lastTick, running, pause, resume } = useLiveTicker({ silent: false });
+
   useEffect(() => {
     loadStats();
-    // Auto-refresh dashboard every 30 seconds for "real-time" feel
-    const interval = setInterval(() => {
-      if (tab === 'dashboard' || tab === 'regions' || tab === 'alerts') loadStats();
-    }, 30000);
-    return () => clearInterval(interval);
-  }, [loadStats, tab]);
+  }, [loadStats]);
+
+  // Whenever a live tick fires, refetch the global stats so all dashboard widgets update
+  useEffect(() => {
+    if (!lastTick) return;
+    // Bump refreshTick so child components that depend on it refetch
+    setRefreshTick((n) => n + 1);
+    // Also pull fresh global stats
+    (async () => {
+      try {
+        const res = await fetch('/api/stats', { cache: 'no-store' });
+        const data = (await res.json()) as StatsResponse;
+        setStats(data);
+      } catch {}
+    })();
+  }, [lastTick]);
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <Header onRefresh={loadStats} refreshing={loading} stats={stats} />
+      <Header
+        onRefresh={loadStats}
+        refreshing={loading}
+        stats={stats}
+        liveRunning={running}
+        onToggleLive={running ? pause : resume}
+      />
 
       <nav className="sticky top-[57px] z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="mx-auto flex max-w-[1600px] gap-1 overflow-x-auto px-4 py-2 scroll-styled">
@@ -108,26 +129,17 @@ export default function Home() {
           <DashboardSkeleton />
         ) : stats ? (
           <>
-            {tab === 'dashboard' && <DashboardView stats={stats} />}
+            {tab === 'dashboard' && <DashboardView stats={stats} refreshTick={refreshTick} />}
+            {tab === 'trainers' && (
+              <div className="space-y-4">
+                <SectionHeader
+                  title="Trainer Performance"
+                  subtitle="Per-coach KPIs, performance trends, and Pre/Post-Session feedback."
+                />
+                <TrainerPerformance refreshTick={refreshTick} />
+              </div>
+            )}
             {tab === 'register' && <RegistrationConsole />}
-            {tab === 'regions' && (
-              <div className="space-y-4">
-                <SectionHeader
-                  title="Regional Capacity & Quota Tracking"
-                  subtitle="Real-time seat tracking with state badges per PRD section 3."
-                />
-                <RegionalCapacityDetail regions={stats.regions} />
-              </div>
-            )}
-            {tab === 'alerts' && (
-              <div className="space-y-4">
-                <SectionHeader
-                  title="Automated Alert System"
-                  subtitle="Capacity thresholds (Rule A) · Regional lag detector (Rule B) · Global milestones (Rule C)."
-                />
-                <AlertsPanel onlyUnresolved />
-              </div>
-            )}
             {tab === 'checkin' && (
               <div className="space-y-4">
                 <SectionHeader
@@ -166,10 +178,14 @@ function Header({
   onRefresh,
   refreshing,
   stats,
+  liveRunning,
+  onToggleLive,
 }: {
   onRefresh: () => void;
   refreshing: boolean;
   stats: StatsResponse | null;
+  liveRunning: boolean;
+  onToggleLive: () => void;
 }) {
   return (
     <header className="sticky top-0 z-40 border-b bg-[#0B1F3A] text-white">
@@ -210,6 +226,36 @@ function Header({
               </div>
             </div>
           )}
+
+          {/* LIVE indicator + toggle */}
+          <button
+            onClick={onToggleLive}
+            className={cn(
+              'group inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-all',
+              liveRunning
+                ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-200 hover:bg-emerald-500/25'
+                : 'border-white/20 bg-white/5 text-white/70 hover:bg-white/10',
+            )}
+            title={liveRunning ? 'Pause live simulation' : 'Resume live simulation'}
+          >
+            {liveRunning ? (
+              <>
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                </span>
+                <span className="hidden font-semibold uppercase tracking-wider sm:inline">Live</span>
+                <Pause className="h-3 w-3 opacity-70" />
+              </>
+            ) : (
+              <>
+                <Radio className="h-3.5 w-3.5 opacity-80" />
+                <span className="hidden font-semibold uppercase tracking-wider sm:inline">Paused</span>
+                <Play className="h-3 w-3 opacity-70" />
+              </>
+            )}
+          </button>
+
           <Button
             variant="ghost"
             size="sm"
@@ -235,10 +281,13 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle: string })
   );
 }
 
-function DashboardView({ stats }: { stats: StatsResponse }) {
+function DashboardView({ stats, refreshTick }: { stats: StatsResponse; refreshTick: number }) {
   return (
     <div className="space-y-4">
       <KpiCards global={stats.global} />
+
+      {/* Live Attendance Tracking — replaces Intelligence Recommendations + Alerts Panel */}
+      <LiveAttendanceTracking refreshTick={refreshTick} />
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <div className="xl:col-span-2">
@@ -254,13 +303,8 @@ function DashboardView({ stats }: { stats: StatsResponse }) {
           <RegionalProgressGrid regions={stats.regions} />
         </div>
         <div>
-          <IntelligenceRecommendations />
+          <DataHygienePanel duplicateBlocked={stats.global.duplicateBlocked} refreshTick={refreshTick} />
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <DataHygienePanel duplicateBlocked={stats.global.duplicateBlocked} />
-        <AlertsPanel onlyUnresolved />
       </div>
     </div>
   );

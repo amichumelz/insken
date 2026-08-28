@@ -1,0 +1,372 @@
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
+import { LiveCheckinsResponse } from '@/lib/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from 'recharts';
+import {
+  Activity,
+  Users,
+  MapPin,
+  Video,
+  TrendingUp,
+  RefreshCw,
+  Radio,
+  Clock,
+  ArrowUp,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const REFRESH_INTERVAL_MS = 10000; // 10 seconds — feels "live" without hammering the DB
+
+export function LiveAttendanceTracking({ refreshTick = 0 }: { refreshTick?: number }) {
+  const [data, setData] = useState<LiveCheckinsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch('/api/checkins/live', { cache: 'no-store' });
+      const json = (await res.json()) as LiveCheckinsResponse;
+      setData(json);
+      setLastUpdated(new Date());
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/checkins/live', { cache: 'no-store' });
+        const json = (await res.json()) as LiveCheckinsResponse;
+        if (!cancelled) {
+          setData(json);
+          setLastUpdated(new Date());
+          setLoading(false);
+        }
+      } catch {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    // Auto-refresh on an interval for "live" feel
+    const interval = setInterval(() => {
+      load();
+    }, REFRESH_INTERVAL_MS);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [load]);
+
+  // Force refetch when the parent's refreshTick bumps (driven by the global live ticker)
+  useEffect(() => {
+    if (refreshTick === 0) return; // skip initial mount
+    load();
+  }, [refreshTick, load]);
+
+  return (
+    <div className="space-y-4">
+      {/* Live indicator strip */}
+      <div className="flex items-center justify-between gap-2 rounded-lg border border-emerald-200 bg-emerald-50/60 px-3 py-2 dark:border-emerald-900/60 dark:bg-emerald-950/20">
+        <div className="flex items-center gap-2">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+          </span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+            Live Attendance Tracking
+          </span>
+          <span className="hidden text-[11px] text-muted-foreground sm:inline">
+            Auto-refreshing every {REFRESH_INTERVAL_MS / 1000}s
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          {lastUpdated && (
+            <span className="font-mono text-[10px] text-muted-foreground">
+              <Clock className="mr-1 inline h-3 w-3" />
+              {lastUpdated.toLocaleTimeString('en-MY', { hour12: false })}
+            </span>
+          )}
+          <Button variant="ghost" size="sm" onClick={load} disabled={loading} className="h-7 px-2 text-xs">
+            <RefreshCw className={cn('h-3 w-3', loading && 'animate-spin')} />
+            <span className="ml-1 hidden sm:inline">Refresh</span>
+          </Button>
+        </div>
+      </div>
+
+      {/* Live KPI row */}
+      {data && <LiveKpiRow data={data} />}
+
+      {/* Velocity chart — full width (Regional Check-ins card removed) */}
+      {data && (
+        <CheckinVelocityChart velocity={data.velocity} peakHour={data.today.peakHour} peakCount={data.today.peakHourCount} />
+      )}
+
+      {/* Live feed */}
+      {data && <LiveFeed feed={data.feed} />}
+    </div>
+  );
+}
+
+function LiveKpiRow({ data }: { data: LiveCheckinsResponse }) {
+  const todayPctOfAllTime = data.allTime.total > 0 ? Math.round((data.today.total / data.allTime.total) * 100) : 0;
+  const physicalShare = data.today.total > 0 ? Math.round((data.today.physical / data.today.total) * 100) : 0;
+  const onlineShare = data.today.total > 0 ? 100 - physicalShare : 0;
+
+  return (
+    <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
+      {/* Today's check-ins */}
+      <Card className="relative overflow-hidden p-4 md:col-span-2 lg:col-span-1">
+        <div className="absolute inset-0 bg-navy-gradient pointer-events-none" />
+        <div className="relative flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              <Radio className="h-3.5 w-3.5 text-emerald-500" />
+              Today&apos;s Check-ins
+            </div>
+            <div className="mt-2 text-3xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+              {data.today.total.toLocaleString()}
+            </div>
+            <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
+              <ArrowUp className="h-3 w-3 text-emerald-500" />
+              {todayPctOfAllTime}% of all-time ({data.allTime.total.toLocaleString()})
+            </div>
+          </div>
+          <div className="shrink-0 rounded-lg bg-emerald-500/10 p-2">
+            <Users className="h-5 w-5 text-emerald-600" />
+          </div>
+        </div>
+        <div className="relative mt-3 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+          <TrendingUp className="h-3 w-3" />
+          Peak hour: <span className="font-semibold text-foreground">{data.today.peakHour}</span>{' '}
+          ({data.today.peakHourCount} check-ins)
+        </div>
+      </Card>
+
+      {/* Physical today */}
+      <Card className="p-4">
+        <div className="flex items-center justify-between">
+          <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Physical Today
+          </div>
+          <div className="rounded-lg bg-primary/10 p-1.5">
+            <MapPin className="h-4 w-4 text-primary" />
+          </div>
+        </div>
+        <div className="mt-2 text-2xl font-bold tabular-nums">{data.today.physical.toLocaleString()}</div>
+        <div className="mt-1 text-[11px] text-muted-foreground">
+          {physicalShare}% of today · {data.allTime.physical.toLocaleString()} all-time
+        </div>
+      </Card>
+
+      {/* Online today */}
+      <Card className="p-4">
+        <div className="flex items-center justify-between">
+          <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Online Today
+          </div>
+          <div className="rounded-lg bg-amber-500/10 p-1.5">
+            <Video className="h-4 w-4 text-amber-600" />
+          </div>
+        </div>
+        <div className="mt-2 text-2xl font-bold tabular-nums">{data.today.online.toLocaleString()}</div>
+        <div className="mt-1 text-[11px] text-muted-foreground">
+          {onlineShare}% of today · {data.allTime.online.toLocaleString()} all-time
+        </div>
+      </Card>
+
+      {/* All-time attended */}
+      <Card className="p-4">
+        <div className="flex items-center justify-between">
+          <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            All-time Attended
+          </div>
+          <div className="rounded-lg bg-sky-500/10 p-1.5">
+            <Activity className="h-4 w-4 text-sky-600" />
+          </div>
+        </div>
+        <div className="mt-2 text-2xl font-bold tabular-nums">{data.allTime.total.toLocaleString()}</div>
+        <div className="mt-1 text-[11px] text-muted-foreground">
+          {data.allTime.physical.toLocaleString()} Phys · {data.allTime.online.toLocaleString()} Online
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function CheckinVelocityChart({
+  velocity,
+  peakHour,
+  peakCount,
+}: {
+  velocity: LiveCheckinsResponse['velocity'];
+  peakHour: string;
+  peakCount: number;
+}) {
+  return (
+    <Card className="h-full">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Activity className="h-4 w-4 text-emerald-600" />
+            Check-in Velocity
+          </CardTitle>
+          <div className="text-right">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Peak hour</div>
+            <div className="text-sm font-semibold tabular-nums">
+              {peakHour} <span className="text-muted-foreground">·</span>{' '}
+              <span className="text-emerald-600">{peakCount}</span>
+            </div>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">Hourly check-ins · last 24 hours</p>
+      </CardHeader>
+      <CardContent>
+        <div className="h-[240px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={velocity} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="physicalBar" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#1E3A8A" stopOpacity={0.95} />
+                  <stop offset="100%" stopColor="#1E3A8A" stopOpacity={0.55} />
+                </linearGradient>
+                <linearGradient id="onlineBar" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#D4A017" stopOpacity={0.95} />
+                  <stop offset="100%" stopColor="#D4A017" stopOpacity={0.55} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(120,120,120,0.12)" vertical={false} />
+              <XAxis
+                dataKey="hour"
+                tick={{ fontSize: 10, fill: '#6b7280' }}
+                tickLine={false}
+                axisLine={false}
+                interval={2}
+              />
+              <YAxis
+                tick={{ fontSize: 10, fill: '#6b7280' }}
+                tickLine={false}
+                axisLine={false}
+                width={28}
+              />
+              <Tooltip
+                cursor={{ fill: 'rgba(120,120,120,0.06)' }}
+                contentStyle={{
+                  background: 'rgba(11, 31, 58, 0.96)',
+                  border: 'none',
+                  borderRadius: 8,
+                  color: 'white',
+                  fontSize: 12,
+                  padding: '8px 12px',
+                }}
+                labelStyle={{ color: '#D4A017', fontWeight: 600 }}
+                formatter={(value: number, name: string) => [
+                  `${value.toLocaleString()} check-ins`,
+                  name === 'physical' ? 'Physical' : 'Online',
+                ]}
+                labelFormatter={(label) => `Hour ${label}`}
+              />
+              <Legend
+                iconType="circle"
+                wrapperStyle={{ fontSize: 11, paddingTop: 6 }}
+                formatter={(value) => (value === 'physical' ? 'Physical' : 'Online')}
+              />
+              <Bar dataKey="physical" stackId="a" fill="url(#physicalBar)" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="online" stackId="a" fill="url(#onlineBar)" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function LiveFeed({ feed }: { feed: LiveCheckinsResponse['feed'] }) {
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Radio className="h-4 w-4 text-emerald-500" />
+            Live Check-in Feed
+          </CardTitle>
+          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+            {feed.length} recent
+          </span>
+        </div>
+        <p className="text-xs text-muted-foreground">Real-time attendance events as they happen</p>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="max-h-[420px] overflow-y-auto scroll-styled">
+          {feed.length === 0 ? (
+            <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">
+              No check-ins recorded yet today.
+            </div>
+          ) : (
+            <ul className="divide-y">
+              {feed.map((c, i) => {
+                const isPhysical = c.status === 'Attended_Physical';
+                const Icon = isPhysical ? MapPin : Video;
+                const tone = isPhysical
+                  ? 'bg-primary/10 text-primary'
+                  : 'bg-amber-500/10 text-amber-600';
+                const badgeTone = isPhysical
+                  ? 'bg-primary/10 text-primary'
+                  : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300';
+                const time = new Date(c.checkInAt);
+                const minutesAgo = Math.floor((Date.now() - time.getTime()) / 60000);
+                return (
+                  <li
+                    key={`${c.participantId}-${i}`}
+                    className="flex items-center justify-between gap-3 px-3 py-2 transition-colors hover:bg-muted/30"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-full', tone)}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-medium">
+                          {c.name}
+                          <span className="ml-2 font-mono text-[10px] text-muted-foreground">{c.participantId}</span>
+                        </div>
+                        <div className="truncate text-[11px] text-muted-foreground">
+                          {c.sector} · {c.region}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-end gap-1 text-right">
+                      <span className={cn('rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide', badgeTone)}>
+                        {isPhysical ? 'Physical' : 'Online'}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {minutesAgo < 1
+                          ? 'just now'
+                          : minutesAgo < 60
+                            ? `${minutesAgo}m ago`
+                            : time.toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
