@@ -291,9 +291,6 @@ function DashboardView({ stats, refreshTick }: { stats: StatsResponse; refreshTi
       {/* Row 2: Live Attendance Tracking banner + velocity chart + live feed */}
       <LiveAttendanceTracking refreshTick={refreshTick} />
 
-      {/* Row 3: Pending Check-in + Data Hygiene + Active Alerts (moved from row 1) */}
-      <KpiCards global={stats.global} />
-
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <div className="xl:col-span-2">
           <RegistrationTrend trend={stats.trend} />
@@ -311,6 +308,9 @@ function DashboardView({ stats, refreshTick }: { stats: StatsResponse; refreshTi
           <DataHygienePanel duplicateBlocked={stats.global.duplicateBlocked} refreshTick={refreshTick} />
         </div>
       </div>
+
+      {/* Bottom row: Pending Check-in + Data Hygiene + Active Alerts (moved to bottom of dashboard) */}
+      <KpiCards global={stats.global} />
     </div>
   );
 }
