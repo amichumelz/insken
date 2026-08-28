@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { StatsResponse } from '@/lib/types';
 import { KpiCards } from '@/components/dashboard/kpi-cards';
+import { DashboardTopRow } from '@/components/dashboard/dashboard-top-row';
 import { RegionalProgressGrid } from '@/components/dashboard/regional-progress-grid';
 import { SectoralBreakdown } from '@/components/dashboard/sectoral-breakdown';
 import { RegistrationTrend } from '@/components/dashboard/registration-trend';
@@ -284,10 +285,14 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle: string })
 function DashboardView({ stats, refreshTick }: { stats: StatsResponse; refreshTick: number }) {
   return (
     <div className="space-y-4">
-      <KpiCards global={stats.global} />
+      {/* Row 1: Global KPI + 4 live attendance KPI cards (Today's Check-ins, Physical Today, Online Today, All-time Attended) */}
+      <DashboardTopRow global={stats.global} refreshTick={refreshTick} />
 
-      {/* Live Attendance Tracking — replaces Intelligence Recommendations + Alerts Panel */}
+      {/* Row 2: Live Attendance Tracking banner + velocity chart + live feed */}
       <LiveAttendanceTracking refreshTick={refreshTick} />
+
+      {/* Row 3: Pending Check-in + Data Hygiene + Active Alerts (moved from row 1) */}
+      <KpiCards global={stats.global} />
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <div className="xl:col-span-2">
