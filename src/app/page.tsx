@@ -157,6 +157,8 @@ export default function Home() {
                   subtitle="Live database view — IC is the unique primary key per PRD section 2."
                 />
                 <ParticipantsTable />
+                {/* Registration Velocity chart — moved here from Executive Dashboard */}
+                <RegistrationTrend trend={stats.trend} />
               </div>
             )}
           </>
@@ -291,14 +293,8 @@ function DashboardView({ stats, refreshTick }: { stats: StatsResponse; refreshTi
       {/* Row 2: Live Attendance Tracking banner + velocity chart + live feed */}
       <LiveAttendanceTracking refreshTick={refreshTick} />
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <div className="xl:col-span-2">
-          <RegistrationTrend trend={stats.trend} />
-        </div>
-        <div>
-          <SectoralBreakdown sectors={stats.sectors} />
-        </div>
-      </div>
+      {/* Row 3: Sectoral Breakdown (Registration Velocity moved to Registry tab) */}
+      <SectoralBreakdown sectors={stats.sectors} />
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <div className="xl:col-span-2">
