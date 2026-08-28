@@ -327,12 +327,16 @@ function TrainerKpiCards({ kpi }: { kpi: Trainer['kpi'] }) {
 
 function TrainerPerformanceChart({ performance }: { performance: Trainer['performance'] }) {
   const totalSessions = performance.reduce((s, p) => s + p.sessions, 0);
-  const avgAttendance = Math.round(
-    performance.reduce((s, p) => s + p.attendance, 0) / performance.length,
-  );
-  const ratingSum = performance.reduce((s, p) => s + p.rating, 0);
+  // Only average over months that actually have data (sessions > 0); otherwise
+  // empty months drag the average down and the chart header shows misleading
+  // numbers like "Avg Attendance: 8%" when really only one month is at 92%.
+  const activeMonths = performance.filter((p) => p.sessions > 0);
+  const avgAttendance = activeMonths.length > 0
+    ? Math.round(activeMonths.reduce((s, p) => s + p.attendance, 0) / activeMonths.length)
+    : 0;
+  const ratingSum = activeMonths.reduce((s, p) => s + p.rating, 0);
   const avgRating = ratingSum > 0
-    ? (ratingSum / performance.length).toFixed(2)
+    ? (ratingSum / activeMonths.length).toFixed(2)
     : '—';
 
   return (

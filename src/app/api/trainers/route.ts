@@ -98,7 +98,7 @@ export async function GET() {
     };
   };
 
-  const buildPerformance = (coachId: 'coach-a' | 'coach-b', baseRating: number) => {
+  const buildPerformance = (coachId: 'coach-a' | 'coach-b', baseAttendance: number, baseRating: number) => {
     const sessions = kpiDeltas[coachId].sessions;
     const hasFirstSession = sessions > 0;
     const hasFirstFeedback = kpiDeltas[coachId].ratingN > 0;
@@ -113,7 +113,7 @@ export async function GET() {
       return {
         month,
         sessions: isCurrent ? sessions : 0,
-        attendance: isCurrent && hasFirstSession ? 92 : 0,
+        attendance: isCurrent && hasFirstSession ? baseAttendance : 0,
         rating: isCurrent && hasFirstFeedback
           ? Math.max(1, Math.min(5, baseRating + kpiDeltas[coachId].ratingSum / kpiDeltas[coachId].ratingN))
           : 0,
@@ -131,7 +131,7 @@ export async function GET() {
       color: 'from-blue-500 to-indigo-600',
       joinedAt: '2024-03-15',
       kpi: buildKpi('coach-a', 92, 87, 4.7, 14),
-      performance: buildPerformance('coach-a', 4.7),
+      performance: buildPerformance('coach-a', 92, 4.7),
       preFeedback: [...liveFeedback['coach-a'].pre, ...[
         {
           id: 'pre-a-1',
@@ -226,7 +226,7 @@ export async function GET() {
       color: 'from-amber-500 to-orange-600',
       joinedAt: '2024-06-02',
       kpi: buildKpi('coach-b', 88, 82, 4.5, 22),
-      performance: buildPerformance('coach-b', 4.5),
+      performance: buildPerformance('coach-b', 88, 4.5),
       preFeedback: [...liveFeedback['coach-b'].pre, ...[
         {
           id: 'pre-b-1',
