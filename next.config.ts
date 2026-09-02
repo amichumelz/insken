@@ -1,8 +1,12 @@
 import type { NextConfig } from "next";
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
+
+if (process.env.NODE_ENV === "development") {
+  initOpenNextCloudflareForDev();
+}
 
 const nextConfig: NextConfig = {
-  output: "standalone",
-  /* config options here */
+  serverExternalPackages: ["@prisma/client", ".prisma/client"],
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -10,3 +14,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
