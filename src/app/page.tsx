@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import { RegistrationConsole } from '@/components/dashboard/registration-console';
-import { Sparkles, QrCode, ShieldCheck, Lock } from 'lucide-react';
+import { Sparkles, QrCode, ShieldCheck, Lock, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage, LanguageToggle } from '@/lib/i18n';
 
 export default function Home() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col justify-between">
@@ -86,6 +86,10 @@ export default function Home() {
         <div className="mx-auto max-w-5xl px-4 flex flex-col sm:flex-row items-center justify-between gap-2.5">
           <p>© 2026 INSKEN · Institut Keusahawanan Negara</p>
           <div className="flex items-center gap-3 text-[11px]">
+            <Link href="/coach" className="inline-flex items-center gap-1 hover:text-foreground font-medium text-slate-600 dark:text-slate-400">
+              <GraduationCap className="h-3 w-3" /> {lang === 'ms' ? 'Portal Jurulatih' : 'Coach Portal'}
+            </Link>
+            <span>·</span>
             <Link href="/admin" className="inline-flex items-center gap-1 hover:text-foreground font-medium text-slate-600 dark:text-slate-400">
               <Lock className="h-3 w-3" /> {t.navAdminAccess}
             </Link>

@@ -13,7 +13,6 @@ import { ParticipantsTable } from '@/components/dashboard/participants-table';
 import { RegistrationTrend } from '@/components/dashboard/registration-trend';
 import { TrainerPerformance } from '@/components/dashboard/trainer-performance';
 import { ScreenQrModal } from '@/components/dashboard/screen-qr-modal';
-import { WhatsAppBlastModal } from '@/components/dashboard/whatsapp-blast-modal';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -151,10 +150,18 @@ export default function AdminPage() {
               })}
             </div>
 
-            {/* Event Day Tools: WhatsApp Blast & Projector Hall QR Screen */}
+            {/* Event Day Tools: Hall Screen QR Display & Coach Portal Link */}
             <div className="flex items-center gap-1.5 shrink-0 border-l pl-2 sm:pl-3 ml-1">
-              <WhatsAppBlastModal onBlastComplete={loadStats} />
               <ScreenQrModal />
+              <Link
+                href="/coach"
+                target="_blank"
+                className="inline-flex items-center gap-1.5 rounded-md border border-indigo-300 bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-900 transition-colors hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300"
+              >
+                <GraduationCap className="h-3.5 w-3.5 text-indigo-600" />
+                <span>{lang === 'ms' ? 'Portal Jurulatih (Coach)' : 'Coach Portal'}</span>
+                <ExternalLink className="h-2.5 w-2.5 opacity-60" />
+              </Link>
             </div>
 
             {/* Quick links to Public Portals */}
