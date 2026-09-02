@@ -2,36 +2,27 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaD1 } from '@prisma/adapter-d1';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
-  d1Client: PrismaClient | undefined;
-};
-
-function getPrismaClient(): PrismaClient {
+export function getDb(): PrismaClient {
   try {
     const ctx = getCloudflareContext();
-    if (ctx?.env?.DB) {
-      if (!globalForPrisma.d1Client) {
-        const adapter = new PrismaD1(ctx.env.DB as any);
-        globalForPrisma.d1Client = new PrismaClient({ adapter, log: ['error'] });
-      }
-      return globalForPrisma.d1Client;
+    if (ctx?.env && (ctx.env as any).DB) {
+      const adapter = new PrismaD1((ctx.env as any).DB);
+      return new PrismaClient({ adapter, log: ['error'] });
     }
   } catch {
-    // Fallback if not inside Cloudflare context
+    // Local / Node / Build-time fallback
   }
 
-  if (!globalForPrisma.prisma) {
-    globalForPrisma.prisma = new PrismaClient({
-      log: ['error'],
-    });
+  const g = globalThis as unknown as { prisma?: PrismaClient };
+  if (!g.prisma) {
+    g.prisma = new PrismaClient({ log: ['error'] });
   }
-  return globalForPrisma.prisma;
+  return g.prisma;
 }
 
 export const db: PrismaClient = new Proxy({} as PrismaClient, {
   get(_target, prop) {
-    const client = getPrismaClient();
+    const client = getDb();
     const val = (client as any)[prop];
     if (typeof val === 'function') {
       return val.bind(client);

@@ -23,16 +23,20 @@ const FIRST_NAMES = ['Ahmad', 'Siti', 'Lim', 'Tan', 'Priya', 'Daniel', 'Nurul', 
  * of the static baseline so the dashboard shows live movement.
  */
 export async function GET() {
-  // Pull the last 24 hours of FEEDBACK and TRAINER_KPI audit entries to merge
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  const liveEvents = await db.auditLog.findMany({
-    where: {
-      action: { in: ['FEEDBACK', 'TRAINER_KPI'] },
-      createdAt: { gte: since },
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 200,
-  });
+  let liveEvents: any[] = [];
+  try {
+    liveEvents = await db.auditLog.findMany({
+      where: {
+        action: { in: ['FEEDBACK', 'TRAINER_KPI'] },
+        createdAt: { gte: since },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+    });
+  } catch (err) {
+    console.warn('Trainers auditLog fetch fallback:', err);
+  }
 
   // Aggregate KPI deltas per coach
   const kpiDeltas: Record<string, { sessions: number; ratingSum: number; ratingN: number }> = {
