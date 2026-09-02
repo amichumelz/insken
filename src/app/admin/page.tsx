@@ -8,8 +8,6 @@ import { RegionalProgressGrid } from '@/components/dashboard/regional-progress-g
 import { SectoralBreakdown } from '@/components/dashboard/sectoral-breakdown';
 import { RegistrationTrend } from '@/components/dashboard/registration-trend';
 import { DataHygienePanel } from '@/components/dashboard/data-hygiene-panel';
-import { RegistrationConsole } from '@/components/dashboard/registration-console';
-import { CheckinConsole } from '@/components/dashboard/checkin-console';
 import { ParticipantsTable } from '@/components/dashboard/participants-table';
 import { LiveAttendanceTracking } from '@/components/dashboard/live-attendance-tracking';
 import { TrainerPerformance } from '@/components/dashboard/trainer-performance';
@@ -26,15 +24,13 @@ import {
   Sparkles,
   GraduationCap,
   ExternalLink,
-  User as UserIcon,
   LogOut,
   LogIn,
-  Lock,
   Loader2,
 } from 'lucide-react';
 import { useLanguage, LanguageToggle } from '@/lib/i18n';
 
-type TabId = 'dashboard' | 'trainers' | 'registry' | 'register' | 'checkin';
+type TabId = 'dashboard' | 'trainers' | 'registry';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -50,8 +46,6 @@ export default function AdminPage() {
     { id: 'dashboard', label: t.navDashboard, icon: LayoutDashboard },
     { id: 'trainers',  label: t.navTrainers, icon: GraduationCap },
     { id: 'registry',  label: t.navRegistry, icon: Users },
-    { id: 'register',  label: t.navRegisterAdmin, icon: UserPlus },
-    { id: 'checkin',   label: t.navCheckinAdmin, icon: QrCode },
   ];
 
   const checkAuth = useCallback(async () => {
@@ -140,7 +134,7 @@ export default function AdminPage() {
                   key={tabItem.id}
                   onClick={() => setTab(tabItem.id)}
                   className={cn(
-                    'inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 sm:px-3 py-1.5 text-xs font-medium transition-colors',
+                    'inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-semibold transition-colors',
                     isActive
                       ? 'bg-primary text-primary-foreground shadow-sm'
                       : 'text-muted-foreground hover:bg-muted hover:text-foreground',
@@ -155,7 +149,7 @@ export default function AdminPage() {
 
           {/* Quick links to Public Portals */}
           <div className="flex items-center gap-1.5 shrink-0 border-l pl-2 sm:pl-3 ml-1">
-            <span className="hidden xl:inline text-[11px] font-medium text-muted-foreground mr-1">
+            <span className="hidden sm:inline text-[11px] font-medium text-muted-foreground mr-1">
               {lang === 'ms' ? 'Portal Awam:' : 'Public Portals:'}
             </span>
             <Link
@@ -183,7 +177,7 @@ export default function AdminPage() {
       </nav>
 
       {/* Main Admin Content */}
-      <main className="mx-auto w-full max-w-[1600px] flex-1 px-3 sm:px-4 py-4">
+      <main className="mx-auto w-full max-w-[1600px] flex-1 px-3 sm:px-4 py-4 sm:py-6">
         {!stats && loading ? (
           <DashboardSkeleton />
         ) : stats ? (
@@ -206,16 +200,6 @@ export default function AdminPage() {
                 />
                 <ParticipantsTable />
                 <RegistrationTrend trend={stats.trend} />
-              </div>
-            )}
-            {tab === 'register' && <RegistrationConsole />}
-            {tab === 'checkin' && (
-              <div className="space-y-4">
-                <SectionHeader
-                  title={t.checkinMainTitle}
-                  subtitle="Scan QR or paste IC. Agent validates Participant_ID and stamps attendance with timestamp."
-                />
-                <CheckinConsole />
               </div>
             )}
           </>
@@ -247,7 +231,7 @@ function Header({
   user: { id: string; name: string; email: string; role: string } | null;
   onLogout: () => void;
 }) {
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
 
   return (
     <header className="sticky top-0 z-40 border-b bg-[#0B1F3A] text-white">
@@ -362,14 +346,23 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle: string })
 
 function DashboardView({ stats, refreshTick }: { stats: StatsResponse; refreshTick: number }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <DashboardTopRow global={stats.global} refreshTick={refreshTick} />
       <RegionalProgressGrid regions={stats.regions} />
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <SectoralBreakdown sectors={stats.sectors} total={stats.global.total} />
-        <LiveAttendanceTracking refreshTick={refreshTick} />
+      
+      {/* 2-Column Balanced Grid */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Left Column: Sectoral breakdown + Data hygiene panel */}
+        <div className="space-y-6">
+          <SectoralBreakdown sectors={stats.sectors} total={stats.global.total} />
+          <DataHygienePanel duplicateBlocked={stats.global.duplicateBlocked} refreshTick={refreshTick} />
+        </div>
+
+        {/* Right Column: Live Attendance tracking with Velocity Chart & Feed */}
+        <div className="space-y-6">
+          <LiveAttendanceTracking refreshTick={refreshTick} />
+        </div>
       </div>
-      <DataHygienePanel />
     </div>
   );
 }
@@ -400,7 +393,7 @@ function DashboardSkeleton() {
 function Footer() {
   const { t } = useLanguage();
   return (
-    <footer className="border-t bg-muted/20 py-4 text-xs text-muted-foreground mt-8">
+    <footer className="border-t bg-muted/20 py-4 text-xs text-muted-foreground mt-10">
       <div className="mx-auto flex max-w-[1600px] flex-col items-center justify-between gap-2 px-4 sm:flex-row">
         <p>© 2026 INSKEN · ASEAN MSME A.I. Skills Training Program</p>
         <div className="flex items-center gap-3">

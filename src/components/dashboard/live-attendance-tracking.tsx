@@ -208,11 +208,11 @@ function CheckinVelocityChart({
 
 function LiveFeed({ feed }: { feed: LiveCheckinsResponse['feed'] }) {
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Card className="border shadow-sm">
+      <CardHeader className="pb-3 px-4 sm:px-6 pt-5">
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Radio className="h-4 w-4 text-emerald-500" />
+            <Radio className="h-4 w-4 text-emerald-500 animate-pulse" />
             Live Check-in Feed
           </CardTitle>
           <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
@@ -222,7 +222,7 @@ function LiveFeed({ feed }: { feed: LiveCheckinsResponse['feed'] }) {
         <p className="text-xs text-muted-foreground">Real-time attendance events as they happen</p>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="max-h-[420px] overflow-y-auto scroll-styled">
+        <div className="max-h-[280px] overflow-y-auto scroll-styled">
           {feed.length === 0 ? (
             <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">
               No check-ins recorded yet today.
