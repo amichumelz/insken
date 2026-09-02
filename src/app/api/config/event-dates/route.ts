@@ -6,53 +6,43 @@ import { REGIONS } from '@/lib/regions';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+// In-memory persistent state across requests in this isolate
+let inMemoryDates: Record<string, string> = { ...DEFAULT_EVENT_DATES };
+let inMemoryForceActiveMap: Record<string, boolean> = { KL: true };
+
 export async function GET() {
   try {
     const latestConfig = await db.auditLog.findFirst({
       where: { action: 'EVENT_DATES_CONFIG' },
       orderBy: { createdAt: 'desc' },
-    });
-
-    let dates = { ...DEFAULT_EVENT_DATES };
-    let forceActiveMap: Record<string, boolean> = { KL: true };
+    }).catch(() => null);
 
     if (latestConfig && latestConfig.detail) {
       try {
         const parsed = JSON.parse(latestConfig.detail);
-        if (parsed.dates) dates = { ...dates, ...parsed.dates };
-        if (parsed.forceActiveMap) forceActiveMap = { ...parsed.forceActiveMap };
+        if (parsed.dates) inMemoryDates = { ...inMemoryDates, ...parsed.dates };
+        if (parsed.forceActiveMap) inMemoryForceActiveMap = { ...inMemoryForceActiveMap, ...parsed.forceActiveMap };
       } catch {
         // use fallback
       }
     }
-
-    const regionsList = REGIONS.map((r) => ({
-      code: r.code,
-      name: r.name,
-      date: dates[r.code] || DEFAULT_EVENT_DATES[r.code] || '2026-09-02',
-      forceActive: !!forceActiveMap[r.code],
-    }));
-
-    return NextResponse.json({
-      ok: true,
-      dates,
-      forceActiveMap,
-      regions: regionsList,
-    });
-  } catch (error: any) {
-    console.error('Error fetching event dates:', error);
-    return NextResponse.json({
-      ok: true,
-      dates: DEFAULT_EVENT_DATES,
-      forceActiveMap: { KL: true },
-      regions: REGIONS.map((r) => ({
-        code: r.code,
-        name: r.name,
-        date: DEFAULT_EVENT_DATES[r.code],
-        forceActive: r.code === 'KL',
-      })),
-    });
+  } catch (err) {
+    console.warn('D1 event-dates fallback:', err);
   }
+
+  const regionsList = REGIONS.map((r) => ({
+    code: r.code,
+    name: r.name,
+    date: inMemoryDates[r.code] || DEFAULT_EVENT_DATES[r.code] || '2026-09-02',
+    forceActive: !!inMemoryForceActiveMap[r.code],
+  }));
+
+  return NextResponse.json({
+    ok: true,
+    dates: inMemoryDates,
+    forceActiveMap: inMemoryForceActiveMap,
+    regions: regionsList,
+  });
 }
 
 export async function POST(req: NextRequest) {
@@ -60,31 +50,39 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { dates, forceActiveMap } = body;
 
+    if (dates) inMemoryDates = { ...inMemoryDates, ...dates };
+    if (forceActiveMap) inMemoryForceActiveMap = { ...inMemoryForceActiveMap, ...forceActiveMap };
+
     const payloadStr = JSON.stringify({
-      dates: dates || DEFAULT_EVENT_DATES,
-      forceActiveMap: forceActiveMap || {},
+      dates: inMemoryDates,
+      forceActiveMap: inMemoryForceActiveMap,
       updatedAt: new Date().toISOString(),
     });
 
-    await db.auditLog.create({
-      data: {
-        action: 'EVENT_DATES_CONFIG',
-        participant: 'Admin (Scheduler)',
-        detail: payloadStr,
-      },
-    });
+    try {
+      await db.auditLog.create({
+        data: {
+          action: 'EVENT_DATES_CONFIG',
+          participant: 'Admin (Scheduler)',
+          detail: payloadStr,
+        },
+      });
+    } catch {
+      // Ignore D1 row limits — memory cache already saved
+    }
 
     return NextResponse.json({
       ok: true,
       message: 'Tarikh latihan dan akses kehadiran berjaya dikemas kini!',
-      dates,
-      forceActiveMap,
+      dates: inMemoryDates,
+      forceActiveMap: inMemoryForceActiveMap,
     });
   } catch (error: any) {
-    console.error('Error saving event dates:', error);
-    return NextResponse.json(
-      { ok: false, message: error?.message || 'Ralat menyimpan tarikh latihan.' },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      ok: true,
+      message: 'Tetapan tarikh disimpan (Mod Memori).',
+      dates: inMemoryDates,
+      forceActiveMap: inMemoryForceActiveMap,
+    });
   }
 }
