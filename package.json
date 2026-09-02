@@ -15,7 +15,8 @@
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
     "d1:schema": "wrangler d1 execute insken-db --file=prisma/d1-schema.sql",
-    "d1:seed": "wrangler d1 execute insken-db --file=prisma/d1-seed.sql"
+    "d1:seed": "wrangler d1 execute insken-db --file=prisma/d1-seed.sql",
+    "d1:empty": "wrangler d1 execute insken-db --remote --file=prisma/d1-empty.sql"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
