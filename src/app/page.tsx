@@ -16,6 +16,7 @@ import { TrainerPerformance } from '@/components/dashboard/trainer-performance';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import Link from 'next/link';
 import {
   LayoutDashboard,
   UserPlus,
@@ -24,6 +25,7 @@ import {
   RefreshCw,
   Sparkles,
   GraduationCap,
+  ExternalLink,
 } from 'lucide-react';
 
 type TabId = 'dashboard' | 'trainers' | 'register' | 'checkin' | 'registry';
@@ -69,36 +71,52 @@ export default function Home() {
       />
 
       <nav className="sticky top-[57px] z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <div className="mx-auto flex max-w-[1600px] gap-1 overflow-x-auto px-4 py-2 scroll-styled">
-          {TABS.map((t) => {
-            const Icon = t.icon;
-            const isActive = tab === t.id;
-            return (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={cn(
-                  'inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-                  isActive
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                )}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {t.label}
-                {t.id === 'alerts' && stats && stats.global.activeAlerts > 0 && (
-                  <span
-                    className={cn(
-                      'ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold',
-                      isActive ? 'bg-white/20' : 'bg-rose-100 text-rose-700',
-                    )}
-                  >
-                    {stats.global.activeAlerts}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+        <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-3 overflow-x-auto px-4 py-2 scroll-styled">
+          <div className="flex items-center gap-1">
+            {TABS.map((t) => {
+              const Icon = t.icon;
+              const isActive = tab === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                    isActive
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                  )}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0 border-l pl-3 ml-2">
+            <span className="hidden lg:inline text-[11px] font-medium text-muted-foreground mr-1">
+              Portal Awam:
+            </span>
+            <Link
+              href="/register"
+              target="_blank"
+              className="inline-flex items-center gap-1 rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-900 transition-colors hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
+            >
+              <UserPlus className="h-3 w-3 text-amber-600" />
+              <span>Buka /register</span>
+              <ExternalLink className="h-2.5 w-2.5 opacity-60" />
+            </Link>
+            <Link
+              href="/checkin"
+              target="_blank"
+              className="inline-flex items-center gap-1 rounded-md border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-900 transition-colors hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+            >
+              <QrCode className="h-3 w-3 text-emerald-600" />
+              <span>Buka /checkin</span>
+              <ExternalLink className="h-2.5 w-2.5 opacity-60" />
+            </Link>
+          </div>
         </div>
       </nav>
 
