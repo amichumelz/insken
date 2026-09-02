@@ -201,7 +201,7 @@ export function RegistrationConsole() {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="phone" className="text-xs font-semibold">
-                  {t.regPhone}
+                  {t.regPhone} <span className="text-rose-500">*</span>
                 </Label>
                 <Input
                   id="phone"
@@ -209,6 +209,7 @@ export function RegistrationConsole() {
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   placeholder="+6012-345 6789"
                   className="h-10 text-sm"
+                  required
                 />
               </div>
             </div>
@@ -460,14 +461,14 @@ export function RegistrationConsole() {
                     </div>
                   </div>
 
-                  <a
-                    href={response.qrDataUrl}
-                    download={`INSKEN-Slip-Pengesahan-${response.participant.participantId}.png`}
-                    className="mt-4 inline-flex items-center justify-center gap-1.5 w-full rounded-lg bg-[#D4A017] px-3 py-2 text-xs font-bold text-[#0B1F3A] shadow hover:bg-[#F59E0B] transition-colors"
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    {t.regDownloadPass}
-                  </a>
+                  <div className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-emerald-500/20 border border-emerald-400/40 p-2.5 text-center text-xs font-bold text-emerald-300 w-full">
+                    <Smartphone className="h-4 w-4 text-emerald-400 shrink-0" />
+                    <span>
+                      {lang === 'ms'
+                        ? `Dihantar terus ke WhatsApp (${response.participant.phone || 'Nombor Peserta'})`
+                        : `Sent directly to WhatsApp (${response.participant.phone || 'Registered Phone'})`}
+                    </span>
+                  </div>
                 </Card>
 
                 {/* WhatsApp Confirmation Card */}

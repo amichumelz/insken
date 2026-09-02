@@ -291,25 +291,11 @@ export default function ParticipantPassPage({
                       )}
                     </Button>
                   ) : (
-                    <div className="w-full sm:flex-1 rounded-lg bg-emerald-500/20 border border-emerald-400/40 p-2.5 text-center text-xs font-bold text-emerald-300 flex items-center justify-center gap-1.5">
+                    <div className="w-full rounded-lg bg-emerald-500/20 border border-emerald-400/40 p-2.5 text-center text-xs font-bold text-emerald-300 flex items-center justify-center gap-1.5">
                       <CheckCircle2 className="h-4 w-4 text-emerald-400" />
                       <span>{lang === 'ms' ? 'Kehadiran Telah Direkodkan' : 'Attendance Verified'}</span>
                     </div>
                   )}
-
-                  <a
-                    href={data.qrDataUrl}
-                    download={`INSKEN-Pass-${data.participant.participantId}.png`}
-                    className="w-full sm:w-auto"
-                  >
-                    <Button
-                      variant="outline"
-                      className="w-full h-11 border-white/30 bg-white/10 text-white hover:bg-white/20 text-xs gap-1.5"
-                    >
-                      <Download className="h-4 w-4" />
-                      <span>{lang === 'ms' ? 'Muat Turun' : 'Download'}</span>
-                    </Button>
-                  </a>
                 </div>
               </div>
 
