@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShieldCheck, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { useLanguage } from '@/lib/i18n';
 
 interface AuditEntry {
   id: string;
@@ -20,6 +21,7 @@ export function DataHygienePanel({
   duplicateBlocked: number;
   refreshTick?: number;
 }) {
+  const { t, lang } = useLanguage();
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -43,37 +45,47 @@ export function DataHygienePanel({
   }, [refreshTick]);
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
+    <Card className="border shadow-sm">
+      <CardHeader className="pb-3 px-4 sm:px-6 pt-5">
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="flex items-center gap-2 text-base">
-            <ShieldCheck className="h-4 w-4 text-primary" />
+            <ShieldCheck className="h-5 w-5 text-primary" />
             Data Hygiene Panel
           </CardTitle>
-          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold tabular-nums text-primary">
-            {duplicateBlocked} blocked
+          <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold tabular-nums text-primary">
+            {duplicateBlocked ?? 0} {lang === 'ms' ? 'disekat' : 'blocked'}
           </span>
         </div>
         <p className="text-xs text-muted-foreground">
-          Live IC duplicate protection — primary key enforcement
+          {lang === 'ms'
+            ? 'Perlindungan penduaan No. IC secara langsung — penguatkuasaan kunci unik utama'
+            : 'Live IC duplicate protection — primary key enforcement'}
         </p>
       </CardHeader>
-      <CardContent>
-        <div className="mb-3 flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50/60 p-2.5 dark:border-emerald-900/50 dark:bg-emerald-950/20">
-          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+      <CardContent className="px-4 sm:px-6 pb-5">
+        <div className="mb-3 flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50/60 p-3 dark:border-emerald-900/50 dark:bg-emerald-950/20">
+          <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
           <div className="text-xs">
-            <span className="font-semibold text-emerald-700 dark:text-emerald-300">Zero data hygiene issues</span>
-            <p className="text-muted-foreground">
-              All {duplicateBlocked} duplicate IC attempts auto-rejected
+            <span className="font-semibold text-emerald-700 dark:text-emerald-300">
+              {lang === 'ms' ? 'Integriti data dalam keadaan optimum' : 'Zero data hygiene issues'}
+            </span>
+            <p className="text-muted-foreground mt-0.5">
+              {lang === 'ms'
+                ? `Semua ${duplicateBlocked ?? 0} cubaan pendaftaran No. IC bertindih telah disekat secara automatik.`
+                : `All ${duplicateBlocked ?? 0} duplicate IC attempts auto-rejected.`}
             </p>
           </div>
         </div>
 
-        <div className="max-h-[280px] space-y-1.5 overflow-y-auto scroll-styled pr-1">
+        <div className="max-h-[220px] space-y-1.5 overflow-y-auto scroll-styled pr-1">
           {loading ? (
-            <div className="py-6 text-center text-xs text-muted-foreground">Loading audit feed…</div>
+            <div className="py-6 text-center text-xs text-muted-foreground">
+              {lang === 'ms' ? 'Memuatkan suapan audit...' : 'Loading audit feed…'}
+            </div>
           ) : entries.length === 0 ? (
-            <div className="py-6 text-center text-xs text-muted-foreground">No duplicate attempts logged.</div>
+            <div className="py-6 text-center text-xs text-muted-foreground">
+              {lang === 'ms' ? 'Tiada rekod cubaan penduaan dikesan.' : 'No duplicate attempts logged.'}
+            </div>
           ) : (
             entries.map((e) => (
               <div

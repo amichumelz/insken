@@ -113,7 +113,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="min-h-screen flex flex-col justify-between bg-background">
       <Header
         onRefresh={loadStats}
         refreshing={loading}
@@ -393,7 +393,7 @@ function DashboardSkeleton() {
 function Footer() {
   const { t } = useLanguage();
   return (
-    <footer className="border-t bg-muted/20 py-4 text-xs text-muted-foreground mt-10">
+    <footer className="w-full clear-both shrink-0 border-t bg-card py-4 text-xs text-muted-foreground mt-12">
       <div className="mx-auto flex max-w-[1600px] flex-col items-center justify-between gap-2 px-4 sm:flex-row">
         <p>© 2026 INSKEN · ASEAN MSME A.I. Skills Training Program</p>
         <div className="flex items-center gap-3">
