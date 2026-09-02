@@ -36,19 +36,18 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Right Header Actions: Language Toggle & Checkin Link */}
+          {/* Right Header Actions: Language Toggle & Admin Access */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <LanguageToggle />
 
-            <Link href="/checkin">
+            <Link href="/admin">
               <Button
                 variant="outline"
                 size="sm"
                 className="h-8 border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white text-xs gap-1 px-2 sm:px-3"
               >
-                <QrCode className="h-3.5 w-3.5" />
-                <span className="hidden md:inline">{t.navAlreadyRegistered}</span>
-                <span className="text-[11px] sm:text-xs">{t.navCheckAttendance}</span>
+                <Lock className="h-3.5 w-3.5" />
+                <span className="text-[11px] sm:text-xs">{t.navAdminAccess}</span>
               </Button>
             </Link>
           </div>
@@ -87,10 +86,6 @@ export default function Home() {
         <div className="mx-auto max-w-5xl px-4 flex flex-col sm:flex-row items-center justify-between gap-2.5">
           <p>© 2026 INSKEN · Institut Keusahawanan Negara</p>
           <div className="flex items-center gap-3 text-[11px]">
-            <Link href="/checkin" className="hover:text-foreground underline sm:no-underline">
-              {t.navCheckAttendance}
-            </Link>
-            <span>·</span>
             <Link href="/admin" className="inline-flex items-center gap-1 hover:text-foreground font-medium text-slate-600 dark:text-slate-400">
               <Lock className="h-3 w-3" /> {t.navAdminAccess}
             </Link>

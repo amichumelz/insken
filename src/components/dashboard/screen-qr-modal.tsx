@@ -32,11 +32,11 @@ export function ScreenQrModal() {
   const [currentTime, setCurrentTime] = useState<string>('');
 
   useEffect(() => {
-    // Generate Master QR Code for Check-in Portal
+    // Generate Master QR Code for Portal
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://insken.workers.dev';
-    const checkinUrl = `${origin}/checkin`;
+    const portalUrl = `${origin}/`;
 
-    QRCode.toDataURL(checkinUrl, {
+    QRCode.toDataURL(portalUrl, {
       errorCorrectionLevel: 'H',
       margin: 1,
       width: 480,
@@ -203,10 +203,10 @@ export function ScreenQrModal() {
             {/* Quick URL for manual type */}
             <div className="pt-2 text-center sm:text-left">
               <span className="text-xs text-white/60 mr-2">
-                {lang === 'ms' ? 'Atau layari terus di pelayar telefon:' : 'Or visit directly:'}
+                {lang === 'ms' ? 'Layari terus di pelayar telefon:' : 'Or visit directly:'}
               </span>
               <span className="font-mono text-xs font-bold text-[#D4A017] underline">
-                /checkin
+                Portal Rasmi INSKEN
               </span>
             </div>
           </div>

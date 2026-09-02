@@ -119,6 +119,41 @@ export function RegistrationConsole() {
     setResponse(null);
   };
 
+  const shareQrImageToWhatsApp = async () => {
+    if (!response?.qrDataUrl || !response?.participant) return;
+
+    try {
+      const res = await fetch(response.qrDataUrl);
+      const blob = await res.blob();
+      const file = new File([blob], `INSKEN-QR-${response.participant.participantId}.png`, {
+        type: 'image/png',
+      });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: 'Pas Kehadiran INSKEN',
+          text: `Pas Kehadiran Rasmi INSKEN\nID: ${response.participant.participantId}\nNama: ${response.participant.name}`,
+          files: [file],
+        });
+        toast.success(lang === 'ms' ? 'Imej QR dikongsi ke WhatsApp!' : 'QR image shared!');
+        return;
+      }
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        console.error('Share error:', err);
+      }
+    }
+
+    // Direct image link fallback
+    const cleanPhone = (response.participant.phone || '').replace(/[^0-9]/g, '').replace(/^0/, '60');
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://insken.workers.dev';
+    const qrDirectImageUrl = `${origin}/api/qr/${response.participant.participantId}.png`;
+    const text = encodeURIComponent(
+      `✅ *PENGESAHAN TEMPAT INSKEN*\n\nHai *${response.participant.name}*!\nBerikut adalah Pas QR Kehadiran Rasmi anda:\n\n🎟️ *ID Peserta:* ${response.participant.participantId}\n📍 *Wilayah:* ${response.participant.region}\n\n🖼️ *Imej Kod QR:* ${qrDirectImageUrl}\n\n_Sila tunjukkan gambar QR di atas semasa hari sesi latihan._`
+    );
+    window.open(`https://wa.me/${cleanPhone}?text=${text}`, '_blank');
+  };
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-5">
       {/* Left: Registration form */}

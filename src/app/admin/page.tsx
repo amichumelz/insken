@@ -159,27 +159,13 @@ export default function AdminPage() {
 
             {/* Quick links to Public Portals */}
             <div className="flex items-center gap-1.5 shrink-0 border-l pl-2 sm:pl-3 ml-1">
-              <span className="hidden sm:inline text-[11px] font-medium text-muted-foreground mr-1">
-                {lang === 'ms' ? 'Portal Awam:' : 'Public Portals:'}
-              </span>
               <Link
                 href="/"
                 target="_blank"
-                className="inline-flex items-center gap-1 rounded-md border border-amber-300 bg-amber-50 px-2 sm:px-2.5 py-1 text-[11px] font-medium text-amber-900 transition-colors hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
+                className="inline-flex items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-900 transition-colors hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
               >
-                <UserPlus className="h-3 w-3 text-amber-600" />
-                <span className="hidden sm:inline">{t.navPublicRegister}</span>
-                <span className="sm:hidden">Daftar</span>
-                <ExternalLink className="h-2.5 w-2.5 opacity-60" />
-              </Link>
-              <Link
-                href="/checkin"
-                target="_blank"
-                className="inline-flex items-center gap-1 rounded-md border border-emerald-300 bg-emerald-50 px-2 sm:px-2.5 py-1 text-[11px] font-medium text-emerald-900 transition-colors hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
-              >
-                <QrCode className="h-3 w-3 text-emerald-600" />
-                <span className="hidden sm:inline">{t.navPublicCheckin}</span>
-                <span className="sm:hidden">Kehadiran</span>
+                <UserPlus className="h-3.5 w-3.5 text-amber-600" />
+                <span>{t.navPublicRegister}</span>
                 <ExternalLink className="h-2.5 w-2.5 opacity-60" />
               </Link>
             </div>
