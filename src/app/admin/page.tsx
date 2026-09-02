@@ -12,6 +12,8 @@ import { KpiCards } from '@/components/dashboard/kpi-cards';
 import { ParticipantsTable } from '@/components/dashboard/participants-table';
 import { RegistrationTrend } from '@/components/dashboard/registration-trend';
 import { TrainerPerformance } from '@/components/dashboard/trainer-performance';
+import { ScreenQrModal } from '@/components/dashboard/screen-qr-modal';
+import { WhatsAppBlastModal } from '@/components/dashboard/whatsapp-blast-modal';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -147,6 +149,12 @@ export default function AdminPage() {
                   </button>
                 );
               })}
+            </div>
+
+            {/* Event Day Tools: WhatsApp Blast & Projector Hall QR Screen */}
+            <div className="flex items-center gap-1.5 shrink-0 border-l pl-2 sm:pl-3 ml-1">
+              <WhatsAppBlastModal onBlastComplete={loadStats} />
+              <ScreenQrModal />
             </div>
 
             {/* Quick links to Public Portals */}
