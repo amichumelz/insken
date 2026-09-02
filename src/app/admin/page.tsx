@@ -50,6 +50,25 @@ export default function AdminPage() {
     { id: 'registry',  label: t.navRegistry, icon: Users },
   ];
 
+  const checkAuth = useCallback(async () => {
+    setAuthLoading(true);
+    try {
+      const res = await fetch('/api/auth/me');
+      const data = await res.json();
+      if (data.authenticated && data.user) {
+        setCurrentUser(data.user);
+      } else {
+        setCurrentUser(null);
+        router.push('/login');
+      }
+    } catch {
+      setCurrentUser(null);
+      router.push('/login');
+    } finally {
+      setAuthLoading(false);
+    }
+  }, [router]);
+
   const loadStats = useCallback(async () => {
     setLoading(true);
     try {
@@ -64,41 +83,23 @@ export default function AdminPage() {
     }
   }, []);
 
-  const checkAuth = useCallback(async () => {
-    try {
-      const res = await fetch('/api/auth/me');
-      const data = await res.json();
-      if (data.authenticated && data.user) {
-        setCurrentUser(data.user);
-        loadStats();
-      } else {
-        setCurrentUser(null);
-        router.replace('/login');
-      }
-    } catch {
-      setCurrentUser(null);
-      router.replace('/login');
-    } finally {
-      setAuthLoading(false);
-    }
-  }, [router, loadStats]);
-
   useEffect(() => {
     checkAuth();
-  }, [checkAuth]);
+    loadStats();
+  }, [checkAuth, loadStats]);
 
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
       setCurrentUser(null);
       toast.success(lang === 'ms' ? 'Log keluar berjaya.' : 'Logged out successfully.');
-      router.replace('/login');
+      router.push('/login');
     } catch {
       toast.error(lang === 'ms' ? 'Ralat semasa log keluar.' : 'Error during logout.');
     }
   };
 
-  if (authLoading || !currentUser) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background space-y-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

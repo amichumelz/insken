@@ -44,11 +44,13 @@ interface PassData {
   message?: string;
 }
 
-import { useParams } from 'next/navigation';
-
-export default function ParticipantPassPage() {
-  const routeParams = useParams();
-  const participantId = (routeParams?.id as string) || '';
+export default function ParticipantPassPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const resolvedParams = use(params);
+  const participantId = resolvedParams.id;
   const { t, lang } = useLanguage();
 
   const [data, setData] = useState<PassData | null>(null);
