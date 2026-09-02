@@ -13,8 +13,26 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Participant } from '@/lib/types';
-import { Search, RefreshCw, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, RefreshCw, Users, ChevronLeft, ChevronRight, Pencil, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+
+// Same SECTORS list as the Registration form — single source of truth would be nicer,
+// but duplicating keeps both forms decoupled.
+const SECTORS = [
+  'Retail',
+  'Food & Beverage',
+  'Manufacturing',
+  'Healthcare',
+  'Education',
+  'Finance & Banking',
+  'Technology',
+  'Tourism & Hospitality',
+  'Government / Public Sector',
+  'Professional Services',
+  'Agriculture',
+  'Others',
+];
 
 const STATUS_TONE: Record<string, string> = {
   DUPLICATE_ENTRY: 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300',
@@ -33,6 +51,11 @@ export function ParticipantsTable() {
   const [status, setStatus] = useState('all');
   const [page, setPage] = useState(0);
   const pageSize = 25;
+
+  // Inline sector editing state — only one row is editable at a time
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [tempSector, setTempSector] = useState<string>('');
+  const [savingSector, setSavingSector] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -83,6 +106,53 @@ export function ParticipantsTable() {
   }, [q, region, status]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  // Begin inline-editing the sector for a participant
+  const startEditSector = (p: Participant) => {
+    setEditingId(p.id);
+    // If the existing sector is one of the dropdown options, pre-select it;
+    // otherwise default to "Others" so the user can re-pick or fix the value.
+    setTempSector(SECTORS.includes(p.sector) ? p.sector : 'Others');
+  };
+
+  const cancelEditSector = () => {
+    setEditingId(null);
+    setTempSector('');
+  };
+
+  // Persist the new sector via PATCH /api/participants
+  const saveSector = async (p: Participant) => {
+    if (!tempSector.trim()) {
+      toast.error('Sector cannot be empty.');
+      return;
+    }
+    setSavingSector(true);
+    try {
+      const res = await fetch('/api/participants', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: p.id, sector: tempSector }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        // Optimistically update the local row so the change is visible immediately
+        setItems((prev) =>
+          prev.map((item) =>
+            item.id === p.id ? { ...item, sector: tempSector } : item,
+          ),
+        );
+        toast.success(`Sector updated to "${tempSector}" for ${p.name}.`);
+        setEditingId(null);
+        setTempSector('');
+      } else {
+        toast.error(data.error ?? 'Failed to update sector.');
+      }
+    } catch {
+      toast.error('Network error — please retry.');
+    } finally {
+      setSavingSector(false);
+    }
+  };
 
   return (
     <Card>
@@ -146,7 +216,9 @@ export function ParticipantsTable() {
                 <th className="px-3 py-2 font-medium">Participant ID</th>
                 <th className="px-3 py-2 font-medium">Name</th>
                 <th className="hidden px-3 py-2 font-medium md:table-cell">IC Number</th>
-                <th className="hidden px-3 py-2 font-medium lg:table-cell">Sector</th>
+                <th className="hidden px-3 py-2 font-medium lg:table-cell">
+                  Sector <span className="ml-1 text-[9px] font-normal text-muted-foreground">(click to edit)</span>
+                </th>
                 <th className="px-3 py-2 font-medium">Region</th>
                 <th className="px-3 py-2 font-medium">Status</th>
                 <th className="hidden px-3 py-2 font-medium sm:table-cell">Check-in</th>
@@ -178,7 +250,57 @@ export function ParticipantsTable() {
                     <td className="hidden whitespace-nowrap px-3 py-2 font-mono text-[11px] text-muted-foreground md:table-cell">
                       {p.icNumber}
                     </td>
-                    <td className="hidden px-3 py-2 text-muted-foreground lg:table-cell">{p.sector}</td>
+                    <td className="hidden px-3 py-2 lg:table-cell">
+                      {editingId === p.id ? (
+                        // Inline editor — Select dropdown + Save/Cancel buttons
+                        <div className="flex items-center gap-1">
+                          <Select
+                            value={tempSector}
+                            onValueChange={(v) => setTempSector(v)}
+                          >
+                            <SelectTrigger className="h-7 w-[150px] text-[11px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {SECTORS.map((s) => (
+                                <SelectItem key={s} value={s}>
+                                  {s}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <button
+                            type="button"
+                            onClick={() => saveSector(p)}
+                            disabled={savingSector}
+                            title="Save sector"
+                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-50"
+                          >
+                            <Check className="h-3 w-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={cancelEditSector}
+                            disabled={savingSector}
+                            title="Cancel"
+                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-muted text-muted-foreground hover:bg-muted/80 disabled:opacity-50"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        // Read-only display with hover-to-edit affordance
+                        <button
+                          type="button"
+                          onClick={() => startEditSector(p)}
+                          className="group inline-flex items-center gap-1 rounded text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+                          title="Click to edit sector"
+                        >
+                          <span>{p.sector}</span>
+                          <Pencil className="h-2.5 w-2.5 opacity-0 transition-opacity group-hover:opacity-70" />
+                        </button>
+                      )}
+                    </td>
                     <td className="px-3 py-2">
                       <span className="inline-flex items-center gap-1 rounded bg-foreground/5 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground/70">
                         {p.region}

@@ -32,9 +32,14 @@ import { WhatsAppPreview } from './whatsapp-preview';
 const SECTORS = [
   'Retail',
   'Food & Beverage',
-  'Professional Services',
-  'Tech & Digital',
   'Manufacturing',
+  'Healthcare',
+  'Education',
+  'Finance & Banking',
+  'Technology',
+  'Tourism & Hospitality',
+  'Government / Public Sector',
+  'Professional Services',
   'Agriculture',
   'Others',
 ];
@@ -74,9 +79,13 @@ export function RegistrationConsole() {
     email: '',
     phone: '',
     sector: 'Retail',
+    otherSector: '',
     region: 'KL',
     preferredMode: 'Physical',
   });
+
+  // Final sector value: if "Others" is selected, use the free-text value; otherwise use the dropdown value
+  const resolvedSector = form.sector === 'Others' ? form.otherSector.trim() || 'Others' : form.sector;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,13 +93,23 @@ export function RegistrationConsole() {
       toast.error('IC Number, Name, and Email are required.');
       return;
     }
+    if (!form.sector) {
+      toast.error('Sector or Industry Sector is required.');
+      return;
+    }
+    if (form.sector === 'Others' && !form.otherSector.trim()) {
+      toast.error('Please specify your sector when "Others" is selected.');
+      return;
+    }
     setSubmitting(true);
     setResponse(null);
     try {
+      // Send the resolved sector (free-text if "Others", otherwise the dropdown value)
+      const payload = { ...form, sector: resolvedSector };
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
       const data = (await res.json()) as RegisterResponse;
       setResponse(data);
@@ -116,6 +135,7 @@ export function RegistrationConsole() {
       email: '',
       phone: '',
       sector: 'Retail',
+      otherSector: '',
       region: 'KL',
       preferredMode: 'Physical',
     });
@@ -202,7 +222,42 @@ export function RegistrationConsole() {
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {/* Sector or Industry Sector — required, on its own row to leave room for the
+                conditional "Others (please specify)" free-text input below the dropdown */}
+            <div className="space-y-1.5">
+              <Label htmlFor="sector" className="text-xs font-medium">
+                Sector or Industry Sector <span className="text-rose-500">*</span>
+              </Label>
+              <Select value={form.sector} onValueChange={(v) => setForm({ ...form, sector: v, otherSector: v === 'Others' ? form.otherSector : '' })}>
+                <SelectTrigger className="text-sm" id="sector">
+                  <SelectValue placeholder="Select a sector" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SECTORS.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {/* Conditional free-text input — only shown when "Others" is selected */}
+              {form.sector === 'Others' && (
+                <div className="space-y-1.5 pt-1">
+                  <Label htmlFor="otherSector" className="text-xs font-medium">
+                    Please specify your sector <span className="text-rose-500">*</span>
+                  </Label>
+                  <Input
+                    id="otherSector"
+                    value={form.otherSector}
+                    onChange={(e) => setForm({ ...form, otherSector: e.target.value })}
+                    placeholder="e.g. Logistics, Construction, Creative Arts…"
+                    required
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium">Region</Label>
                 <Select value={form.region} onValueChange={(v) => setForm({ ...form, region: v })}>
@@ -213,21 +268,6 @@ export function RegistrationConsole() {
                     {REGIONS.map((r) => (
                       <SelectItem key={r.code} value={r.code}>
                         {r.code} · {r.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium">Sector</Label>
-                <Select value={form.sector} onValueChange={(v) => setForm({ ...form, sector: v })}>
-                  <SelectTrigger className="text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SECTORS.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {s}
                       </SelectItem>
                     ))}
                   </SelectContent>
