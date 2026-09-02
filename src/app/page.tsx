@@ -16,7 +16,6 @@ import { TrainerPerformance } from '@/components/dashboard/trainer-performance';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { useLiveTicker } from '@/hooks/use-live-ticker';
 import {
   LayoutDashboard,
   UserPlus,
@@ -25,9 +24,6 @@ import {
   RefreshCw,
   Sparkles,
   GraduationCap,
-  Radio,
-  Pause,
-  Play,
 } from 'lucide-react';
 
 type TabId = 'dashboard' | 'trainers' | 'register' | 'checkin' | 'registry';
@@ -44,7 +40,7 @@ export default function Home() {
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<TabId>('dashboard');
-  const [refreshTick, setRefreshTick] = useState(0); // bump to force live components to refetch
+  const [refreshTick, setRefreshTick] = useState(0);
 
   const loadStats = useCallback(async () => {
     setLoading(true);
@@ -52,6 +48,7 @@ export default function Home() {
       const res = await fetch('/api/stats', { cache: 'no-store' });
       const data = (await res.json()) as StatsResponse;
       setStats(data);
+      setRefreshTick((n) => n + 1);
     } catch {
       toast.error('Failed to load stats — please retry');
     } finally {
@@ -59,27 +56,9 @@ export default function Home() {
     }
   }, []);
 
-  // Live ticker — fires every 5s, mutates the DB, and forces refetches everywhere
-  const { lastTick, running, pause, resume } = useLiveTicker({ silent: false });
-
   useEffect(() => {
     loadStats();
   }, [loadStats]);
-
-  // Whenever a live tick fires, refetch the global stats so all dashboard widgets update
-  useEffect(() => {
-    if (!lastTick) return;
-    // Bump refreshTick so child components that depend on it refetch
-    setRefreshTick((n) => n + 1);
-    // Also pull fresh global stats
-    (async () => {
-      try {
-        const res = await fetch('/api/stats', { cache: 'no-store' });
-        const data = (await res.json()) as StatsResponse;
-        setStats(data);
-      } catch {}
-    })();
-  }, [lastTick]);
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -87,8 +66,6 @@ export default function Home() {
         onRefresh={loadStats}
         refreshing={loading}
         stats={stats}
-        liveRunning={running}
-        onToggleLive={running ? pause : resume}
       />
 
       <nav className="sticky top-[57px] z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -181,14 +158,10 @@ function Header({
   onRefresh,
   refreshing,
   stats,
-  liveRunning,
-  onToggleLive,
 }: {
   onRefresh: () => void;
   refreshing: boolean;
   stats: StatsResponse | null;
-  liveRunning: boolean;
-  onToggleLive: () => void;
 }) {
   return (
     <header className="sticky top-0 z-40 border-b bg-[#0B1F3A] text-white">
@@ -230,34 +203,14 @@ function Header({
             </div>
           )}
 
-          {/* LIVE indicator + toggle */}
-          <button
-            onClick={onToggleLive}
-            className={cn(
-              'group inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-all',
-              liveRunning
-                ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-200 hover:bg-emerald-500/25'
-                : 'border-white/20 bg-white/5 text-white/70 hover:bg-white/10',
-            )}
-            title={liveRunning ? 'Pause live simulation' : 'Resume live simulation'}
-          >
-            {liveRunning ? (
-              <>
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                </span>
-                <span className="hidden font-semibold uppercase tracking-wider sm:inline">Live</span>
-                <Pause className="h-3 w-3 opacity-70" />
-              </>
-            ) : (
-              <>
-                <Radio className="h-3.5 w-3.5 opacity-80" />
-                <span className="hidden font-semibold uppercase tracking-wider sm:inline">Paused</span>
-                <Play className="h-3 w-3 opacity-70" />
-              </>
-            )}
-          </button>
+          {/* Real D1 Connected indicator */}
+          <div className="inline-flex items-center gap-1.5 rounded-md border border-emerald-400/40 bg-emerald-500/10 px-2.5 py-1.5 text-xs font-medium text-emerald-300">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+            </span>
+            <span className="font-semibold uppercase tracking-wider">Live DB</span>
+          </div>
 
           <Button
             variant="ghost"
