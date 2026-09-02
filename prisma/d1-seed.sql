@@ -1,5 +1,3 @@
-PRAGMA foreign_keys=OFF;
-BEGIN TRANSACTION;
 CREATE TABLE IF NOT EXISTS "Participant" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "participantId" TEXT NOT NULL,
@@ -7362,9 +7360,8 @@ INSERT INTO AuditLog VALUES('cmtjmlcae01axn1uh0mxveevh','DUPLICATE_BLOCKED','Lia
 INSERT INTO AuditLog VALUES('cmtjmlcvg01azn1uhwhpkvd8f','REGISTER','Suresh a/l Subramaniam','930616-12-2027-2','Registered as ASEAN-80502 via Registered_Physical. Region: Kuala Lumpur.',1788325103212);
 INSERT INTO AuditLog VALUES('cmtjmlcvj01b0n1uhnsqeq4zt','CHECKIN','Suresh a/l Subramaniam','','Live check-in: Suresh a/l Subramaniam (ASEAN-80502) → Physical · KL.',1788325103215);
 INSERT INTO AuditLog VALUES('cmtjmlcvj01b1n1uha4h286io','FEEDBACK','Devi binti Yusof','coach-a|pre|ASEAN-08849|3|Appreciated the quick WhatsApp check-in before the session. The pre-assessment was short and respectful of my time.','Live pre-session feedback for coach-a: "Appreciated the quick WhatsApp check-in before the session. The pre-assessment was short and respectful of my time.…"',1788325103216);
-CREATE UNIQUE INDEX "Participant_participantId_key" ON "Participant"("participantId");
-CREATE UNIQUE INDEX "Participant_icNumber_key" ON "Participant"("icNumber");
-CREATE INDEX "Participant_region_status_idx" ON "Participant"("region", "status");
-CREATE INDEX "Participant_status_idx" ON "Participant"("status");
-CREATE INDEX "Participant_sector_idx" ON "Participant"("sector");
-COMMIT;
+CREATE UNIQUE INDEX IF NOT EXISTS "Participant_participantId_key" ON "Participant"("participantId");
+CREATE UNIQUE INDEX IF NOT EXISTS "Participant_icNumber_key" ON "Participant"("icNumber");
+CREATE INDEX IF NOT EXISTS "Participant_region_status_idx" ON "Participant"("region", "status");
+CREATE INDEX IF NOT EXISTS "Participant_status_idx" ON "Participant"("status");
+CREATE INDEX IF NOT EXISTS "Participant_sector_idx" ON "Participant"("sector");
