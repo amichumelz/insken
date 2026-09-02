@@ -4,14 +4,18 @@ import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
+  d1Client: PrismaClient | undefined;
 };
 
 function getPrismaClient(): PrismaClient {
   try {
     const ctx = getCloudflareContext();
     if (ctx?.env?.DB) {
-      const adapter = new PrismaD1(ctx.env.DB as any);
-      return new PrismaClient({ adapter, log: ['error', 'warn'] });
+      if (!globalForPrisma.d1Client) {
+        const adapter = new PrismaD1(ctx.env.DB as any);
+        globalForPrisma.d1Client = new PrismaClient({ adapter, log: ['error'] });
+      }
+      return globalForPrisma.d1Client;
     }
   } catch {
     // Fallback if not inside Cloudflare context
@@ -19,7 +23,7 @@ function getPrismaClient(): PrismaClient {
 
   if (!globalForPrisma.prisma) {
     globalForPrisma.prisma = new PrismaClient({
-      log: ['error', 'warn'],
+      log: ['error'],
     });
   }
   return globalForPrisma.prisma;
