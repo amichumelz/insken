@@ -23,10 +23,12 @@ import {
   Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/lib/i18n';
 
-const REFRESH_INTERVAL_MS = 30000; // 30 seconds — gentle cadence (the live ticker also drives refreshes)
+const REFRESH_INTERVAL_MS = 30000; // 30 seconds
 
 export function LiveAttendanceTracking({ refreshTick = 0 }: { refreshTick?: number }) {
+  const { t, lang } = useLanguage();
   const [data, setData] = useState<LiveCheckinsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -58,7 +60,6 @@ export function LiveAttendanceTracking({ refreshTick = 0 }: { refreshTick?: numb
       }
     })();
 
-    // Auto-refresh on an interval for "live" feel
     const interval = setInterval(() => {
       load();
     }, REFRESH_INTERVAL_MS);
@@ -69,55 +70,55 @@ export function LiveAttendanceTracking({ refreshTick = 0 }: { refreshTick?: numb
     };
   }, [load]);
 
-  // Force refetch when the parent's refreshTick bumps (driven by the global live ticker)
   useEffect(() => {
-    if (refreshTick === 0) return; // skip initial mount
+    if (refreshTick === 0) return;
     load();
   }, [refreshTick, load]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Live indicator strip */}
-      <div className="flex items-center justify-between gap-2 rounded-lg border border-emerald-200 bg-emerald-50/60 px-3 py-2 dark:border-emerald-900/60 dark:bg-emerald-950/20">
+      <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-2.5 dark:border-emerald-900/60 dark:bg-emerald-950/20 shadow-sm">
         <div className="flex items-center gap-2">
           <span className="relative flex h-2.5 w-2.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
             <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
           </span>
-          <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
-            Live Attendance Tracking
+          <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+            {lang === 'ms' ? 'PEMANTAUAN KEHADIRAN LANGSUNG' : 'LIVE ATTENDANCE TRACKING'}
           </span>
           <span className="hidden text-[11px] text-muted-foreground sm:inline">
-            Auto-refreshing every {REFRESH_INTERVAL_MS / 1000}s
+            {lang === 'ms' ? 'Kemas kini automatik setiap 30s' : 'Auto-refreshing every 30s'}
           </span>
         </div>
         <div className="flex items-center gap-2">
           {lastUpdated && (
-            <span className="font-mono text-[10px] text-muted-foreground">
-              <Clock className="mr-1 inline h-3 w-3" />
+            <span className="font-mono text-[10px] text-muted-foreground flex items-center">
+              <Clock className="mr-1 h-3 w-3" />
               {lastUpdated.toLocaleTimeString('en-MY', { hour12: false })}
             </span>
           )}
           <Button variant="ghost" size="sm" onClick={load} disabled={loading} className="h-7 px-2 text-xs">
-            <RefreshCw className={cn('h-3 w-3', loading && 'animate-spin')} />
-            <span className="ml-1 hidden sm:inline">Refresh</span>
+            <RefreshCw className={cn('h-3 w-3 mr-1', loading && 'animate-spin')} />
+            <span>{t.navRefresh}</span>
           </Button>
         </div>
       </div>
 
-      {/* (Live KPI row moved to top of dashboard — see DashboardTopRow) */}
-
-      {/* Velocity chart — full width (Regional Check-ins card removed) */}
+      {/* Velocity chart — full width */}
       {data && (
-        <CheckinVelocityChart velocity={data.velocity} peakHour={data.today.peakHour} peakCount={data.today.peakHourCount} />
+        <CheckinVelocityChart
+          velocity={data.velocity}
+          peakHour={data.today.peakHour}
+          peakCount={data.today.peakHourCount}
+        />
       )}
 
-      {/* Live feed */}
+      {/* Live feed — full width */}
       {data && <LiveFeed feed={data.feed} />}
     </div>
   );
 }
-
 
 function CheckinVelocityChart({
   velocity,
@@ -128,28 +129,34 @@ function CheckinVelocityChart({
   peakHour: string;
   peakCount: number;
 }) {
+  const { lang } = useLanguage();
+
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
+    <Card className="border shadow-sm">
+      <CardHeader className="pb-3 px-4 sm:px-6 pt-5">
         <div className="flex items-center justify-between gap-2">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Activity className="h-4 w-4 text-emerald-600" />
-            Check-in Velocity
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Activity className="h-5 w-5 text-emerald-600" />
+            {lang === 'ms' ? 'Kelajuan Kehadiran' : 'Check-in Velocity'}
           </CardTitle>
           <div className="text-right">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Peak hour</div>
-            <div className="text-sm font-semibold tabular-nums">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              {lang === 'ms' ? 'Waktu Kemuncak' : 'Peak Hour'}
+            </div>
+            <div className="text-sm font-bold tabular-nums text-foreground">
               {peakHour} <span className="text-muted-foreground">·</span>{' '}
               <span className="text-emerald-600">{peakCount}</span>
             </div>
           </div>
         </div>
-        <p className="text-xs text-muted-foreground">Hourly check-ins · last 24 hours</p>
+        <p className="text-xs text-muted-foreground">
+          {lang === 'ms' ? 'Kehadiran setiap jam · 24 jam lepas' : 'Hourly check-ins · last 24 hours'}
+        </p>
       </CardHeader>
-      <CardContent>
-        <div className="h-[240px]">
+      <CardContent className="px-2 sm:px-6 pb-5">
+        <div className="h-[260px] sm:h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={velocity} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+            <BarChart data={velocity} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
               <defs>
                 <linearGradient id="physicalBar" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#1E3A8A" stopOpacity={0.95} />
@@ -187,14 +194,14 @@ function CheckinVelocityChart({
                 labelStyle={{ color: '#D4A017', fontWeight: 600 }}
                 formatter={(value: number, name: string) => [
                   `${value.toLocaleString()} check-ins`,
-                  name === 'physical' ? 'Physical' : 'Online',
+                  name === 'physical' ? (lang === 'ms' ? 'Fizikal' : 'Physical') : (lang === 'ms' ? 'Online' : 'Online'),
                 ]}
-                labelFormatter={(label) => `Hour ${label}`}
+                labelFormatter={(label) => `${lang === 'ms' ? 'Jam' : 'Hour'} ${label}`}
               />
               <Legend
                 iconType="circle"
                 wrapperStyle={{ fontSize: 11, paddingTop: 6 }}
-                formatter={(value) => (value === 'physical' ? 'Physical' : 'Online')}
+                formatter={(value) => (value === 'physical' ? (lang === 'ms' ? 'Fizikal' : 'Physical') : (lang === 'ms' ? 'Online' : 'Online'))}
               />
               <Bar dataKey="physical" stackId="a" fill="url(#physicalBar)" radius={[0, 0, 0, 0]} />
               <Bar dataKey="online" stackId="a" fill="url(#onlineBar)" radius={[4, 4, 0, 0]} />
@@ -207,25 +214,29 @@ function CheckinVelocityChart({
 }
 
 function LiveFeed({ feed }: { feed: LiveCheckinsResponse['feed'] }) {
+  const { lang } = useLanguage();
+
   return (
     <Card className="border shadow-sm">
       <CardHeader className="pb-3 px-4 sm:px-6 pt-5">
         <div className="flex items-center justify-between gap-2">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Radio className="h-4 w-4 text-emerald-500 animate-pulse" />
-            Live Check-in Feed
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Radio className="h-5 w-5 text-emerald-500 animate-pulse" />
+            {lang === 'ms' ? 'Suapan Kehadiran Terkini' : 'Live Check-in Feed'}
           </CardTitle>
-          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
-            {feed.length} recent
+          <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+            {feed.length} {lang === 'ms' ? 'terkini' : 'recent'}
           </span>
         </div>
-        <p className="text-xs text-muted-foreground">Real-time attendance events as they happen</p>
+        <p className="text-xs text-muted-foreground">
+          {lang === 'ms' ? 'Peristiwa kehadiran secara langsung semasa ia berlaku' : 'Real-time attendance events as they happen'}
+        </p>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="max-h-[280px] overflow-y-auto scroll-styled">
+        <div className="max-h-[380px] overflow-y-auto scroll-styled">
           {feed.length === 0 ? (
             <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">
-              No check-ins recorded yet today.
+              {lang === 'ms' ? 'Tiada kehadiran direkodkan lagi hari ini.' : 'No check-ins recorded yet today.'}
             </div>
           ) : (
             <ul className="divide-y">
@@ -236,34 +247,34 @@ function LiveFeed({ feed }: { feed: LiveCheckinsResponse['feed'] }) {
                   ? 'bg-primary/10 text-primary'
                   : 'bg-amber-500/10 text-amber-600';
                 const badgeTone = isPhysical
-                  ? 'bg-primary/10 text-primary'
-                  : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300';
+                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 font-bold'
+                  : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 font-bold';
                 const time = new Date(c.checkInAt);
                 const minutesAgo = Math.floor((Date.now() - time.getTime()) / 60000);
                 return (
                   <li
                     key={`${c.participantId}-${i}`}
-                    className="flex items-center justify-between gap-3 px-3 py-2 transition-colors hover:bg-muted/30"
+                    className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3 transition-colors hover:bg-muted/30"
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-full', tone)}>
                         <Icon className="h-4 w-4" />
                       </div>
                       <div className="min-w-0">
-                        <div className="truncate text-sm font-medium">
+                        <div className="truncate text-sm font-semibold">
                           {c.name}
-                          <span className="ml-2 font-mono text-[10px] text-muted-foreground">{c.participantId}</span>
+                          <span className="ml-2 font-mono text-[11px] font-normal text-muted-foreground">{c.participantId}</span>
                         </div>
-                        <div className="truncate text-[11px] text-muted-foreground">
+                        <div className="truncate text-xs text-muted-foreground">
                           {c.sector} · {c.region}
                         </div>
                       </div>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1 text-right">
-                      <span className={cn('rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide', badgeTone)}>
-                        {isPhysical ? 'Physical' : 'Online'}
+                      <span className={cn('rounded px-2 py-0.5 text-[10px] uppercase tracking-wide', badgeTone)}>
+                        {isPhysical ? 'PHYSICAL' : 'ONLINE'}
                       </span>
-                      <span className="text-[10px] text-muted-foreground">
+                      <span className="text-[11px] text-muted-foreground">
                         {minutesAgo < 1
                           ? 'just now'
                           : minutesAgo < 60

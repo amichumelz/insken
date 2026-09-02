@@ -4,6 +4,7 @@ import { SectorStat } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { PieChart as PieIcon, TrendingUp } from 'lucide-react';
+import { useLanguage } from '@/lib/i18n';
 
 const SECTOR_COLORS = [
   '#1E3A8A', // navy
@@ -16,6 +17,7 @@ const SECTOR_COLORS = [
 ];
 
 export function SectoralBreakdown({ sectors }: { sectors: SectorStat[] }) {
+  const { lang } = useLanguage();
   const top3 = sectors.slice(0, 3);
   const rest = sectors.slice(3);
   const restCount = rest.reduce((s, x) => s + x.count, 0);
@@ -26,25 +28,27 @@ export function SectoralBreakdown({ sectors }: { sectors: SectorStat[] }) {
   ];
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <PieIcon className="h-4 w-4 text-primary" />
-          Sectoral Breakdown
+    <Card className="border shadow-sm">
+      <CardHeader className="pb-3 px-4 sm:px-6 pt-5">
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <PieIcon className="h-5 w-5 text-primary" />
+          {lang === 'ms' ? 'Pecahan Sektor Perniagaan PMKS' : 'Sectoral Breakdown'}
         </CardTitle>
-        <p className="text-xs text-muted-foreground">Top 3 MSME sectors driving registrations</p>
+        <p className="text-xs text-muted-foreground">
+          {lang === 'ms' ? '3 sektor utama yang memacu pendaftaran' : 'Top 3 MSME sectors driving registrations'}
+        </p>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="h-[200px]">
+      <CardContent className="px-4 sm:px-6 pb-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 items-center">
+          <div className="h-[220px] sm:h-[240px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={chartData}
                   dataKey="value"
                   nameKey="name"
-                  innerRadius={45}
-                  outerRadius={75}
+                  innerRadius={50}
+                  outerRadius={85}
                   paddingAngle={2}
                   strokeWidth={0}
                 >
@@ -74,35 +78,35 @@ export function SectoralBreakdown({ sectors }: { sectors: SectorStat[] }) {
             </ResponsiveContainer>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {sectors.slice(0, 5).map((s, i) => (
-              <div key={s.sector} className="flex items-center justify-between gap-2 text-xs">
-                <div className="flex min-w-0 items-center gap-2">
+              <div key={s.sector} className="flex items-center justify-between gap-2 text-xs sm:text-sm">
+                <div className="flex min-w-0 items-center gap-2.5">
                   <span
-                    className="h-2.5 w-2.5 shrink-0 rounded-full"
+                    className="h-3 w-3 shrink-0 rounded-full"
                     style={{ background: SECTOR_COLORS[i % SECTOR_COLORS.length] }}
                   />
-                  <span className="truncate font-medium">{s.sector}</span>
+                  <span className="truncate font-medium text-foreground">{s.sector}</span>
                 </div>
-                <div className="flex items-center gap-2 tabular-nums">
-                  <span className="font-semibold">{s.count.toLocaleString()}</span>
-                  <span className="text-muted-foreground">{s.pct}%</span>
+                <div className="flex items-center gap-2.5 tabular-nums">
+                  <span className="font-bold text-foreground">{s.count.toLocaleString()}</span>
+                  <span className="text-muted-foreground text-xs">{s.pct}%</span>
                 </div>
               </div>
             ))}
             {sectors.length > 5 && (
-              <div className="pt-1 text-[11px] text-muted-foreground">
-                +{sectors.length - 5} more sectors
+              <div className="pt-1 text-xs text-muted-foreground">
+                +{sectors.length - 5} {lang === 'ms' ? 'lagi sektor lain' : 'more sectors'}
               </div>
             )}
-            <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-emerald-50 p-2 text-[11px] text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
-              <TrendingUp className="h-3 w-3" />
+            <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-50 p-2.5 text-xs text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/40">
+              <TrendingUp className="h-4 w-4 shrink-0" />
               <span>
-                Top 3 sectors ={' '}
-                <span className="font-semibold">
+                {lang === 'ms' ? '3 sektor teratas merangkumi ' : 'Top 3 sectors = '}
+                <span className="font-bold">
                   {top3.reduce((s, x) => s + x.pct, 0)}%
                 </span>{' '}
-                of all registrations
+                {lang === 'ms' ? 'daripada jumlah keseluruhan pendaftaran' : 'of all registrations'}
               </span>
             </div>
           </div>
