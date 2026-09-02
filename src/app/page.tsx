@@ -26,6 +26,9 @@ import {
   Sparkles,
   GraduationCap,
   ExternalLink,
+  User as UserIcon,
+  LogOut,
+  LogIn,
 } from 'lucide-react';
 
 type TabId = 'dashboard' | 'trainers' | 'register' | 'checkin' | 'registry';
@@ -43,6 +46,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<TabId>('dashboard');
   const [refreshTick, setRefreshTick] = useState(0);
+  const [currentUser, setCurrentUser] = useState<{ id: string; name: string; email: string; role: string } | null>(null);
 
   const loadStats = useCallback(async () => {
     setLoading(true);
@@ -58,9 +62,35 @@ export default function Home() {
     }
   }, []);
 
+  const checkAuth = useCallback(async () => {
+    try {
+      const res = await fetch('/api/auth/me');
+      const data = await res.json();
+      if (data.authenticated && data.user) {
+        setCurrentUser(data.user);
+      } else {
+        setCurrentUser(null);
+      }
+    } catch {
+      setCurrentUser(null);
+    }
+  }, []);
+
   useEffect(() => {
     loadStats();
-  }, [loadStats]);
+    checkAuth();
+  }, [loadStats, checkAuth]);
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      setCurrentUser(null);
+      toast.success('Log keluar berjaya.');
+      window.location.href = '/login';
+    } catch {
+      toast.error('Ralat semasa log keluar.');
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -68,6 +98,8 @@ export default function Home() {
         onRefresh={loadStats}
         refreshing={loading}
         stats={stats}
+        user={currentUser}
+        onLogout={handleLogout}
       />
 
       <nav className="sticky top-[57px] z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -176,10 +208,14 @@ function Header({
   onRefresh,
   refreshing,
   stats,
+  user,
+  onLogout,
 }: {
   onRefresh: () => void;
   refreshing: boolean;
   stats: StatsResponse | null;
+  user: { id: string; name: string; email: string; role: string } | null;
+  onLogout: () => void;
 }) {
   return (
     <header className="sticky top-0 z-40 border-b bg-[#0B1F3A] text-white">
@@ -240,6 +276,36 @@ function Header({
             <RefreshCw className={cn('h-3.5 w-3.5', refreshing && 'animate-spin')} />
             <span className="ml-1 hidden sm:inline">Refresh</span>
           </Button>
+
+          {/* User Auth Profile / Actions */}
+          {user ? (
+            <div className="flex items-center gap-2 border-l border-white/20 pl-2 ml-1">
+              <div className="hidden sm:flex flex-col items-end text-right">
+                <span className="text-xs font-medium text-white truncate max-w-[130px]">{user.name}</span>
+                <span className="text-[10px] text-[#D4A017] font-semibold">{user.role}</span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onLogout}
+                className="h-8 border-white/20 bg-white/10 px-2 text-xs text-white hover:bg-rose-500/20 hover:border-rose-400 hover:text-rose-200"
+                title="Log Keluar"
+              >
+                <LogOut className="h-3.5 w-3.5 sm:mr-1" />
+                <span className="hidden sm:inline">Log Keluar</span>
+              </Button>
+            </div>
+          ) : (
+            <Link href="/login" className="border-l border-white/20 pl-2 ml-1">
+              <Button
+                size="sm"
+                className="h-8 bg-[#D4A017] text-[#0B1F3A] hover:bg-[#F59E0B] font-semibold text-xs gap-1.5"
+              >
+                <LogIn className="h-3.5 w-3.5" />
+                <span>Log Masuk</span>
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
     </header>

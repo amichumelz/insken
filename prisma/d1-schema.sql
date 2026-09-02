@@ -38,9 +38,22 @@ CREATE TABLE IF NOT EXISTS "AuditLog" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- CreateTable
+CREATE TABLE IF NOT EXISTS "User" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "password" TEXT NOT NULL,
+    "role" TEXT NOT NULL DEFAULT 'ADMIN',
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX IF NOT EXISTS "Participant_participantId_key" ON "Participant"("participantId");
 CREATE UNIQUE INDEX IF NOT EXISTS "Participant_icNumber_key" ON "Participant"("icNumber");
 CREATE INDEX IF NOT EXISTS "Participant_region_status_idx" ON "Participant"("region", "status");
 CREATE INDEX IF NOT EXISTS "Participant_status_idx" ON "Participant"("status");
 CREATE INDEX IF NOT EXISTS "Participant_sector_idx" ON "Participant"("sector");
+CREATE UNIQUE INDEX IF NOT EXISTS "User_email_key" ON "User"("email");
+
