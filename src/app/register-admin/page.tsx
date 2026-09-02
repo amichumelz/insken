@@ -41,7 +41,7 @@ export default function RegisterAdminPage() {
 
       if (res.ok && data.ok) {
         toast.success('Akaun admin berjaya didaftarkan!');
-        router.push('/');
+        router.push('/admin');
         router.refresh();
       } else {
         toast.error(data.message || 'Pendaftaran akaun gagal.');

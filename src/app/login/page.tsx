@@ -34,7 +34,7 @@ export default function LoginPage() {
 
       if (res.ok && data.ok) {
         toast.success(`Selamat kembali, ${data.user.name}!`);
-        router.push('/');
+        router.push('/admin');
         router.refresh();
       } else {
         toast.error(data.message || 'Log masuk gagal. Sila semak emel atau kata laluan.');
