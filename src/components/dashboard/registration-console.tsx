@@ -21,15 +21,13 @@ import {
   Loader2,
   ShieldCheck,
   Route,
-  Send,
   Smartphone,
-  Download,
   RotateCcw,
   Sparkles,
+  MessageCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RegisterResponse, WorkflowStep } from '@/lib/types';
-import { WhatsAppPreview } from './whatsapp-preview';
 import { useLanguage } from '@/lib/i18n';
 
 const SECTORS = [
@@ -38,76 +36,55 @@ const SECTORS = [
   'Manufacturing',
   'Healthcare',
   'Education',
-  'Finance & Banking',
-  'Technology',
-  'Tourism & Hospitality',
-  'Government / Public Sector',
   'Professional Services',
   'Agriculture',
+  'Tech & Digital',
+  'Construction',
+  'Tourism & Hospitality',
   'Others',
 ];
 
 const REGIONS = [
-  { code: 'KL', name: 'Kuala Lumpur' },
-  { code: 'JHR', name: 'Johor' },
-  { code: 'PNG', name: 'Penang' },
-  { code: 'SBH', name: 'Sabah' },
-  { code: 'SWK', name: 'Sarawak' },
+  { code: 'KL', name: 'Kuala Lumpur (KL)' },
+  { code: 'JHR', name: 'Johor (JHR)' },
+  { code: 'PNG', name: 'Pulau Pinang (PNG)' },
+  { code: 'SBH', name: 'Sabah (SBH)' },
+  { code: 'SWK', name: 'Sarawak (SWK)' },
 ];
-
-const STEP_ICON: Record<WorkflowStep['status'], React.ElementType> = {
-  success: CheckCircle2,
-  rejected: XCircle,
-  routed: Route,
-};
-
-const STEP_TONE: Record<WorkflowStep['status'], string> = {
-  success: 'border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/30',
-  rejected: 'border-rose-300 bg-rose-50 dark:border-rose-800 dark:bg-rose-950/30',
-  routed: 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30',
-};
-
-const STEP_ICON_TONE: Record<WorkflowStep['status'], string> = {
-  success: 'text-emerald-600',
-  rejected: 'text-rose-600',
-  routed: 'text-amber-600',
-};
 
 export function RegistrationConsole() {
   const { t, lang } = useLanguage();
-  const [submitting, setSubmitting] = useState(false);
-  const [response, setResponse] = useState<RegisterResponse | null>(null);
   const [form, setForm] = useState({
     icNumber: '',
     name: '',
     email: '',
     phone: '',
-    sector: 'Retail',
+    sector: '',
     otherSector: '',
     region: 'KL',
     preferredMode: 'Physical',
   });
 
-  const resolvedSector = form.sector === 'Others' ? form.otherSector.trim() || 'Others' : form.sector;
+  const [submitting, setSubmitting] = useState(false);
+  const [response, setResponse] = useState<RegisterResponse | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.icNumber || !form.name || !form.email) {
-      toast.error(lang === 'ms' ? 'No. IC, Nama Penuh dan Emel adalah wajib.' : 'IC Number, Full Name, and Email are required.');
+
+    if (!form.icNumber.trim() || !form.name.trim() || !form.email.trim() || !form.phone.trim() || !form.sector) {
+      toast.error(lang === 'ms' ? 'Sila lengkapkan semua ruangan wajib termasuk No. Telefon WhatsApp.' : 'Please fill in all required fields including WhatsApp Phone Number.');
       return;
     }
-    if (!form.sector) {
-      toast.error(lang === 'ms' ? 'Sila pilih sektor perniagaan anda.' : 'Please select your business sector.');
-      return;
-    }
-    if (form.sector === 'Others' && !form.otherSector.trim()) {
-      toast.error(lang === 'ms' ? 'Sila nyatakan sektor anda jika memilih "Others".' : 'Please specify your sector when "Others" is selected.');
-      return;
-    }
+
+    const payload = {
+      ...form,
+      sector: form.sector === 'Others' && form.otherSector ? form.otherSector : form.sector,
+    };
+
     setSubmitting(true);
     setResponse(null);
+
     try {
-      const payload = { ...form, sector: resolvedSector };
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -115,49 +92,37 @@ export function RegistrationConsole() {
       });
       const data = (await res.json()) as RegisterResponse;
       setResponse(data);
+
       if (data.ok) {
-        toast.success(lang === 'ms' ? 'Pendaftaran berjaya disahkan!' : (data.message ?? 'Registered successfully'));
-      } else if (data.status === 'DUPLICATE_ENTRY') {
-        toast.error(lang === 'ms' ? 'No. IC ini sudah didaftarkan.' : (data.message ?? 'Duplicate entry — already registered'));
+        toast.success(lang === 'ms' ? 'Pendaftaran berjaya disahkan!' : 'Registration confirmed!');
       } else {
-        toast.error(data.error ?? (lang === 'ms' ? 'Pendaftaran gagal.' : 'Registration failed'));
+        toast.error(data.message || (lang === 'ms' ? 'Pendaftaran gagal.' : 'Registration failed.'));
       }
     } catch {
-      toast.error(lang === 'ms' ? 'Ralat sambungan rangkaian. Sila cuba lagi.' : 'Network error — please retry');
+      toast.error(lang === 'ms' ? 'Ralat rangkaian — sila cuba lagi' : 'Network error — please retry');
     } finally {
       setSubmitting(false);
     }
   };
 
   const reset = () => {
-    setResponse(null);
     setForm({
       icNumber: '',
       name: '',
       email: '',
       phone: '',
-      sector: 'Retail',
+      sector: '',
       otherSector: '',
       region: 'KL',
       preferredMode: 'Physical',
     });
+    setResponse(null);
   };
 
-  const regionName = response?.participant
-    ? REGIONS.find((r) => r.code === response.participant!.region)?.name ?? response.participant.region
-    : '';
-
   return (
-    <div
-      className={cn(
-        'grid grid-cols-1 gap-4 sm:gap-6',
-        response?.ok && response.qrDataUrl && response.whatsapp
-          ? 'lg:grid-cols-12'
-          : 'lg:grid-cols-5',
-      )}
-    >
+    <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-5">
       {/* Left: Registration form */}
-      <Card className={cn('border shadow-sm', response?.ok && response.qrDataUrl ? 'lg:col-span-5' : 'lg:col-span-3')}>
+      <Card className="lg:col-span-3 border shadow-sm">
         <CardHeader className="pb-3 px-4 sm:px-6 pt-5">
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
             <UserPlus className="h-5 w-5 text-primary" />
@@ -207,7 +172,7 @@ export function RegistrationConsole() {
                   id="phone"
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  placeholder="+6012-345 6789"
+                  placeholder="0123456789 atau +6012-345 6789"
                   className="h-10 text-sm"
                   required
                 />
@@ -250,71 +215,78 @@ export function RegistrationConsole() {
                 </SelectTrigger>
                 <SelectContent>
                   {SECTORS.map((s) => (
-                    <SelectItem key={s} value={s}>
+                    <SelectItem key={s} value={s} className="text-sm">
                       {s}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-
               {form.sector === 'Others' && (
-                <div className="space-y-1.5 pt-1.5">
-                  <Label htmlFor="otherSector" className="text-xs font-semibold">
-                    {lang === 'ms' ? 'Sila nyatakan sektor anda' : 'Please specify your sector'} <span className="text-rose-500">*</span>
-                  </Label>
-                  <Input
-                    id="otherSector"
-                    value={form.otherSector}
-                    onChange={(e) => setForm({ ...form, otherSector: e.target.value })}
-                    placeholder="cth: Logistik, Pembinaan, Kraf..."
-                    className="h-10 text-sm"
-                    required
-                  />
-                </div>
+                <Input
+                  value={form.otherSector}
+                  onChange={(e) => setForm({ ...form, otherSector: e.target.value })}
+                  placeholder="Sila nyatakan sektor perniagaan anda"
+                  className="mt-2 h-10 text-sm"
+                  required
+                />
               )}
             </div>
 
-            {/* Region & Mode */}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">{t.regRegion}</Label>
-                <Select value={form.region} onValueChange={(v) => setForm({ ...form, region: v })}>
-                  <SelectTrigger className="h-10 text-sm">
-                    <SelectValue placeholder={t.regSelectRegion} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {REGIONS.map((r) => (
-                      <SelectItem key={r.code} value={r.code}>
-                        {r.code} · {r.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">{t.regPreferredMode}</Label>
-                <Select
-                  value={form.preferredMode}
-                  onValueChange={(v) => setForm({ ...form, preferredMode: v })}
-                >
-                  <SelectTrigger className="h-10 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Physical">{t.regPhysicalMode}</SelectItem>
-                    <SelectItem value="Online">{t.regOnlineMode}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Region */}
+            <div className="space-y-1.5">
+              <Label htmlFor="region" className="text-xs font-semibold">
+                {t.regRegion} <span className="text-rose-500">*</span>
+              </Label>
+              <Select
+                value={form.region}
+                onValueChange={(v) => setForm({ ...form, region: v })}
+              >
+                <SelectTrigger className="h-10 text-sm" id="region">
+                  <SelectValue placeholder={t.regSelectRegion} />
+                </SelectTrigger>
+                <SelectContent>
+                  {REGIONS.map((r) => (
+                    <SelectItem key={r.code} value={r.code} className="text-sm">
+                      {r.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Mode Guidance Note */}
-            <div className="rounded-lg bg-muted/50 p-2.5 text-[11px] text-muted-foreground border">
-              <p>
-                {form.preferredMode === 'Physical'
-                  ? t.regPhysicalDesc
-                  : t.regOnlineDesc}
+            {/* Preferred Mode */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">{t.regPreferredMode}</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant={form.preferredMode === 'Physical' ? 'default' : 'outline'}
+                  onClick={() => setForm({ ...form, preferredMode: 'Physical' })}
+                  className={cn(
+                    'h-10 text-xs font-medium',
+                    form.preferredMode === 'Physical'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'hover:bg-muted',
+                  )}
+                >
+                  {t.regPhysicalMode}
+                </Button>
+                <Button
+                  type="button"
+                  variant={form.preferredMode === 'Online' ? 'default' : 'outline'}
+                  onClick={() => setForm({ ...form, preferredMode: 'Online' })}
+                  className={cn(
+                    'h-10 text-xs font-medium',
+                    form.preferredMode === 'Online'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'hover:bg-muted',
+                  )}
+                >
+                  {t.regOnlineMode}
+                </Button>
+              </div>
+              <p className="text-[11px] text-muted-foreground pt-0.5">
+                {form.preferredMode === 'Physical' ? t.regPhysicalDesc : t.regOnlineDesc}
               </p>
             </div>
 
@@ -352,18 +324,18 @@ export function RegistrationConsole() {
         </CardContent>
       </Card>
 
-      {/* Right: Workflow Log & Digital Pass Preview */}
-      <div className={cn(response?.ok && response.qrDataUrl ? 'lg:col-span-7' : 'lg:col-span-2', 'space-y-4')}>
+      {/* Right: Confirmation Pass Result */}
+      <div className="lg:col-span-2 space-y-4">
         {!response ? (
-          <Card className="h-full min-h-[300px] flex flex-col justify-center items-center text-center p-6 border-dashed bg-muted/20">
+          <Card className="h-full min-h-[340px] flex flex-col justify-center items-center text-center p-6 border-dashed bg-muted/20">
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary mb-3">
               <QrCode className="h-7 w-7 text-primary" />
             </div>
-            <h3 className="text-sm font-semibold">{lang === 'ms' ? 'Pas Digital Automatik' : 'Instant Digital Pass'}</h3>
+            <h3 className="text-sm font-semibold">{lang === 'ms' ? 'Pengesahan Tempat Rasmi' : 'Official Seat Confirmation'}</h3>
             <p className="mt-1 max-w-xs text-xs text-muted-foreground leading-relaxed">
               {lang === 'ms'
-                ? 'Lengkapkan borang di sebelah untuk menjana Pas Kehadiran Rasmi ber-QR dan ID Peserta secara serta-merta.'
-                : 'Complete the form to instantly generate your official QR entry pass and participant ID.'}
+                ? 'Lengkapkan borang di sebelah untuk mengesahkan tempat anda. Pas kehadiran digital ber-QR akan dijana dan dihantar terus ke WhatsApp anda.'
+                : 'Complete the form to confirm your seat. Your digital pass will be generated and dispatched directly to your WhatsApp.'}
             </p>
           </Card>
         ) : (
@@ -415,108 +387,76 @@ export function RegistrationConsole() {
               </div>
             </div>
 
-            {/* Digital Pass Card (Mobile & Desktop optimized) */}
+            {/* Official Confirmation Slip Pass Card */}
             {response.ok && response.qrDataUrl && response.participant && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Confirmation Slip Pass Box */}
-                <Card className="border-2 border-[#D4A017]/40 bg-gradient-to-b from-[#0B1F3A] to-[#1E293B] text-white p-4 sm:p-5 flex flex-col items-center justify-center text-center shadow-md">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300 uppercase tracking-wider">
-                      <CheckCircle2 className="h-3 w-3 text-emerald-400" /> {t.regConfirmedBadge}
-                    </span>
+              <Card className="border-2 border-[#D4A017]/40 bg-gradient-to-b from-[#0B1F3A] to-[#1E293B] text-white p-5 flex flex-col items-center justify-center text-center shadow-lg rounded-2xl">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 px-3 py-0.5 text-[10px] font-bold text-emerald-300 uppercase tracking-wider">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> {t.regConfirmedBadge}
+                  </span>
+                </div>
+
+                <h4 className="text-xs font-bold text-[#D4A017] tracking-wider uppercase mb-2">
+                  {t.regSlipTitle}
+                </h4>
+                
+                {/* QR Image Container */}
+                <div className="relative rounded-2xl bg-white p-3 shadow-xl my-1">
+                  <img
+                    src={response.qrDataUrl}
+                    alt={`QR Pass for ${response.participant.participantId}`}
+                    className="h-40 w-40 sm:h-44 sm:w-44 object-contain"
+                  />
+                </div>
+
+                <div className="mt-2.5 rounded-lg bg-amber-500/20 border border-amber-400/30 p-2.5 text-left w-full space-y-1">
+                  <div className="flex items-center gap-1 text-[11px] font-bold text-amber-300">
+                    <Sparkles className="h-3 w-3 text-amber-400" />
+                    <span>{t.regQrLockedBadge}</span>
                   </div>
+                  <p className="text-[10px] text-white/80 leading-tight">
+                    {t.regQrLockedDesc}
+                  </p>
+                </div>
 
-                  <h4 className="text-xs font-bold text-[#D4A017] tracking-wider uppercase mb-2">
-                    {t.regSlipTitle}
-                  </h4>
-                  
-                  {/* QR Image Container with Lock Overlay */}
-                  <div className="relative rounded-xl bg-white p-3 shadow-lg my-1">
-                    <img
-                      src={response.qrDataUrl}
-                      alt={`QR Pass for ${response.participant.participantId}`}
-                      className="h-36 w-36 sm:h-44 sm:w-44 object-contain"
-                    />
+                <div className="mt-3 space-y-1 w-full text-center">
+                  <div className="font-mono font-bold text-xl text-[#D4A017]">
+                    {response.participant.participantId}
                   </div>
-
-                  <div className="mt-2.5 rounded-lg bg-amber-500/20 border border-amber-400/30 p-2 text-left w-full space-y-1">
-                    <div className="flex items-center gap-1 text-[11px] font-bold text-amber-300">
-                      <Sparkles className="h-3 w-3 text-amber-400" />
-                      <span>{t.regQrLockedBadge}</span>
-                    </div>
-                    <p className="text-[10px] text-white/80 leading-tight">
-                      {t.regQrLockedDesc}
-                    </p>
+                  <div className="font-semibold text-base text-white truncate">
+                    {response.participant.name}
                   </div>
-
-                  <div className="mt-3 space-y-1 w-full text-center">
-                    <div className="font-mono font-bold text-lg text-[#D4A017]">
-                      {response.participant.participantId}
-                    </div>
-                    <div className="font-medium text-sm text-white truncate">
-                      {response.participant.name}
-                    </div>
-                    <div className="text-xs text-white/70">
-                      {response.participant.region} · {response.participant.finalMode.replace('Registered_', '')}
-                    </div>
+                  <div className="text-xs text-white/70">
+                    {response.participant.region} · {response.participant.finalMode.replace('Registered_', '')}
                   </div>
+                </div>
 
-                  <div className="mt-4 flex flex-col items-center gap-2 w-full">
-                    <div className="flex items-center justify-center gap-2 rounded-xl bg-emerald-500/20 border border-emerald-400/40 p-2.5 text-center text-xs font-bold text-emerald-300 w-full">
-                      <Smartphone className="h-4 w-4 text-emerald-400 shrink-0" />
-                      <span>
-                        {lang === 'ms'
-                          ? `Dihantar terus ke WhatsApp (${response.participant.phone || 'Nombor Peserta'})`
-                          : `Sent directly to WhatsApp (${response.participant.phone || 'Registered Phone'})`}
-                      </span>
-                    </div>
-
-                    {response.participant.phone && (
-                      <a
-                        href={`https://wa.me/${response.participant.phone.replace(/[^0-9]/g, '').replace(/^0/, '60')}?text=${encodeURIComponent(
-                          `✅ *PENGESAHAN PENDAFTARAN INSKEN*\n\nHai *${response.participant.name}*!\nPendaftaran anda untuk *Program Latihan A.I. PMKS ASEAN* telah DISAHKAN.\n\n🎟️ *ID Peserta:* ${response.participant.participantId}\n📍 *Wilayah:* ${response.participant.region}\n📋 *Mod:* ${response.participant.finalMode.replace('Registered_', '')}\n\n👉 *Pautan Pas Kehadiran Digital:* ${typeof window !== 'undefined' ? window.location.origin : 'https://insken.workers.dev'}/pass/${response.participant.participantId}\n\n_Sila simpan pautan ini untuk imbasan kehadiran pada hari program._`
-                        )}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-1.5 w-full rounded-lg bg-[#25D366] px-3 py-2 text-xs font-bold text-white shadow hover:bg-[#1EBE5D] transition-colors"
-                      >
-                        <Smartphone className="h-3.5 w-3.5" />
-                        <span>{lang === 'ms' ? 'Buka Mesej di WhatsApp Anda' : 'Open Message in WhatsApp'}</span>
-                      </a>
-                    )}
-                  </div>
-                </Card>
-
-                {/* WhatsApp Confirmation Card */}
-                {response.whatsapp && (
-                  <Card className="p-4 sm:p-5 flex flex-col justify-between border shadow-sm">
-                    <div>
-                      <div className="flex items-center gap-2 mb-3">
-                        <Smartphone className="h-4 w-4 text-emerald-600" />
-                        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                          {t.regWhatsAppPreview}
-                        </span>
-                      </div>
-                      <WhatsAppPreview
-                        participant={response.participant}
-                        qrDataUrl={response.qrDataUrl}
-                        whatsapp={response.whatsapp}
-                        capacityRouted={!!response.capacityRouted}
-                        regionName={regionName}
-                      />
-                    </div>
-
-                    <Button
-                      variant="outline"
-                      onClick={reset}
-                      className="mt-4 w-full h-9 text-xs gap-1.5"
+                {/* Direct WhatsApp Action */}
+                <div className="mt-4 flex flex-col items-center gap-2 w-full">
+                  {response.participant.phone && (
+                    <a
+                      href={`https://wa.me/${response.participant.phone.replace(/[^0-9]/g, '').replace(/^0/, '60')}?text=${encodeURIComponent(
+                        `✅ *PENGESAHAN PENDAFTARAN INSKEN*\n\nHai *${response.participant.name}*!\nPendaftaran anda untuk *Program Latihan A.I. PMKS ASEAN* telah DISAHKAN.\n\n🎟️ *ID Peserta:* ${response.participant.participantId}\n📍 *Wilayah:* ${response.participant.region}\n📋 *Mod:* ${response.participant.finalMode.replace('Registered_', '')}\n\n👉 *Pautan Pas Kehadiran Digital:* ${typeof window !== 'undefined' ? window.location.origin : 'https://insken.workers.dev'}/pass/${response.participant.participantId}\n\n_Sila simpan pautan ini untuk imbasan kehadiran pada hari program._`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-2 w-full rounded-xl bg-[#25D366] px-4 py-3 text-xs font-bold text-white shadow-lg hover:bg-[#1EBE5D] transition-colors"
                     >
-                      <UserPlus className="h-3.5 w-3.5" />
-                      {t.regRegisterAnother}
-                    </Button>
-                  </Card>
-                )}
-              </div>
+                      <MessageCircle className="h-4 w-4" />
+                      <span>{lang === 'ms' ? 'Buka Mesej di WhatsApp Anda' : 'Open Message in WhatsApp'}</span>
+                    </a>
+                  )}
+
+                  <Button
+                    variant="outline"
+                    onClick={reset}
+                    className="w-full h-9 border-white/20 bg-white/10 text-white hover:bg-white/20 text-xs gap-1.5"
+                  >
+                    <UserPlus className="h-3.5 w-3.5" />
+                    {t.regRegisterAnother}
+                  </Button>
+                </div>
+              </Card>
             )}
           </div>
         )}
