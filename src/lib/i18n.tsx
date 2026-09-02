@@ -64,6 +64,11 @@ export interface Translations {
   regDownloadPass: string;
   regWhatsAppPreview: string;
   regRegisterAnother: string;
+  regSlipTitle: string;
+  regQrLockedBadge: string;
+  regQrLockedDesc: string;
+  regEventDateLabel: string;
+  regConfirmedBadge: string;
 
   // Check-in Portal
   checkinCounterTitle: string;
@@ -180,9 +185,14 @@ export const translations: Record<Language, Translations> = {
     regSuccessMsg: 'Pas Kehadiran Digital anda telah sedia. Sila simpan atau tangkap layar (*screenshot*) kod QR ini.',
     regParticipantId: 'ID Peserta Rasmi',
     regAssignedMode: 'Mod Disahkan',
-    regDownloadPass: 'Muat Turun Pas Digital',
+    regDownloadPass: 'Muat Turun Slip Pengesahan',
     regWhatsAppPreview: 'Pratonton Pengesahan WhatsApp',
     regRegisterAnother: 'Daftar Peserta Lain',
+    regSlipTitle: 'SLIP PENGESAHAN PENDAFTARAN',
+    regQrLockedBadge: 'KOD QR KEHADIRAN (DIAKTIFKAN PADA HARI KELAS)',
+    regQrLockedDesc: 'Sila simpan kod QR ini. Imbasan kehadiran hanya akan dibuka pada hari sesi latihan anda bermula.',
+    regEventDateLabel: 'Tarikh Sesi Program',
+    regConfirmedBadge: 'TEMPAT DISAHKAN',
 
     checkinCounterTitle: 'Kaunter Imbasan Kehadiran',
     checkinMainTitle: 'Pengesahan Kehadiran Peserta (Check-in)',
@@ -294,9 +304,14 @@ export const translations: Record<Language, Translations> = {
     regSuccessMsg: 'Your Digital QR Attendance Pass is ready. Please save or screenshot this pass for event entry.',
     regParticipantId: 'Official Participant ID',
     regAssignedMode: 'Confirmed Mode',
-    regDownloadPass: 'Download Digital Pass',
+    regDownloadPass: 'Download Confirmation Slip',
     regWhatsAppPreview: 'WhatsApp Confirmation Preview',
     regRegisterAnother: 'Register Another Participant',
+    regSlipTitle: 'REGISTRATION CONFIRMATION SLIP',
+    regQrLockedBadge: 'ATTENDANCE QR (ACTIVE ON EVENT DAY)',
+    regQrLockedDesc: 'Please save this QR code. Attendance scanning will open on your session date.',
+    regEventDateLabel: 'Session Date',
+    regConfirmedBadge: 'SEAT CONFIRMED',
 
     checkinCounterTitle: 'Attendance Check-in Desk',
     checkinMainTitle: 'Participant Attendance Check-in',

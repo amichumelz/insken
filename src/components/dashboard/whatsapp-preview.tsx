@@ -83,17 +83,20 @@ export function WhatsAppPreview({
               <div className="max-w-[92%] rounded-lg rounded-tl-none bg-white p-2 shadow-sm">
                 <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold text-[#075E54]">
                   <CheckCircle2 className="h-3 w-3" />
-                  {capacityRouted ? 'Upgraded to Priority Online' : 'Registration Confirmed'}
+                  {capacityRouted ? 'Upgraded to Priority Online' : 'Pendaftaran Tempat Disahkan'}
                 </div>
                 <p className="text-[12px] leading-relaxed text-on-surface">
-                  ✅ Hi <strong>{participant.name.split(' ')[0]}</strong>! Welcome to the ASEAN MSME A.I. Skills Training.
-                  Your digital pass is ready. Show the QR code below at check-in.
+                  ✅ Hai <strong>{participant.name.split(' ')[0]}</strong>! Pendaftaran anda untuk <strong>Program Latihan A.I. PMKS ASEAN</strong> telah DISAHKAN.
+                  Slip digital anda telah sedia di bawah.
                 </p>
 
                 {/* Digital pass with QR */}
                 <div className="mb-2 mt-2 flex flex-col items-center rounded-md border border-outline-variant bg-surface-container-low p-3">
-                  <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
-                    Digital Pass
+                  <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
+                    SLIP PENGESAHAN TEMPAT
+                  </div>
+                  <div className="text-[9px] text-amber-800 bg-amber-100 dark:bg-amber-950/60 dark:text-amber-300 rounded px-1.5 py-0.5 mb-2 font-semibold">
+                    🔒 QR Kehadiran: Aktif Pada Hari Kelas
                   </div>
                   <div className="relative mb-2 h-32 w-32 bg-white p-2">
                     {/* Real QR code (rendered server-side via `qrcode` lib) */}
