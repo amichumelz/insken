@@ -253,8 +253,12 @@ function Header({
     <header className="sticky top-0 z-40 border-b bg-[#0B1F3A] text-white">
       <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-2 px-3 sm:px-4 py-2 sm:py-2.5">
         <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
-          <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#D4A017] to-[#F59E0B] text-sm font-bold text-[#0B1F3A] shadow-md">
-            I
+          <div className="flex h-9 sm:h-10 items-center justify-center rounded-lg bg-white p-1 px-1.5 shadow shrink-0">
+            <img
+              src="/insken-logo.png"
+              alt="INSKEN Logo"
+              className="h-7 sm:h-8 w-auto object-contain"
+            />
           </div>
           <div className="min-w-0">
             <div className="flex items-baseline gap-1.5 sm:gap-2 truncate">
