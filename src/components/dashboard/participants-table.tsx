@@ -16,6 +16,7 @@ import { Participant } from '@/lib/types';
 import { Search, RefreshCw, Users, ChevronLeft, ChevronRight, Pencil, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useLanguage } from '@/lib/i18n';
 
 // Same SECTORS list as the Registration form — single source of truth would be nicer,
 // but duplicating keeps both forms decoupled.
@@ -43,6 +44,7 @@ const STATUS_TONE: Record<string, string> = {
 };
 
 export function ParticipantsTable() {
+  const { t, lang } = useLanguage();
   const [items, setItems] = useState<Participant[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -155,34 +157,34 @@ export function ParticipantsTable() {
   };
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <Card className="border shadow-sm">
+      <CardHeader className="pb-3 px-4 sm:px-6 pt-5">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Users className="h-4 w-4 text-primary" />
-              Participant Registry
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Users className="h-5 w-5 text-primary" />
+              {t.dashMasterRegistry}
             </CardTitle>
             <p className="text-xs text-muted-foreground">
-              {total.toLocaleString()} records · IC is the unique primary key
+              {total.toLocaleString()} {lang === 'ms' ? 'rekod didaftarkan · No. IC adalah kunci unik utama' : 'records · IC is the unique primary key'}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <div className="relative flex-1 sm:flex-initial">
+              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Name, IC, ID, email…"
-                className="h-8 w-[180px] pl-7 text-xs sm:w-[220px]"
+                placeholder={t.dashSearchPlaceholder}
+                className="h-9 w-full pl-8 text-xs sm:w-[220px]"
               />
             </div>
             <Select value={region} onValueChange={setRegion}>
-              <SelectTrigger className="h-8 w-[110px] text-xs">
-                <SelectValue placeholder="Region" />
+              <SelectTrigger className="h-9 w-[120px] text-xs">
+                <SelectValue placeholder={t.dashFilterRegion} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Regions</SelectItem>
+                <SelectItem value="all">{lang === 'ms' ? 'Semua Wilayah' : 'All Regions'}</SelectItem>
                 <SelectItem value="KL">Kuala Lumpur</SelectItem>
                 <SelectItem value="JHR">Johor</SelectItem>
                 <SelectItem value="PNG">Penang</SelectItem>
@@ -191,50 +193,50 @@ export function ParticipantsTable() {
               </SelectContent>
             </Select>
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="h-8 w-[140px] text-xs">
-                <SelectValue placeholder="Status" />
+              <SelectTrigger className="h-9 w-[140px] text-xs">
+                <SelectValue placeholder={t.dashFilterStatus} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="Registered_Physical">Registered (Physical)</SelectItem>
-                <SelectItem value="Registered_Online">Registered (Online)</SelectItem>
-                <SelectItem value="Attended_Physical">Attended (Physical)</SelectItem>
-                <SelectItem value="Attended_Online">Attended (Online)</SelectItem>
+                <SelectItem value="all">{lang === 'ms' ? 'Semua Status' : 'All Statuses'}</SelectItem>
+                <SelectItem value="Registered_Physical">{lang === 'ms' ? 'Daftar (Fizikal)' : 'Registered (Physical)'}</SelectItem>
+                <SelectItem value="Registered_Online">{lang === 'ms' ? 'Daftar (Online)' : 'Registered (Online)'}</SelectItem>
+                <SelectItem value="Attended_Physical">{lang === 'ms' ? 'Hadir (Fizikal)' : 'Attended (Physical)'}</SelectItem>
+                <SelectItem value="Attended_Online">{lang === 'ms' ? 'Hadir (Online)' : 'Attended (Online)'}</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="ghost" size="icon" onClick={load} disabled={loading} className="h-8 w-8">
+            <Button variant="ghost" size="icon" onClick={load} disabled={loading} className="h-9 w-9" title={t.navRefresh}>
               <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
             </Button>
           </div>
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
+        <div className="overflow-x-auto scroll-styled">
+          <table className="w-full text-xs min-w-[650px]">
             <thead className="border-y bg-muted/40">
               <tr className="text-left text-muted-foreground">
-                <th className="px-3 py-2 font-medium">Participant ID</th>
-                <th className="px-3 py-2 font-medium">Name</th>
-                <th className="hidden px-3 py-2 font-medium md:table-cell">IC Number</th>
-                <th className="hidden px-3 py-2 font-medium lg:table-cell">
-                  Sector <span className="ml-1 text-[9px] font-normal text-muted-foreground">(click to edit)</span>
+                <th className="px-3 sm:px-4 py-2.5 font-medium">{t.regParticipantId}</th>
+                <th className="px-3 sm:px-4 py-2.5 font-medium">{t.dashName}</th>
+                <th className="hidden px-3 sm:px-4 py-2.5 font-medium md:table-cell">{t.regIcNumber}</th>
+                <th className="hidden px-3 sm:px-4 py-2.5 font-medium lg:table-cell">
+                  {t.regSector} <span className="ml-1 text-[9px] font-normal text-muted-foreground">({lang === 'ms' ? 'klik untuk sunting' : 'click to edit'})</span>
                 </th>
-                <th className="px-3 py-2 font-medium">Region</th>
-                <th className="px-3 py-2 font-medium">Status</th>
-                <th className="hidden px-3 py-2 font-medium sm:table-cell">Check-in</th>
+                <th className="px-3 sm:px-4 py-2.5 font-medium">{t.checkinRegion}</th>
+                <th className="px-3 sm:px-4 py-2.5 font-medium">{t.dashStatus}</th>
+                <th className="hidden px-3 sm:px-4 py-2.5 font-medium sm:table-cell">{t.checkinTime}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
                   <td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">
-                    Loading…
+                    {lang === 'ms' ? 'Memuatkan pangkalan data...' : 'Loading registry...'}
                   </td>
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">
-                    No participants found.
+                    {lang === 'ms' ? 'Tiada rekod peserta dijumpai.' : 'No participants found.'}
                   </td>
                 </tr>
               ) : (

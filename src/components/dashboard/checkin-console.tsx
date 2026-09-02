@@ -15,15 +15,18 @@ import {
   Calendar,
   MapPin,
   User,
+  ShieldCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Participant } from '@/lib/types';
+import { useLanguage } from '@/lib/i18n';
 
 type CheckinResult =
   | { ok: true; participant: Participant; message: string }
   | { ok: false; alreadyCheckedIn?: boolean; participant?: Participant; message: string; error?: string };
 
 export function CheckinConsole() {
+  const { t, lang } = useLanguage();
   const [mode, setMode] = useState<'Physical' | 'Online'>('Physical');
   const [query, setQuery] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -32,14 +35,13 @@ export function CheckinConsole() {
   const handleCheckin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) {
-      toast.error('Enter a Participant ID or IC Number');
+      toast.error(lang === 'ms' ? 'Sila masukkan ID Peserta atau No. Kad Pengenalan' : 'Enter a Participant ID or IC Number');
       return;
     }
     setSubmitting(true);
     setResult(null);
     try {
       const payload: { participantId?: string; icNumber?: string; mode: 'Physical' | 'Online' } = { mode };
-      // Heuristic: ASEAN-XXXXX → participantId, otherwise treat as IC
       if (query.startsWith('ASEAN-')) payload.participantId = query.trim();
       else payload.icNumber = query.trim();
 
@@ -51,15 +53,15 @@ export function CheckinConsole() {
       const data = (await res.json()) as CheckinResult;
       setResult(data);
       if (data.ok) {
-        toast.success(data.message);
+        toast.success(lang === 'ms' ? 'Kehadiran berjaya disahkan!' : data.message);
         setQuery('');
       } else if (data.alreadyCheckedIn) {
-        toast.warning(data.message);
+        toast.warning(lang === 'ms' ? 'Peserta ini sudah membuat semakan kehadiran.' : data.message);
       } else {
-        toast.error(data.message ?? data.error ?? 'Check-in failed');
+        toast.error(data.message ?? data.error ?? (lang === 'ms' ? 'Pengesahan kehadiran gagal.' : 'Check-in failed'));
       }
     } catch {
-      toast.error('Network error — please retry');
+      toast.error(lang === 'ms' ? 'Ralat sambungan rangkaian.' : 'Network error — please retry');
     } finally {
       setSubmitting(false);
     }
@@ -71,118 +73,122 @@ export function CheckinConsole() {
   };
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-      <Card className="lg:col-span-2">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <ScanLine className="h-4 w-4 text-primary" />
-            Attendance Check-in (Phase 3)
+    <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-5">
+      {/* Left Input Form */}
+      <Card className="lg:col-span-2 border shadow-sm">
+        <CardHeader className="pb-3 px-4 sm:px-6 pt-5">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <ScanLine className="h-5 w-5 text-emerald-600" />
+            {t.checkinCounterTitle}
           </CardTitle>
           <p className="text-xs text-muted-foreground">
-            Scan QR or look up by IC — agent validates Participant_ID and stamps attendance.
+            {lang === 'ms'
+              ? 'Imbas QR atau masukkan No. IC untuk mengesahkan kehadiran.'
+              : 'Scan QR or look up by IC — agent validates and records attendance.'}
           </p>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleCheckin} className="space-y-3">
+        <CardContent className="px-4 sm:px-6 pb-6">
+          <form onSubmit={handleCheckin} className="space-y-4">
+            {/* Mode Select Buttons */}
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium">Check-in Mode</Label>
+              <Label className="text-xs font-semibold">{t.checkinModeLabel}</Label>
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   type="button"
                   variant={mode === 'Physical' ? 'default' : 'outline'}
                   onClick={() => setMode('Physical')}
-                  className="h-9"
+                  className={cn(
+                    'h-10 text-xs sm:text-sm font-semibold gap-1.5',
+                    mode === 'Physical' ? 'bg-[#0B1F3A] text-white' : ''
+                  )}
                 >
-                  <MapPin className="h-3.5 w-3.5" />
-                  Physical
+                  <MapPin className="h-4 w-4 text-emerald-500" />
+                  {t.checkinPhysicalBtn}
                 </Button>
                 <Button
                   type="button"
                   variant={mode === 'Online' ? 'default' : 'outline'}
                   onClick={() => setMode('Online')}
-                  className="h-9"
+                  className={cn(
+                    'h-10 text-xs sm:text-sm font-semibold gap-1.5',
+                    mode === 'Online' ? 'bg-[#0B1F3A] text-white' : ''
+                  )}
                 >
-                  <Calendar className="h-3.5 w-3.5" />
-                  Online
+                  <Calendar className="h-4 w-4 text-sky-500" />
+                  {t.checkinOnlineBtn}
                 </Button>
               </div>
             </div>
 
+            {/* Input field */}
             <div className="space-y-1.5">
-              <Label htmlFor="query" className="text-xs font-medium">
-                QR / Participant ID / IC Number
+              <Label htmlFor="query" className="text-xs font-semibold">
+                {t.checkinInputLabel}
               </Label>
               <Input
                 id="query"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="ASEAN-00001 or 900101-14-1234-5"
-                className="font-mono text-sm"
+                placeholder={t.checkinInputPlaceholder}
+                className="font-mono text-sm h-11"
                 autoFocus
               />
               <p className="text-[11px] text-muted-foreground">
-                Live validation against master registry — primary key enforcement.
+                {t.checkinInputHelp}
               </p>
             </div>
 
-            <Button type="submit" disabled={submitting} className="w-full">
+            <Button
+              type="submit"
+              disabled={submitting}
+              className="w-full h-11 text-sm font-semibold gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
               {submitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Validating…
+                  {t.checkinVerifying}
                 </>
               ) : (
                 <>
                   <QrCode className="h-4 w-4" />
-                  Confirm Check-in
+                  {t.checkinSubmitBtn}
                 </>
               )}
             </Button>
-
-            <div className="pt-2">
-              <div className="mb-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
-                Quick demo lookup
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {['ASEAN-00001', 'ASEAN-00100', 'ASEAN-01000', 'ASEAN-02000'].map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => quickLookup(p)}
-                    className="rounded-md border border-border bg-muted/40 px-2 py-1 font-mono text-[10px] text-foreground/70 transition-colors hover:border-primary hover:text-primary"
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
-            </div>
           </form>
         </CardContent>
       </Card>
 
-      <Card className="lg:col-span-3">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <User className="h-4 w-4 text-primary" />
-            Participant Lookup Result
+      {/* Right Result View */}
+      <Card className="lg:col-span-3 border shadow-sm">
+        <CardHeader className="pb-3 px-4 sm:px-6 pt-5">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <User className="h-5 w-5 text-primary" />
+            {lang === 'ms' ? 'Keputusan Semakan Kehadiran' : 'Check-in Verification Result'}
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 sm:px-6 pb-6">
           {!result ? (
-            <div className="flex h-[420px] flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-muted/20 p-6 text-center">
-              <QrCode className="h-10 w-10 text-muted-foreground/60" />
+            <div className="flex h-[280px] sm:h-[320px] flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-muted/20 p-6 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
+                <QrCode className="h-6 w-6" />
+              </div>
               <div>
-                <div className="text-sm font-medium">Awaiting check-in</div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  On event day, scan the participant QR or paste their IC to stamp attendance with timestamp.
+                <div className="text-sm font-semibold">
+                  {lang === 'ms' ? 'Menunggu Imbasan / Semakan' : 'Awaiting Check-in'}
+                </div>
+                <p className="mt-1 max-w-xs text-xs text-muted-foreground">
+                  {lang === 'ms'
+                    ? 'Imbas kod QR pada Pas Digital peserta atau masukkan No. IC untuk mengesahkan kehadiran.'
+                    : 'Scan participant QR pass or enter IC to stamp attendance timestamp.'}
                 </p>
               </div>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div
                 className={cn(
-                  'flex items-start gap-3 rounded-lg border p-4',
+                  'flex items-start gap-3 rounded-xl border p-4 shadow-sm',
                   result.ok
                     ? 'border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/30'
                     : result.alreadyCheckedIn
@@ -196,43 +202,50 @@ export function CheckinConsole() {
                   <XCircle className="mt-0.5 h-6 w-6 shrink-0 text-rose-600" />
                 )}
                 <div className="min-w-0 flex-1">
-                  <div className="text-base font-semibold">
-                    {result.ok ? 'Check-in Confirmed' : result.alreadyCheckedIn ? 'Already Checked In' : 'Check-in Failed'}
+                  <div className="text-base font-bold text-foreground">
+                    {result.ok
+                      ? t.checkinSuccessTitle
+                      : result.alreadyCheckedIn
+                        ? t.checkinAlreadyTitle
+                        : t.checkinNotFoundTitle}
                   </div>
                   <p className="mt-0.5 text-xs text-muted-foreground">{result.message}</p>
                 </div>
               </div>
 
               {result.participant && (
-                <div className="rounded-lg border border-border bg-card p-4">
-                  <div className="mb-3 flex items-center justify-between">
-                    <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      Participant Record
+                <div className="rounded-xl border border-border bg-card p-4 sm:p-5 shadow-sm space-y-3">
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      {lang === 'ms' ? 'Maklumat Peserta' : 'Participant Details'}
                     </span>
                     <span
                       className={cn(
-                        'rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+                        'rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide',
                         result.participant.status.startsWith('Attended')
-                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
-                          : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300',
+                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                          : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300',
                       )}
                     >
                       {result.participant.status.replace(/_/g, ' ')}
                     </span>
                   </div>
-                  <div className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
-                    <Row label="Participant ID" value={result.participant.participantId} mono />
-                    <Row label="Name" value={result.participant.name} />
-                    <Row label="IC Number" value={result.participant.icNumber} mono />
-                    <Row label="Region" value={result.participant.region} />
-                    <Row label="Sector" value={result.participant.sector} />
-                    <Row label="Final Mode" value={result.participant.finalMode.replace(/_/g, ' ')} />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    <Row label={t.regParticipantId} value={result.participant.participantId} mono />
+                    <Row label={t.regFullName} value={result.participant.name} />
+                    <Row label={t.regIcNumber} value={result.participant.icNumber} mono />
+                    <Row label={t.checkinRegion} value={result.participant.region} />
+                    <Row label={t.checkinSector} value={result.participant.sector} />
+                    <Row label={t.regAssignedMode} value={result.participant.finalMode.replace('Registered_', '')} />
                     {result.participant.checkInAt && (
-                      <Row
-                        label="Check-in Time"
-                        value={new Date(result.participant.checkInAt).toLocaleString('en-MY', { hour12: false })}
-                        mono
-                      />
+                      <div className="sm:col-span-2">
+                        <Row
+                          label={t.checkinTime}
+                          value={new Date(result.participant.checkInAt).toLocaleString(lang === 'ms' ? 'ms-MY' : 'en-US', { hour12: true })}
+                          mono
+                        />
+                      </div>
                     )}
                   </div>
                 </div>
@@ -247,9 +260,9 @@ export function CheckinConsole() {
 
 function Row({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
-    <div className="flex items-center justify-between gap-2 rounded bg-muted/30 px-2 py-1.5">
-      <span className="text-muted-foreground">{label}</span>
-      <span className={cn('font-medium', mono && 'font-mono text-[11px]')}>{value}</span>
+    <div className="flex items-center justify-between gap-2 rounded-lg bg-muted/40 px-3 py-2">
+      <span className="text-muted-foreground text-[11px]">{label}</span>
+      <span className={cn('font-semibold text-foreground truncate', mono && 'font-mono text-xs')}>{value}</span>
     </div>
   );
 }

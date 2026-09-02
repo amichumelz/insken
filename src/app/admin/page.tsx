@@ -32,25 +32,27 @@ import {
   Lock,
   Loader2,
 } from 'lucide-react';
+import { useLanguage, LanguageToggle } from '@/lib/i18n';
 
 type TabId = 'dashboard' | 'trainers' | 'registry' | 'register' | 'checkin';
 
-const TABS: Array<{ id: TabId; label: string; icon: React.ElementType }> = [
-  { id: 'dashboard', label: 'Executive Dashboard', icon: LayoutDashboard },
-  { id: 'trainers',  label: 'Trainer Performance', icon: GraduationCap },
-  { id: 'registry',  label: 'Master Registry',      icon: Users },
-  { id: 'register',  label: 'Pendaftaran (Admin)',  icon: UserPlus },
-  { id: 'checkin',   label: 'Kehadiran (Admin)',    icon: QrCode },
-];
-
 export default function AdminPage() {
   const router = useRouter();
+  const { t, lang } = useLanguage();
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(true);
   const [tab, setTab] = useState<TabId>('dashboard');
   const [refreshTick, setRefreshTick] = useState(0);
   const [currentUser, setCurrentUser] = useState<{ id: string; name: string; email: string; role: string } | null>(null);
+
+  const TABS: Array<{ id: TabId; label: string; icon: React.ElementType }> = [
+    { id: 'dashboard', label: t.navDashboard, icon: LayoutDashboard },
+    { id: 'trainers',  label: t.navTrainers, icon: GraduationCap },
+    { id: 'registry',  label: t.navRegistry, icon: Users },
+    { id: 'register',  label: t.navRegisterAdmin, icon: UserPlus },
+    { id: 'checkin',   label: t.navCheckinAdmin, icon: QrCode },
+  ];
 
   const checkAuth = useCallback(async () => {
     setAuthLoading(true);
@@ -94,10 +96,10 @@ export default function AdminPage() {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
       setCurrentUser(null);
-      toast.success('Log keluar berjaya.');
+      toast.success(lang === 'ms' ? 'Log keluar berjaya.' : 'Logged out successfully.');
       router.push('/login');
     } catch {
-      toast.error('Ralat semasa log keluar.');
+      toast.error(lang === 'ms' ? 'Ralat semasa log keluar.' : 'Error during logout.');
     }
   };
 
@@ -105,13 +107,15 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background space-y-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground">Mengesahkan akses pentadbir...</p>
+        <p className="text-sm text-muted-foreground">
+          {lang === 'ms' ? 'Mengesahkan akses pentadbir...' : 'Verifying administrator access...'}
+        </p>
       </div>
     );
   }
 
   if (!currentUser) {
-    return null; // Will redirect in useEffect
+    return null;
   }
 
   return (
@@ -124,57 +128,62 @@ export default function AdminPage() {
         onLogout={handleLogout}
       />
 
-      <nav className="sticky top-[57px] z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-3 overflow-x-auto px-4 py-2 scroll-styled">
-          <div className="flex items-center gap-1">
-            {TABS.map((t) => {
-              const Icon = t.icon;
-              const isActive = tab === t.id;
+      {/* Sticky Tab Subnav */}
+      <nav className="sticky top-[53px] sm:top-[57px] z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-2 overflow-x-auto px-3 sm:px-4 py-1.5 sm:py-2 scroll-styled">
+          <div className="flex items-center gap-1 shrink-0">
+            {TABS.map((tabItem) => {
+              const Icon = tabItem.icon;
+              const isActive = tab === tabItem.id;
               return (
                 <button
-                  key={t.id}
-                  onClick={() => setTab(t.id)}
+                  key={tabItem.id}
+                  onClick={() => setTab(tabItem.id)}
                   className={cn(
-                    'inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                    'inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 sm:px-3 py-1.5 text-xs font-medium transition-colors',
                     isActive
                       ? 'bg-primary text-primary-foreground shadow-sm'
                       : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                   )}
                 >
                   <Icon className="h-3.5 w-3.5" />
-                  {t.label}
+                  <span>{tabItem.label}</span>
                 </button>
               );
             })}
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0 border-l pl-3 ml-2">
-            <span className="hidden lg:inline text-[11px] font-medium text-muted-foreground mr-1">
-              Portal Awam:
+          {/* Quick links to Public Portals */}
+          <div className="flex items-center gap-1.5 shrink-0 border-l pl-2 sm:pl-3 ml-1">
+            <span className="hidden xl:inline text-[11px] font-medium text-muted-foreground mr-1">
+              {lang === 'ms' ? 'Portal Awam:' : 'Public Portals:'}
             </span>
             <Link
               href="/"
               target="_blank"
-              className="inline-flex items-center gap-1 rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-900 transition-colors hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
+              className="inline-flex items-center gap-1 rounded-md border border-amber-300 bg-amber-50 px-2 sm:px-2.5 py-1 text-[11px] font-medium text-amber-900 transition-colors hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
             >
               <UserPlus className="h-3 w-3 text-amber-600" />
-              <span>Portal Pendaftaran</span>
+              <span className="hidden sm:inline">{t.navPublicRegister}</span>
+              <span className="sm:hidden">Daftar</span>
               <ExternalLink className="h-2.5 w-2.5 opacity-60" />
             </Link>
             <Link
               href="/checkin"
               target="_blank"
-              className="inline-flex items-center gap-1 rounded-md border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-900 transition-colors hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+              className="inline-flex items-center gap-1 rounded-md border border-emerald-300 bg-emerald-50 px-2 sm:px-2.5 py-1 text-[11px] font-medium text-emerald-900 transition-colors hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
             >
               <QrCode className="h-3 w-3 text-emerald-600" />
-              <span>Portal Kehadiran</span>
+              <span className="hidden sm:inline">{t.navPublicCheckin}</span>
+              <span className="sm:hidden">Kehadiran</span>
               <ExternalLink className="h-2.5 w-2.5 opacity-60" />
             </Link>
           </div>
         </div>
       </nav>
 
-      <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-4">
+      {/* Main Admin Content */}
+      <main className="mx-auto w-full max-w-[1600px] flex-1 px-3 sm:px-4 py-4">
         {!stats && loading ? (
           <DashboardSkeleton />
         ) : stats ? (
@@ -183,7 +192,7 @@ export default function AdminPage() {
             {tab === 'trainers' && (
               <div className="space-y-4">
                 <SectionHeader
-                  title="Trainer Performance"
+                  title={t.dashTrainerPerformance}
                   subtitle="Per-coach KPIs, performance trends, and Pre/Post-Session feedback."
                 />
                 <TrainerPerformance refreshTick={refreshTick} />
@@ -192,7 +201,7 @@ export default function AdminPage() {
             {tab === 'registry' && (
               <div className="space-y-4">
                 <SectionHeader
-                  title="Master Participant Registry"
+                  title={t.dashMasterRegistry}
                   subtitle="Live database view — IC is the unique primary key per PRD section 2."
                 />
                 <ParticipantsTable />
@@ -203,7 +212,7 @@ export default function AdminPage() {
             {tab === 'checkin' && (
               <div className="space-y-4">
                 <SectionHeader
-                  title="Attendance Check-in"
+                  title={t.checkinMainTitle}
                   subtitle="Scan QR or paste IC. Agent validates Participant_ID and stamps attendance with timestamp."
                 />
                 <CheckinConsole />
@@ -238,31 +247,33 @@ function Header({
   user: { id: string; name: string; email: string; role: string } | null;
   onLogout: () => void;
 }) {
+  const { t, lang } = useLanguage();
+
   return (
     <header className="sticky top-0 z-40 border-b bg-[#0B1F3A] text-white">
-      <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-3 px-4 py-2.5">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#D4A017] to-[#F59E0B] text-sm font-bold text-[#0B1F3A] shadow-md">
+      <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-2 px-3 sm:px-4 py-2 sm:py-2.5">
+        <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+          <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#D4A017] to-[#F59E0B] text-sm font-bold text-[#0B1F3A] shadow-md">
             I
           </div>
           <div className="min-w-0">
-            <div className="flex items-baseline gap-2 truncate">
-              <h1 className="truncate text-sm font-semibold sm:text-base">
+            <div className="flex items-baseline gap-1.5 sm:gap-2 truncate">
+              <h1 className="truncate text-xs sm:text-base font-semibold">
                 INSKEN · Operations &amp; Intelligence
               </h1>
-              <span className="hidden shrink-0 rounded bg-white/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-white/80 sm:inline">
-                ASEAN MSME A.I. Skills Training
+              <span className="hidden md:inline shrink-0 rounded bg-white/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-white/80">
+                ASEAN MSME A.I.
               </span>
             </div>
-            <p className="truncate text-[11px] text-white/60">
+            <p className="truncate text-[10px] sm:text-[11px] text-white/60 hidden sm:block">
               Autonomous operations agent · 5,000 participants across 5 regions
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {stats && (
-            <div className="hidden items-center gap-3 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs md:flex">
+            <div className="hidden lg:flex items-center gap-3 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs">
               <div className="flex items-center gap-1.5">
                 <Sparkles className="h-3 w-3 text-[#D4A017]" />
                 <span className="font-semibold tabular-nums">{stats.global.total.toLocaleString()}</span>
@@ -272,20 +283,22 @@ function Header({
               <div className={cn('flex items-center gap-1', stats.global.criticalAlerts > 0 ? 'text-rose-300' : 'text-emerald-300')}>
                 <span className="h-1.5 w-1.5 rounded-full bg-current" />
                 <span className="text-white/80">
-                  {stats.global.criticalAlerts > 0 ? `${stats.global.criticalAlerts} critical alerts` : 'All systems healthy'}
+                  {stats.global.criticalAlerts > 0 ? `${stats.global.criticalAlerts} ${t.dashActiveAlerts}` : t.dashSystemsHealthy}
                 </span>
               </div>
             </div>
           )}
 
           {/* Real D1 Connected indicator */}
-          <div className="inline-flex items-center gap-1.5 rounded-md border border-emerald-400/40 bg-emerald-500/10 px-2.5 py-1.5 text-xs font-medium text-emerald-300">
-            <span className="relative flex h-2 w-2">
+          <div className="inline-flex items-center gap-1 rounded-md border border-emerald-400/40 bg-emerald-500/10 px-2 py-1 text-[11px] sm:text-xs font-medium text-emerald-300">
+            <span className="relative flex h-1.5 w-1.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
             </span>
             <span className="font-semibold uppercase tracking-wider">Live DB</span>
           </div>
+
+          <LanguageToggle />
 
           <Button
             variant="ghost"
@@ -293,37 +306,38 @@ function Header({
             onClick={onRefresh}
             disabled={refreshing}
             className="h-8 px-2 text-white hover:bg-white/10 hover:text-white"
+            title={t.navRefresh}
           >
             <RefreshCw className={cn('h-3.5 w-3.5', refreshing && 'animate-spin')} />
-            <span className="ml-1 hidden sm:inline">Refresh</span>
+            <span className="ml-1 hidden sm:inline">{t.navRefresh}</span>
           </Button>
 
           {/* User Profile / Logout */}
           {user ? (
-            <div className="flex items-center gap-2 border-l border-white/20 pl-2 ml-1">
+            <div className="flex items-center gap-1.5 border-l border-white/20 pl-2 ml-1">
               <div className="hidden sm:flex flex-col items-end text-right">
-                <span className="text-xs font-medium text-white truncate max-w-[130px]">{user.name}</span>
-                <span className="text-[10px] text-[#D4A017] font-semibold">{user.role}</span>
+                <span className="text-xs font-medium text-white truncate max-w-[110px]">{user.name}</span>
+                <span className="text-[9px] text-[#D4A017] font-semibold">{user.role}</span>
               </div>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={onLogout}
                 className="h-8 border-white/20 bg-white/10 px-2 text-xs text-white hover:bg-rose-500/20 hover:border-rose-400 hover:text-rose-200"
-                title="Log Keluar"
+                title={t.navLogout}
               >
                 <LogOut className="h-3.5 w-3.5 sm:mr-1" />
-                <span className="hidden sm:inline">Log Keluar</span>
+                <span className="hidden sm:inline">{t.navLogout}</span>
               </Button>
             </div>
           ) : (
             <Link href="/login" className="border-l border-white/20 pl-2 ml-1">
               <Button
                 size="sm"
-                className="h-8 bg-[#D4A017] text-[#0B1F3A] hover:bg-[#F59E0B] font-semibold text-xs gap-1.5"
+                className="h-8 bg-[#D4A017] text-[#0B1F3A] hover:bg-[#F59E0B] font-semibold text-xs gap-1"
               >
                 <LogIn className="h-3.5 w-3.5" />
-                <span>Log Masuk</span>
+                <span>{t.navLogin}</span>
               </Button>
             </Link>
           )}
@@ -336,7 +350,7 @@ function Header({
 function SectionHeader({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <div>
-      <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+      <h2 className="text-base sm:text-lg font-semibold tracking-tight">{title}</h2>
       <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>
     </div>
   );
@@ -380,14 +394,15 @@ function DashboardSkeleton() {
 }
 
 function Footer() {
+  const { t } = useLanguage();
   return (
-    <footer className="border-t bg-muted/20 py-4 text-xs text-muted-foreground">
+    <footer className="border-t bg-muted/20 py-4 text-xs text-muted-foreground mt-8">
       <div className="mx-auto flex max-w-[1600px] flex-col items-center justify-between gap-2 px-4 sm:flex-row">
         <p>© 2026 INSKEN · ASEAN MSME A.I. Skills Training Program</p>
         <div className="flex items-center gap-3">
-          <Link href="/" className="hover:text-foreground">Portal Pendaftaran Peserta</Link>
+          <Link href="/" className="hover:text-foreground">{t.navPublicRegister}</Link>
           <span>·</span>
-          <Link href="/checkin" className="hover:text-foreground">Portal Kehadiran Peserta</Link>
+          <Link href="/checkin" className="hover:text-foreground">{t.navPublicCheckin}</Link>
         </div>
       </div>
     </footer>
