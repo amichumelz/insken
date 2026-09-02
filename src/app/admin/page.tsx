@@ -13,6 +13,7 @@ import { ParticipantsTable } from '@/components/dashboard/participants-table';
 import { RegistrationTrend } from '@/components/dashboard/registration-trend';
 import { TrainerPerformance } from '@/components/dashboard/trainer-performance';
 import { ScreenQrModal } from '@/components/dashboard/screen-qr-modal';
+import { EventDateSettingsModal } from '@/components/dashboard/event-date-settings-modal';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -150,8 +151,9 @@ export default function AdminPage() {
               })}
             </div>
 
-            {/* Event Day Tools: Hall Screen QR Display & Coach Portal Link */}
+            {/* Event Day Tools: Date Settings, Hall Screen QR Display & Coach Portal Link */}
             <div className="flex items-center gap-1.5 shrink-0 border-l pl-2 sm:pl-3 ml-1">
+              <EventDateSettingsModal onSaved={loadStats} />
               <ScreenQrModal />
               <Link
                 href="/coach"
