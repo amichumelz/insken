@@ -461,13 +461,29 @@ export function RegistrationConsole() {
                     </div>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-emerald-500/20 border border-emerald-400/40 p-2.5 text-center text-xs font-bold text-emerald-300 w-full">
-                    <Smartphone className="h-4 w-4 text-emerald-400 shrink-0" />
-                    <span>
-                      {lang === 'ms'
-                        ? `Dihantar terus ke WhatsApp (${response.participant.phone || 'Nombor Peserta'})`
-                        : `Sent directly to WhatsApp (${response.participant.phone || 'Registered Phone'})`}
-                    </span>
+                  <div className="mt-4 flex flex-col items-center gap-2 w-full">
+                    <div className="flex items-center justify-center gap-2 rounded-xl bg-emerald-500/20 border border-emerald-400/40 p-2.5 text-center text-xs font-bold text-emerald-300 w-full">
+                      <Smartphone className="h-4 w-4 text-emerald-400 shrink-0" />
+                      <span>
+                        {lang === 'ms'
+                          ? `Dihantar terus ke WhatsApp (${response.participant.phone || 'Nombor Peserta'})`
+                          : `Sent directly to WhatsApp (${response.participant.phone || 'Registered Phone'})`}
+                      </span>
+                    </div>
+
+                    {response.participant.phone && (
+                      <a
+                        href={`https://wa.me/${response.participant.phone.replace(/[^0-9]/g, '').replace(/^0/, '60')}?text=${encodeURIComponent(
+                          `✅ *PENGESAHAN PENDAFTARAN INSKEN*\n\nHai *${response.participant.name}*!\nPendaftaran anda untuk *Program Latihan A.I. PMKS ASEAN* telah DISAHKAN.\n\n🎟️ *ID Peserta:* ${response.participant.participantId}\n📍 *Wilayah:* ${response.participant.region}\n📋 *Mod:* ${response.participant.finalMode.replace('Registered_', '')}\n\n👉 *Pautan Pas Kehadiran Digital:* ${typeof window !== 'undefined' ? window.location.origin : 'https://insken.workers.dev'}/pass/${response.participant.participantId}\n\n_Sila simpan pautan ini untuk imbasan kehadiran pada hari program._`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center gap-1.5 w-full rounded-lg bg-[#25D366] px-3 py-2 text-xs font-bold text-white shadow hover:bg-[#1EBE5D] transition-colors"
+                      >
+                        <Smartphone className="h-3.5 w-3.5" />
+                        <span>{lang === 'ms' ? 'Buka Mesej di WhatsApp Anda' : 'Open Message in WhatsApp'}</span>
+                      </a>
+                    )}
                   </div>
                 </Card>
 
