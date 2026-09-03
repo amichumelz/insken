@@ -4,6 +4,13 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import QRCode from 'qrcode';
 import {
   GraduationCap,
@@ -20,32 +27,21 @@ import {
   Layers,
   XCircle,
   ScanLine,
+  Filter,
+  User,
 } from 'lucide-react';
 import Link from 'next/link';
-import { DEFAULT_EVENT_DATES } from '@/lib/event-dates';
+import { CoachClassRecord } from '@/app/api/config/coaches/route';
 
-interface TrainingClass {
-  id: string;
-  module: string;
-  coachId: 'coach-a' | 'coach-b';
-  coachName: string;
-  region: string;
-  regionName: string;
-  defaultDate: string;
-  time: string;
-  venue: string;
-  targetSeats: number;
-}
-
-const BASE_SCHEDULED_CLASSES: TrainingClass[] = [
+const DEFAULT_CLASSES: CoachClassRecord[] = [
   {
     id: 'cls-01',
     module: 'AI for Retail Marketing & Sales Automation',
-    coachId: 'coach-a',
+    coachId: 'coach-farhan',
     coachName: 'En. Farhan (Coach A)',
     region: 'KL',
     regionName: 'Kuala Lumpur (HQ)',
-    defaultDate: '2026-09-02',
+    date: '2026-09-02',
     time: '09:00 AM - 05:00 PM',
     venue: 'Dewan Utama INSKEN KL Sentral',
     targetSeats: 400,
@@ -53,11 +49,11 @@ const BASE_SCHEDULED_CLASSES: TrainingClass[] = [
   {
     id: 'cls-02',
     module: 'ChatGPT & Prompt Engineering for MSME Daily Operations',
-    coachId: 'coach-a',
-    coachName: 'En. Farhan (Coach A)',
+    coachId: 'coach-nadia',
+    coachName: 'Dr. Nadia (Coach B)',
     region: 'JHR',
     regionName: 'Johor Bahru',
-    defaultDate: '2026-09-05',
+    date: '2026-09-05',
     time: '09:00 AM - 05:00 PM',
     venue: 'Pusat Konvensyen Antarabangsa Persada Johor',
     targetSeats: 200,
@@ -65,11 +61,11 @@ const BASE_SCHEDULED_CLASSES: TrainingClass[] = [
   {
     id: 'cls-03',
     module: 'Generative A.I. Fundamentals & Content Creation for MSMEs',
-    coachId: 'coach-b',
-    coachName: 'Dr. Nadia (Coach B)',
+    coachId: 'coach-amirul',
+    coachName: 'Ts. Amirul (Coach C)',
     region: 'PNG',
     regionName: 'Pulau Pinang',
-    defaultDate: '2026-09-08',
+    date: '2026-09-08',
     time: '09:00 AM - 05:00 PM',
     venue: 'Setia SPICE Convention Centre, Penang',
     targetSeats: 200,
@@ -77,11 +73,11 @@ const BASE_SCHEDULED_CLASSES: TrainingClass[] = [
   {
     id: 'cls-04',
     module: 'No-Code A.I. Tools & Automated Business Workflows',
-    coachId: 'coach-b',
-    coachName: 'Dr. Nadia (Coach B)',
+    coachId: 'coach-aishah',
+    coachName: 'Pn. Aishah (Coach D)',
     region: 'SBH',
     regionName: 'Sabah (Kota Kinabalu)',
-    defaultDate: '2026-09-12',
+    date: '2026-09-12',
     time: '09:00 AM - 05:00 PM',
     venue: 'Sabah International Convention Centre (SICC)',
     targetSeats: 200,
@@ -89,11 +85,11 @@ const BASE_SCHEDULED_CLASSES: TrainingClass[] = [
   {
     id: 'cls-05',
     module: 'AI for F&B, Smart Inventory & Customer Retention',
-    coachId: 'coach-a',
+    coachId: 'coach-farhan',
     coachName: 'En. Farhan (Coach A)',
     region: 'SWK',
     regionName: 'Sarawak (Kuching)',
-    defaultDate: '2026-09-15',
+    date: '2026-09-15',
     time: '09:00 AM - 05:00 PM',
     venue: 'Borneo Convention Centre Kuching (BCCK)',
     targetSeats: 200,
@@ -101,11 +97,11 @@ const BASE_SCHEDULED_CLASSES: TrainingClass[] = [
   {
     id: 'cls-06',
     module: 'Automation & A.I. Lead Generation for Service Businesses',
-    coachId: 'coach-b',
+    coachId: 'coach-nadia',
     coachName: 'Dr. Nadia (Coach B)',
     region: 'KL',
     regionName: 'Kuala Lumpur',
-    defaultDate: '2026-09-18',
+    date: '2026-09-18',
     time: '09:00 AM - 05:00 PM',
     venue: 'Dewan Teater Utama INSKEN',
     targetSeats: 400,
@@ -113,8 +109,9 @@ const BASE_SCHEDULED_CLASSES: TrainingClass[] = [
 ];
 
 export default function CoachPortalPage() {
-  const [eventDates, setEventDates] = useState<Record<string, string>>(DEFAULT_EVENT_DATES);
-  const [selectedClass, setSelectedClass] = useState<TrainingClass>(BASE_SCHEDULED_CLASSES[0]);
+  const [classes, setClasses] = useState<CoachClassRecord[]>(DEFAULT_CLASSES);
+  const [selectedCoachFilter, setSelectedCoachFilter] = useState<string>('all');
+  const [selectedClass, setSelectedClass] = useState<CoachClassRecord>(DEFAULT_CLASSES[0]);
   const [isDisplayingScreen, setIsDisplayingScreen] = useState(false);
   const [activeScreenMode, setActiveScreenMode] = useState<'attendance' | 'feedback'>('attendance');
   const [feedbackPhase, setFeedbackPhase] = useState<'pre' | 'post'>('post');
@@ -125,20 +122,24 @@ export default function CoachPortalPage() {
 
   const displaySectionRef = useRef<HTMLDivElement | null>(null);
 
-  // 1. Fetch live event dates set by Admin to keep everything in sync
-  useEffect(() => {
-    const fetchDates = async () => {
-      try {
-        const res = await fetch('/api/config/event-dates');
-        const data = await res.json();
-        if (data.ok && data.dates) {
-          setEventDates(data.dates);
+  // 1. Fetch dynamic coaches & class schedule configured by Admin
+  const loadDynamicClasses = async () => {
+    try {
+      const res = await fetch('/api/config/coaches');
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.classes) && data.classes.length > 0) {
+        setClasses(data.classes);
+        if (!selectedClass || !data.classes.some((c: any) => c.id === selectedClass.id)) {
+          setSelectedClass(data.classes[0]);
         }
-      } catch {
-        // Fallback
       }
-    };
-    fetchDates();
+    } catch {
+      // Fallback to default
+    }
+  };
+
+  useEffect(() => {
+    loadDynamicClasses();
   }, []);
 
   // 2. Live clock
@@ -158,13 +159,13 @@ export default function CoachPortalPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // 3. Generate QR codes strictly for ATTENDANCE CHECK-IN (not for registration)
+  // 3. Generate QR codes uniquely per Coach, Venue, Region, Date, and Module
   useEffect(() => {
+    if (!selectedClass) return;
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://insken.1211111996.workers.dev';
-    const effectiveDate = eventDates[selectedClass.region] || selectedClass.defaultDate;
 
-    // Attendance QR URL — points to check-in confirmation
-    const attendanceUrl = `${origin}/checkin?session=${encodeURIComponent(selectedClass.module)}&region=${selectedClass.region}&date=${effectiveDate}&coach=${selectedClass.coachId}`;
+    // Unique Attendance QR URL encoding coach, venue, and class session
+    const attendanceUrl = `${origin}/checkin?session=${encodeURIComponent(selectedClass.module)}&region=${selectedClass.region}&venue=${encodeURIComponent(selectedClass.venue)}&date=${selectedClass.date}&coach=${encodeURIComponent(selectedClass.coachName)}&coachId=${selectedClass.coachId}`;
     QRCode.toDataURL(attendanceUrl, {
       errorCorrectionLevel: 'H',
       margin: 1,
@@ -172,18 +173,18 @@ export default function CoachPortalPage() {
       color: { dark: '#0B1F3A', light: '#FFFFFF' },
     }).then(setAttendanceQrUrl);
 
-    // Feedback QR URL
-    const feedbackUrl = `${origin}/feedback?trainer=${selectedClass.coachId}&phase=${feedbackPhase}&session=${encodeURIComponent(selectedClass.module)}&region=${selectedClass.region}`;
+    // Unique Feedback QR URL
+    const feedbackUrl = `${origin}/feedback?trainer=${selectedClass.coachId}&trainerName=${encodeURIComponent(selectedClass.coachName)}&phase=${feedbackPhase}&session=${encodeURIComponent(selectedClass.module)}&region=${selectedClass.region}&venue=${encodeURIComponent(selectedClass.venue)}`;
     QRCode.toDataURL(feedbackUrl, {
       errorCorrectionLevel: 'H',
       margin: 1,
       width: 480,
       color: { dark: '#0B1F3A', light: '#FFFFFF' },
     }).then(setFeedbackQrUrl);
-  }, [selectedClass, feedbackPhase, eventDates]);
+  }, [selectedClass, feedbackPhase]);
 
   // Action: User clicks Generate QR / Display Screen
-  const handleGenerateScreen = (cls: TrainingClass, mode: 'attendance' | 'feedback') => {
+  const handleGenerateScreen = (cls: CoachClassRecord, mode: 'attendance' | 'feedback') => {
     setSelectedClass(cls);
     setActiveScreenMode(mode);
     setIsDisplayingScreen(true);
@@ -193,7 +194,14 @@ export default function CoachPortalPage() {
     }, 100);
   };
 
-  const activeDate = eventDates[selectedClass.region] || selectedClass.defaultDate;
+  // Distinct coach list for filter dropdown
+  const uniqueCoaches = Array.from(
+    new Map(classes.map((c) => [c.coachName, c])).values()
+  );
+
+  const filteredClasses = selectedCoachFilter === 'all'
+    ? classes
+    : classes.filter((c) => c.coachName === selectedCoachFilter || c.coachId === selectedCoachFilter);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col justify-between">
@@ -243,28 +251,50 @@ export default function CoachPortalPage() {
       {/* Main Content */}
       <main className="mx-auto w-full max-w-[1600px] flex-1 px-3 sm:px-4 py-4 sm:py-6 space-y-6">
         
-        {/* 1. Class Selection Section */}
+        {/* 1. Class Selection Section with Coach Filter Dropdown */}
         <Card className="border shadow-sm bg-card">
           <CardHeader className="pb-3 px-4 sm:px-6 pt-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Layers className="h-5 w-5 text-indigo-600" />
-                <CardTitle className="text-base sm:text-lg">
-                  Senarai Jadual Sesi Latihan Jurulatih
-                </CardTitle>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <Layers className="h-5 w-5 text-indigo-600" />
+                  <CardTitle className="text-base sm:text-lg">
+                    Senarai Jadual Sesi Latihan Jurulatih
+                  </CardTitle>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Pilih jurulatih dan klik <strong>[Jana QR Kehadiran]</strong> untuk memaparkan kod QR unik mengikut jurulatih dan tempat dewan.
+                </p>
               </div>
-              <Badge className="bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-300 text-xs">
-                Tarikh Diselaraskan Automatik dari Admin
-              </Badge>
+
+              {/* Coach Filter Dropdown */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                  <User className="h-3.5 w-3.5 text-indigo-600" />
+                  <span>Pilih Jurulatih:</span>
+                </div>
+                <Select value={selectedCoachFilter} onValueChange={setSelectedCoachFilter}>
+                  <SelectTrigger className="w-[200px] sm:w-[240px] h-9 text-xs font-semibold bg-background">
+                    <SelectValue placeholder="Semua Jurulatih" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all" className="text-xs font-bold">
+                      Semua Jurulatih ({classes.length} Sesi)
+                    </SelectItem>
+                    {uniqueCoaches.map((c) => (
+                      <SelectItem key={c.coachName} value={c.coachName} className="text-xs">
+                        {c.coachName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Klik butang <strong>[Jana QR Kehadiran]</strong> pada mana-mana sesi di bawah untuk memaparkan kod QR pengesahan kehadiran dewan (16:9) pada skrin projektor.
-            </p>
           </CardHeader>
+
           <CardContent className="px-4 sm:px-6 pb-5">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-              {BASE_SCHEDULED_CLASSES.map((cls) => {
-                const classDate = eventDates[cls.region] || cls.defaultDate;
+              {filteredClasses.map((cls) => {
                 const isSelected = selectedClass.id === cls.id && isDisplayingScreen;
 
                 return (
@@ -283,7 +313,7 @@ export default function CoachPortalPage() {
                         </Badge>
                         <span className="font-mono text-[11px] font-bold text-indigo-950 dark:text-indigo-200 bg-amber-500/15 border border-amber-400/40 px-2 py-0.5 rounded flex items-center gap-1">
                           <Calendar className="h-3 w-3 text-[#D4A017]" />
-                          {classDate}
+                          {cls.date}
                         </span>
                       </div>
 
@@ -291,15 +321,21 @@ export default function CoachPortalPage() {
                         {cls.module}
                       </h4>
 
-                      <div className="text-[11px] text-muted-foreground space-y-0.5">
-                        <div className="flex items-center gap-1 text-foreground font-medium">
-                          <GraduationCap className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
+                      <div className="text-[11px] text-muted-foreground space-y-1">
+                        <div className="flex items-center gap-1.5 text-foreground font-bold">
+                          <GraduationCap className="h-4 w-4 text-indigo-600 shrink-0" />
                           <span>{cls.coachName}</span>
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1.5">
                           <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                           <span className="truncate">{cls.venue}</span>
                         </div>
+                        {cls.time && (
+                          <div className="flex items-center gap-1.5 text-[10px] font-mono">
+                            <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
+                            <span>{cls.time}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -341,7 +377,7 @@ export default function CoachPortalPage() {
 
         {/* 2. Projector Display Area — ONLY DISPLAYED WHEN USER CLICKS GENERATE QR */}
         <div ref={displaySectionRef} className="space-y-4">
-          {isDisplayingScreen ? (
+          {isDisplayingScreen && selectedClass ? (
             <div className="space-y-3">
               {/* Header Bar with Toggle & Close Button */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-2">
@@ -394,7 +430,7 @@ export default function CoachPortalPage() {
                           ASEAN MSMEs AI Skills Training Programme
                         </h2>
                         <p className="text-xs text-[#D4A017] font-semibold">
-                          {selectedClass.coachName} · {selectedClass.regionName} · {activeDate}
+                          {selectedClass.coachName} · {selectedClass.regionName} · {selectedClass.date}
                         </p>
                       </div>
                     </div>
@@ -419,7 +455,7 @@ export default function CoachPortalPage() {
                         {attendanceQrUrl ? (
                           <img
                             src={attendanceQrUrl}
-                            alt="Class Attendance Check-in QR"
+                            alt={`Attendance Check-in QR for ${selectedClass.coachName}`}
                             className="h-56 w-56 sm:h-72 sm:w-72 object-contain"
                           />
                         ) : (
@@ -431,7 +467,7 @@ export default function CoachPortalPage() {
 
                       <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1 text-xs font-bold text-[#D4A017]">
                         <ScanLine className="h-3.5 w-3.5" />
-                        <span>Imbas QR untuk Pengesahan Kehadiran Kelas (Check-in)</span>
+                        <span>Imbas QR untuk Pengesahan Kehadiran ({selectedClass.coachName})</span>
                       </div>
                     </div>
 
@@ -445,7 +481,7 @@ export default function CoachPortalPage() {
                           Pengesahan Kehadiran Sesi Latihan
                         </h3>
                         <p className="text-xs sm:text-sm text-white/75 mt-1 leading-relaxed">
-                          Sila gunakan kamera telefon pintar anda untuk mengimbas kod QR di sebelah bagi mengesahkan kehadiran anda dalam sesi kelas hari ini.
+                          Sila gunakan kamera telefon pintar anda untuk mengimbas kod QR di sebelah bagi mengesahkan kehadiran anda bersama jurulatih hari ini.
                         </p>
                       </div>
 
@@ -466,7 +502,7 @@ export default function CoachPortalPage() {
 
                       <div className="rounded-xl bg-black/30 p-3.5 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-white/80 gap-2">
                         <span>Jurulatih: <strong className="text-white">{selectedClass.coachName}</strong></span>
-                        <span className="font-mono text-[#D4A017]">{selectedClass.venue} · {activeDate}</span>
+                        <span className="font-mono text-[#D4A017]">{selectedClass.venue} · {selectedClass.date}</span>
                       </div>
                     </div>
                   </div>
@@ -525,7 +561,7 @@ export default function CoachPortalPage() {
                         {feedbackQrUrl ? (
                           <img
                             src={feedbackQrUrl}
-                            alt="Feedback Form QR"
+                            alt={`Feedback QR for ${selectedClass.coachName}`}
                             className="h-56 w-56 sm:h-72 sm:w-72 object-contain"
                           />
                         ) : (
@@ -539,8 +575,8 @@ export default function CoachPortalPage() {
                         <Sparkles className="h-3.5 w-3.5" />
                         <span>
                           {feedbackPhase === 'pre'
-                            ? 'Imbas untuk Soal Selidik Awal (Pre-Session)'
-                            : 'Imbas untuk Penilaian Akhir (Post-Session)'}
+                            ? `Soal Selidik Awal (${selectedClass.coachName})`
+                            : `Penilaian Akhir (${selectedClass.coachName})`}
                         </span>
                       </div>
                     </div>
@@ -555,18 +591,18 @@ export default function CoachPortalPage() {
                           Sila Lengkapkan Borang Maklum Balas Anda
                         </h3>
                         <p className="text-xs sm:text-sm text-white/75 mt-1 leading-relaxed">
-                          Pandangan dan penilaian anda amat penting bagi memastikan modul bimbingan A.I. ini memberi impak maksimum kepada perniagaan PMKS anda.
+                          Penilaian anda terhadap bimbingan <strong>{selectedClass.coachName}</strong> di <strong>{selectedClass.venue}</strong> amat penting bagi kawalan kualiti latihan INSKEN.
                         </p>
                       </div>
 
                       <div className="space-y-2.5">
                         <div className="flex items-center gap-3 rounded-xl bg-white/10 p-3 border border-white/15 text-xs">
                           <CheckCircle2 className="h-4 w-4 text-indigo-400 shrink-0" />
-                          <span>Penilaian Penguasaan Jurulatih &amp; Kejelasan Kandungan</span>
+                          <span>Penilaian Penguasaan Jurulatih ({selectedClass.coachName})</span>
                         </div>
                         <div className="flex items-center gap-3 rounded-xl bg-white/10 p-3 border border-white/15 text-xs">
                           <CheckCircle2 className="h-4 w-4 text-indigo-400 shrink-0" />
-                          <span>Kebolehlaksanaan A.I. dalam operasi perniagaan sebenar</span>
+                          <span>Kemudahan &amp; Keselesaan Dewan ({selectedClass.venue})</span>
                         </div>
                       </div>
 
@@ -575,7 +611,7 @@ export default function CoachPortalPage() {
                         <Lock className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
                         <div className="text-[11px] leading-relaxed">
                           <strong className="text-amber-300 block">Jaminan Kerahsiaan Maklum Balas:</strong>
-                          Semua skor penilaian dan komen peserta adalah <strong>SULIT</strong> dan dianalisis secara eksklusif oleh pihak <strong>Pentadbir (Admin Dashboard)</strong> untuk kawalan kualiti bebas.
+                          Semua skor penilaian jurulatih adalah <strong>SULIT</strong> dan dianalisis secara eksklusif oleh pihak <strong>Pentadbir (Admin Dashboard)</strong>.
                         </div>
                       </div>
                     </div>
@@ -590,7 +626,7 @@ export default function CoachPortalPage() {
                 Paparan Skrin Projektor Belum Diaktifkan
               </h4>
               <p className="text-xs text-muted-foreground max-w-md mx-auto">
-                Sila klik butang <strong>[Jana QR Kehadiran]</strong> pada mana-mana kelas di atas untuk memaparkan kod QR pengesahan kehadiran dewan (16:9) atau borang maklum balas.
+                Sila pilih jurulatih dan klik butang <strong>[Jana QR Kehadiran]</strong> pada mana-mana kelas di atas untuk memaparkan kod QR pengesahan kehadiran dewan (16:9).
               </p>
             </div>
           )}
