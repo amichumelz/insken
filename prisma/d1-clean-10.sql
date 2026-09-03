@@ -1,7 +1,7 @@
--- 1. Remove specific participants (Umar, Fatin, ASEAN-02063, ASEAN-02064, ASEAN-02065)
-DELETE FROM Participant WHERE participantId IN ('ASEAN-02063', 'ASEAN-02064', 'ASEAN-02065');
-DELETE FROM Participant WHERE LOWER(name) LIKE '%umar%' OR LOWER(name) LIKE '%fatin%';
-DELETE FROM Participant WHERE icNumber IN ('040222140768', '040221140768');
+-- 1. Remove specific participants (Azlan, Fatin, Umar, ASEAN-00011, ASEAN-00012, ASEAN-02063, ASEAN-02064, ASEAN-02065)
+DELETE FROM Participant WHERE participantId IN ('ASEAN-00011', 'ASEAN-00012', 'ASEAN-02063', 'ASEAN-02064', 'ASEAN-02065');
+DELETE FROM Participant WHERE LOWER(name) LIKE '%azlan%' OR LOWER(name) LIKE '%fatin%' OR LOWER(name) LIKE '%umar%';
+DELETE FROM Participant WHERE icNumber IN ('020608101087', '040221140768', '040222140768');
 
 -- 2. Clear out excess data and insert exactly 10 clean baseline records
 DELETE FROM Participant;
@@ -19,4 +19,4 @@ INSERT OR REPLACE INTO Participant (id, participantId, icNumber, name, email, ph
 ('p-10', 'ASEAN-00010', '920311-13-5490', 'Brandon Anak Walter', 'brandon.w@msme.my', '+60123456710', 'Professional Services', 'SWK', 'Physical', 'Registered_Physical', 'Registered_Physical', NULL, '2026-08-29 17:00:00', '2026-08-29 17:00:00');
 
 -- 3. Clean audit log
-DELETE FROM AuditLog WHERE LOWER(participant) LIKE '%umar%' OR LOWER(participant) LIKE '%fatin%' OR icNumber IN ('040222140768', '040221140768');
+DELETE FROM AuditLog WHERE LOWER(participant) LIKE '%azlan%' OR LOWER(participant) LIKE '%umar%' OR LOWER(participant) LIKE '%fatin%' OR icNumber IN ('020608101087', '040222140768', '040221140768');

@@ -6,18 +6,25 @@ import { REGION_CONFIG, REGIONS, GLOBAL_TARGET } from '@/lib/regions';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// In-memory 10-second cache
+const BLOCKED_IDS = ['ASEAN-00011', 'ASEAN-00012', 'ASEAN-02063', 'ASEAN-02064', 'ASEAN-02065'];
+const BLOCKED_ICS = ['020608101087', '040221140768', '040222140768'];
+
+// In-memory 5-second cache
 let cachedStats: any = null;
 let lastCacheTime = 0;
-const CACHE_TTL_MS = 10000;
+const CACHE_TTL_MS = 5000;
 
 function computeExactRegistrationTrend(
-  participants: Array<{ createdAt: Date | string; finalMode?: string; status?: string }>
+  participants: Array<{ createdAt: Date | string; finalMode?: string; status?: string; participantId?: string; icNumber?: string; name?: string }>
 ) {
   const dateMap: Map<string, { day: string; sortKey: string; total: number; physical: number; online: number }> = new Map();
 
   for (const p of participants) {
     if (!p.createdAt) continue;
+    if (p.participantId && BLOCKED_IDS.includes(p.participantId)) continue;
+    if (p.icNumber && BLOCKED_ICS.includes(p.icNumber)) continue;
+    if (p.name && (p.name.toLowerCase().includes('azlan') || p.name.toLowerCase().includes('fatin') || p.name.toLowerCase().includes('umar'))) continue;
+
     const dateObj = new Date(p.createdAt);
     if (isNaN(dateObj.getTime())) continue;
 
@@ -68,7 +75,17 @@ export async function GET() {
     return NextResponse.json(cachedStats);
   }
 
+  // Cleanup from in-memory store
+  for (const bId of BLOCKED_IDS) {
+    inMemoryParticipants.delete(bId);
+  }
+
   try {
+    const baseWhere = {
+      participantId: { notIn: BLOCKED_IDS },
+      icNumber: { notIn: BLOCKED_ICS },
+    };
+
     const [
       totalParticipants,
       attendedPhysical,
@@ -84,30 +101,33 @@ export async function GET() {
       allParticipants,
       recentLogs,
     ] = await Promise.all([
-      db.participant.count().catch(() => inMemoryParticipants.size),
-      db.participant.count({ where: { status: 'Attended_Physical' } }).catch(() => 4),
-      db.participant.count({ where: { status: 'Attended_Online' } }).catch(() => 2),
-      db.participant.count({ where: { status: 'Registered_Physical' } }).catch(() => 6),
-      db.participant.count({ where: { status: 'Registered_Online' } }).catch(() => 4),
+      db.participant.count({ where: baseWhere }).catch(() => inMemoryParticipants.size),
+      db.participant.count({ where: { ...baseWhere, status: 'Attended_Physical' } }).catch(() => 4),
+      db.participant.count({ where: { ...baseWhere, status: 'Attended_Online' } }).catch(() => 2),
+      db.participant.count({ where: { ...baseWhere, status: 'Registered_Physical' } }).catch(() => 6),
+      db.participant.count({ where: { ...baseWhere, status: 'Registered_Online' } }).catch(() => 4),
       db.auditLog.count({ where: { action: 'DUPLICATE_BLOCKED' } }).catch(() => 0),
       db.alert.count({ where: { resolved: false } }).catch(() => 0),
       db.alert.count({ where: { resolved: false, severity: 'critical' } }).catch(() => 0),
       db.participant.groupBy({
         by: ['region', 'finalMode'],
+        where: baseWhere,
         _count: { _all: true },
       }).catch(() => []),
       db.participant.groupBy({
         by: ['region'],
-        where: { status: { in: ['Attended_Physical', 'Attended_Online'] } },
+        where: { ...baseWhere, status: { in: ['Attended_Physical', 'Attended_Online'] } },
         _count: { _all: true },
       }).catch(() => []),
       db.participant.groupBy({
         by: ['sector'],
+        where: baseWhere,
         _count: { _all: true },
         orderBy: { _count: { sector: 'desc' } },
       }).catch(() => []),
       db.participant.findMany({
-        select: { createdAt: true, finalMode: true, status: true },
+        where: baseWhere,
+        select: { createdAt: true, finalMode: true, status: true, participantId: true, icNumber: true, name: true },
         orderBy: { createdAt: 'asc' },
       }).catch(() => Array.from(inMemoryParticipants.values())),
       db.auditLog.findMany({
@@ -214,7 +234,9 @@ export async function GET() {
     return NextResponse.json(responsePayload);
   } catch (error: any) {
     console.warn('D1 limit fallback activated for /api/stats');
-    const participantList = Array.from(inMemoryParticipants.values());
+    const participantList = Array.from(inMemoryParticipants.values()).filter(
+      (p) => !BLOCKED_IDS.includes(p.participantId) && !BLOCKED_ICS.includes(p.icNumber)
+    );
     const exactDailyTrend = computeExactRegistrationTrend(participantList);
 
     const totalParticipants = participantList.length;
