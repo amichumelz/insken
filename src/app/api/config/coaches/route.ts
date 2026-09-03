@@ -4,6 +4,8 @@ import { db } from '@/lib/db';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+export const PROGRAMME_TITLE = 'ASEAN MSMEs AI Skills Training Programme';
+
 export interface CoachClassRecord {
   id: string;
   module: string;
@@ -20,7 +22,7 @@ export interface CoachClassRecord {
 const DEFAULT_CLASSES: CoachClassRecord[] = [
   {
     id: 'cls-01',
-    module: 'AI for Retail Marketing & Sales Automation',
+    module: PROGRAMME_TITLE,
     coachId: 'coach-farhan',
     coachName: 'En. Farhan (Coach A)',
     region: 'KL',
@@ -32,7 +34,7 @@ const DEFAULT_CLASSES: CoachClassRecord[] = [
   },
   {
     id: 'cls-02',
-    module: 'ChatGPT & Prompt Engineering for MSME Daily Operations',
+    module: PROGRAMME_TITLE,
     coachId: 'coach-nadia',
     coachName: 'Dr. Nadia (Coach B)',
     region: 'JHR',
@@ -44,7 +46,7 @@ const DEFAULT_CLASSES: CoachClassRecord[] = [
   },
   {
     id: 'cls-03',
-    module: 'Generative A.I. Fundamentals & Content Creation for MSMEs',
+    module: PROGRAMME_TITLE,
     coachId: 'coach-amirul',
     coachName: 'Ts. Amirul (Coach C)',
     region: 'PNG',
@@ -56,7 +58,7 @@ const DEFAULT_CLASSES: CoachClassRecord[] = [
   },
   {
     id: 'cls-04',
-    module: 'No-Code A.I. Tools & Automated Business Workflows',
+    module: PROGRAMME_TITLE,
     coachId: 'coach-aishah',
     coachName: 'Pn. Aishah (Coach D)',
     region: 'SBH',
@@ -68,7 +70,7 @@ const DEFAULT_CLASSES: CoachClassRecord[] = [
   },
   {
     id: 'cls-05',
-    module: 'AI for F&B, Smart Inventory & Customer Retention',
+    module: PROGRAMME_TITLE,
     coachId: 'coach-farhan',
     coachName: 'En. Farhan (Coach A)',
     region: 'SWK',
@@ -80,7 +82,7 @@ const DEFAULT_CLASSES: CoachClassRecord[] = [
   },
   {
     id: 'cls-06',
-    module: 'Automation & A.I. Lead Generation for Service Businesses',
+    module: PROGRAMME_TITLE,
     coachId: 'coach-nadia',
     coachName: 'Dr. Nadia (Coach B)',
     region: 'KL',
@@ -105,7 +107,10 @@ export async function GET() {
       try {
         const parsed = JSON.parse(latestConfig.detail);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          inMemoryCoachClasses = parsed;
+          inMemoryCoachClasses = parsed.map((c) => ({
+            ...c,
+            module: PROGRAMME_TITLE,
+          }));
         }
       } catch {
         // use in-memory
@@ -133,18 +138,21 @@ export async function POST(req: NextRequest) {
     const { classes } = body;
 
     if (Array.isArray(classes)) {
-      inMemoryCoachClasses = classes;
+      inMemoryCoachClasses = classes.map((c: any) => ({
+        ...c,
+        module: PROGRAMME_TITLE,
+      }));
 
       try {
         await db.auditLog.create({
           data: {
             action: 'COACH_CLASSES_CONFIG',
             participant: 'Admin (Coach Manager)',
-            detail: JSON.stringify(classes),
+            detail: JSON.stringify(inMemoryCoachClasses),
           },
         });
       } catch {
-        // Ignore D1 limits — in-memory is updated
+        // Ignore D1 limits
       }
     }
 

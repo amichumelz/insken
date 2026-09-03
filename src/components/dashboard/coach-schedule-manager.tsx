@@ -27,12 +27,11 @@ import {
   Sparkles,
   ExternalLink,
   Layers,
-  CheckCircle2,
-  RefreshCw,
   Tv,
+  BookOpen,
 } from 'lucide-react';
 import Link from 'next/link';
-import { CoachClassRecord } from '@/app/api/config/coaches/route';
+import { CoachClassRecord, PROGRAMME_TITLE } from '@/app/api/config/coaches/route';
 import { DEFAULT_EVENT_DATES } from '@/lib/event-dates';
 
 const REGIONS = [
@@ -60,9 +59,8 @@ export function CoachScheduleManager({ onSaved }: { onSaved?: () => void }) {
   // Coach Classes list
   const [classes, setClasses] = useState<CoachClassRecord[]>([]);
 
-  // Add new class form
+  // Add new class form (Module input removed — all 4 modules taught in single session)
   const [newCoachName, setNewCoachName] = useState('');
-  const [newModule, setNewModule] = useState('');
   const [newRegion, setNewRegion] = useState('KL');
   const [newTime, setNewTime] = useState('09:00 AM - 05:00 PM');
   const [newVenue, setNewVenue] = useState('Dewan Utama INSKEN KL Sentral');
@@ -111,8 +109,8 @@ export function CoachScheduleManager({ onSaved }: { onSaved?: () => void }) {
   };
 
   const handleAddClass = () => {
-    if (!newCoachName.trim() || !newModule.trim() || !newVenue.trim()) {
-      toast.error('Sila lengkapkan Nama Jurulatih, Modul dan Tempat.');
+    if (!newCoachName.trim() || !newVenue.trim()) {
+      toast.error('Sila lengkapkan Nama Jurulatih dan Tempat Dewan.');
       return;
     }
 
@@ -124,7 +122,7 @@ export function CoachScheduleManager({ onSaved }: { onSaved?: () => void }) {
       id: `cls-${Date.now()}`,
       coachId: `coach-${coachSlug}`,
       coachName: newCoachName.trim(),
-      module: newModule.trim(),
+      module: PROGRAMME_TITLE,
       region: newRegion,
       regionName: regionObj.name,
       date: classDate,
@@ -135,7 +133,6 @@ export function CoachScheduleManager({ onSaved }: { onSaved?: () => void }) {
 
     setClasses((prev) => [...prev, newRecord]);
     setNewCoachName('');
-    setNewModule('');
     toast.success('Sesi jurulatih baharu berjaya ditambah ke senarai!');
   };
 
@@ -154,9 +151,10 @@ export function CoachScheduleManager({ onSaved }: { onSaved?: () => void }) {
         body: JSON.stringify({ dates, forceActiveMap }),
       });
 
-      // 2. Save Coach Classes (with updated region dates)
+      // 2. Save Coach Classes (with updated region dates and standardized programme title)
       const syncedClasses = classes.map((c) => ({
         ...c,
+        module: PROGRAMME_TITLE,
         date: dates[c.region] || c.date,
       }));
 
@@ -199,7 +197,7 @@ export function CoachScheduleManager({ onSaved }: { onSaved?: () => void }) {
             Tetapan Tarikh Latihan &amp; Pengurusan Jurulatih
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-3xl">
-            Urus tarikh latihan bagi setiap wilayah dan selaraskan maklumat jurulatih, topik modul, serta lokasi dewan dalam satu halaman yang sama. Perubahan akan diselaraskan serta-merta ke Portal Jurulatih.
+            Semua 4 modul latihan diajar lengkap dalam satu sesi latihan penuh berjadual: <strong>ASEAN MSMEs AI Skills Training Programme</strong>. Urus tarikh wilayah, profil jurulatih dan lokasi dewan di bawah.
           </p>
         </div>
 
@@ -307,11 +305,11 @@ export function CoachScheduleManager({ onSaved }: { onSaved?: () => void }) {
             </CardTitle>
           </div>
           <p className="text-xs text-muted-foreground">
-            Masukkan maklumat jurulatih baharu untuk dijadualkan ke dalam sistem. Tarikh akan dipadankan secara automatik mengikut wilayah yang dipilih.
+            Sesi latihan menggunakan program standard: <strong>ASEAN MSMEs AI Skills Training Programme</strong> (merangkumi kesemua 4 modul silibus).
           </p>
         </CardHeader>
         <CardContent className="px-4 sm:px-6 pb-6 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
             <div className="space-y-1">
               <Label className="text-xs font-semibold">Nama Jurulatih (Coach)</Label>
               <Input
@@ -323,17 +321,7 @@ export function CoachScheduleManager({ onSaved }: { onSaved?: () => void }) {
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs font-semibold">Modul / Topik Latihan A.I.</Label>
-              <Input
-                placeholder="Contoh: AI Copywriting & Social Ads Automation"
-                value={newModule}
-                onChange={(e) => setNewModule(e.target.value)}
-                className="h-9 text-xs bg-background"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold">Wilayah</Label>
+              <Label className="text-xs font-semibold">Wilayah Sesi</Label>
               <Select value={newRegion} onValueChange={setNewRegion}>
                 <SelectTrigger className="h-9 text-xs bg-background">
                   <SelectValue />
@@ -351,7 +339,7 @@ export function CoachScheduleManager({ onSaved }: { onSaved?: () => void }) {
             <div className="space-y-1">
               <Label className="text-xs font-semibold">Tempat / Dewan Latihan</Label>
               <Input
-                placeholder="Contoh: Hotel Grand Riverview, Kota Bharu"
+                placeholder="Contoh: Hotel Grand Riverview, KB"
                 value={newVenue}
                 onChange={(e) => setNewVenue(e.target.value)}
                 className="h-9 text-xs bg-background"
@@ -367,16 +355,16 @@ export function CoachScheduleManager({ onSaved }: { onSaved?: () => void }) {
                 className="h-9 text-xs font-mono bg-background"
               />
             </div>
+          </div>
 
-            <div className="flex items-end">
-              <Button
-                onClick={handleAddClass}
-                className="w-full h-9 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold gap-1.5 shadow-sm"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Tambah Sesi ke Jadual</span>
-              </Button>
-            </div>
+          <div className="flex justify-end pt-1">
+            <Button
+              onClick={handleAddClass}
+              className="h-9 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold gap-1.5 shadow-sm px-5"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Tambah Sesi ke Jadual</span>
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -392,7 +380,7 @@ export function CoachScheduleManager({ onSaved }: { onSaved?: () => void }) {
               </CardTitle>
             </div>
             <Badge variant="outline" className="text-xs font-semibold w-fit">
-              Semua tarikh selaras dengan Wilayah
+              Program Silibus Penuh (4 Modul Lengkap)
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground">
@@ -420,8 +408,8 @@ export function CoachScheduleManager({ onSaved }: { onSaved?: () => void }) {
                       </span>
                     </div>
 
-                    <h4 className="text-xs sm:text-sm font-bold text-foreground leading-snug line-clamp-2">
-                      {cls.module}
+                    <h4 className="text-xs sm:text-sm font-bold text-foreground leading-snug">
+                      {PROGRAMME_TITLE}
                     </h4>
 
                     <div className="text-[11px] text-muted-foreground space-y-1">
