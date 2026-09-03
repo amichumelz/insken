@@ -17,10 +17,10 @@ import { useLanguage } from '@/lib/i18n';
 
 export function RegistrationTrend({ trend }: { trend: TrendPoint[] }) {
   const { lang } = useLanguage();
-  const total12 = trend.reduce((s, t) => s + t.total, 0);
-  const peakMonth = trend.reduce(
+  const total = trend.reduce((s, t) => s + t.total, 0);
+  const peakDay = trend.reduce(
     (max, t) => (t.total > max.total ? t : max),
-    { month: '—', total: 0, physical: 0, online: 0 },
+    { day: '—', total: 0, physical: 0, online: 0 },
   );
 
   return (
@@ -29,20 +29,20 @@ export function RegistrationTrend({ trend }: { trend: TrendPoint[] }) {
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg font-bold">
             <Activity className="h-5 w-5 text-indigo-600" />
-            <span>Participant Registration Velocity</span>
+            <span>Daily Registration Trend</span>
           </CardTitle>
           <div className="text-right">
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-              Peak Month
+              Peak Day
             </div>
             <div className="text-sm font-bold tabular-nums text-foreground">
-              {peakMonth.month} <span className="text-muted-foreground">·</span>{' '}
-              <span className="text-indigo-600">{peakMonth.total.toLocaleString()}</span>
+              {peakDay.day || peakDay.month} <span className="text-muted-foreground">·</span>{' '}
+              <span className="text-indigo-600">{peakDay.total.toLocaleString()}</span>
             </div>
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          Monthly registrations · last 12 months ({total12.toLocaleString()} total registrations)
+          Daily participant registrations · Physical vs Online ({total.toLocaleString()} total registrations)
         </p>
       </CardHeader>
       <CardContent className="px-2 sm:px-6 pb-5">
@@ -61,7 +61,7 @@ export function RegistrationTrend({ trend }: { trend: TrendPoint[] }) {
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(120,120,120,0.12)" vertical={false} />
               <XAxis
-                dataKey="month"
+                dataKey="day"
                 tick={{ fontSize: 10, fill: '#6b7280' }}
                 tickLine={false}
                 axisLine={false}
@@ -88,7 +88,7 @@ export function RegistrationTrend({ trend }: { trend: TrendPoint[] }) {
                   `${value.toLocaleString()} Participants`,
                   name === 'physical' ? 'Physical (Hall)' : 'Online (Virtual)',
                 ]}
-                labelFormatter={(label) => `Month: ${label}`}
+                labelFormatter={(label) => `Date: ${label}`}
               />
               <Legend
                 verticalAlign="bottom"

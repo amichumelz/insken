@@ -40,7 +40,8 @@ export interface SectorStat {
 }
 
 export interface TrendPoint {
-  month: string;
+  day: string;
+  month?: string;
   total: number;
   physical: number;
   online: number;
