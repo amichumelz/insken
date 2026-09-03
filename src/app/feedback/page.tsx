@@ -19,16 +19,16 @@ import {
   GraduationCap,
   HeartHandshake,
 } from 'lucide-react';
-import { useLanguage, LanguageToggle } from '@/lib/i18n';
+import { useLanguage } from '@/lib/i18n';
 
 function FeedbackFormContent() {
   const searchParams = useSearchParams();
-  const { lang } = useLanguage();
 
-  const trainerId = searchParams.get('trainer') || 'coach-a';
-  const trainerName = trainerId === 'coach-b' ? 'Coach B (Dr. Nadia)' : 'Coach A (En. Farhan)';
+  const trainerId = searchParams.get('trainer') || 'coach-farhan';
+  const trainerNameParam = searchParams.get('trainerName');
+  const trainerName = trainerNameParam ? decodeURIComponent(trainerNameParam) : (trainerId.includes('nadia') ? 'Dr. Nadia (Coach B)' : 'Mr. Farhan (Coach A)');
   const phase = searchParams.get('phase') || 'post';
-  const sessionParam = searchParams.get('session') || 'Program Latihan Kemahiran A.I. PMKS ASEAN';
+  const sessionParam = searchParams.get('session') || 'ASEAN MSMEs AI Skills Training Programme';
 
   const [name, setName] = useState('');
   const [rating, setRating] = useState(5);
@@ -49,7 +49,7 @@ function FeedbackFormContent() {
         body: JSON.stringify({
           trainerId,
           phase,
-          participantName: name.trim() || 'Peserta INSKEN',
+          participantName: name.trim() || 'INSKEN Participant',
           sessionName: sessionParam,
           rating,
           trainerKnowledge,
@@ -61,12 +61,12 @@ function FeedbackFormContent() {
       const data = await res.json();
       if (data.ok) {
         setSubmitted(true);
-        toast.success(data.message);
+        toast.success(data.message || 'Feedback submitted successfully!');
       } else {
-        toast.error(data.message || 'Penghantaran gagal.');
+        toast.error(data.message || 'Submission failed.');
       }
     } catch {
-      toast.error('Ralat rangkaian semasa menghantar.');
+      toast.error('Network error during submission.');
     } finally {
       setSubmitting(false);
     }
@@ -89,16 +89,14 @@ function FeedbackFormContent() {
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="font-semibold text-xs sm:text-base truncate">INSKEN</span>
                 <span className="shrink-0 rounded bg-[#D4A017]/20 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold text-[#F59E0B]">
-                  {phase === 'pre' ? 'Pre-Session' : 'Borang Maklum Balas'}
+                  {phase === 'pre' ? 'Pre-Session Survey' : 'Feedback Form'}
                 </span>
               </div>
               <p className="text-[10px] sm:text-[11px] text-white/70 truncate hidden xs:block sm:block">
-                Penilaian Kualiti &amp; Pengalaman Latihan
+                Training Quality &amp; Experience Evaluation
               </p>
             </div>
           </div>
-
-          <LanguageToggle />
         </div>
       </header>
 
@@ -111,170 +109,188 @@ function FeedbackFormContent() {
             </div>
             <div className="space-y-1">
               <h2 className="text-xl font-bold text-foreground">
-                {lang === 'ms' ? 'Terima Kasih Atas Maklum Balas Anda!' : 'Thank You for Your Feedback!'}
+                Thank You for Your Feedback!
               </h2>
               <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
-                {lang === 'ms'
-                  ? 'Penilaian anda telah direkodkan secara selamat. Maklum balas anda amat berharga bagi meningkatkan kualiti latihan keusahawanan negara.'
-                  : 'Your evaluation has been securely recorded. Your feedback helps us continually enhance the training experience.'}
+                Your evaluation has been securely recorded. Your feedback helps INSKEN continually elevate entrepreneurship training quality.
               </p>
             </div>
 
-            <div className="pt-3">
+            <div className="pt-2">
               <Link href="/">
-                <Button className="h-10 text-xs font-semibold gap-1.5 bg-[#0B1F3A] hover:bg-[#1E3A8A]">
+                <Button variant="outline" size="sm" className="h-9 text-xs gap-1.5 font-semibold">
                   <ArrowLeft className="h-3.5 w-3.5" />
-                  {lang === 'ms' ? 'Kembali ke Laman Utama' : 'Return to Home'}
+                  Return to Home
                 </Button>
               </Link>
             </div>
           </Card>
         ) : (
-          <Card className="border shadow-lg rounded-2xl overflow-hidden">
-            <CardHeader className="bg-[#0B1F3A] text-white p-5 sm:p-6">
-              <div className="flex items-center justify-between">
-                <Badge className="bg-[#D4A017] text-[#0B1F3A] font-bold text-[10px] uppercase">
-                  {phase === 'pre' ? 'Pre-Session Survey' : 'Post-Session Evaluation'}
-                </Badge>
-                <span className="text-[11px] text-white/70 flex items-center gap-1">
-                  <GraduationCap className="h-3.5 w-3.5 text-[#D4A017]" />
-                  <span>{trainerName}</span>
-                </span>
+          <Card className="border shadow-xl rounded-2xl overflow-hidden bg-card">
+            {/* Form Top Banner */}
+            <div className="bg-gradient-to-r from-[#0B1F3A] via-[#112D55] to-[#0B1F3A] text-white p-5 sm:p-6 text-center space-y-2">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-[#D4A017]/20 border border-[#D4A017]/40 px-3 py-0.5 text-xs font-bold text-[#F59E0B]">
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>{phase === 'pre' ? 'PRE-SESSION SURVEY' : 'POST-SESSION EVALUATION'}</span>
               </div>
-              <CardTitle className="text-lg sm:text-xl font-bold text-white mt-2">
-                {lang === 'ms' ? 'Borang Maklum Balas Sesi Latihan' : 'Training Session Feedback Form'}
-              </CardTitle>
-              <p className="text-xs text-white/70 mt-0.5">
+              <h1 className="text-lg sm:text-xl font-bold text-white">
                 {sessionParam}
-              </p>
-            </CardHeader>
+              </h1>
+              <div className="flex items-center justify-center gap-1.5 text-xs text-white/80 font-medium">
+                <GraduationCap className="h-4 w-4 text-[#D4A017]" />
+                <span>Coach: <strong>{trainerName}</strong></span>
+              </div>
+            </div>
 
-            <CardContent className="p-5 sm:p-6">
+            <CardContent className="p-5 sm:p-6 space-y-5">
               <form onSubmit={handleSubmit} className="space-y-5">
-                {/* Participant Name (Optional) */}
+                {/* Participant Name */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="fb-name" className="text-xs font-semibold">
-                    {lang === 'ms' ? 'Nama Anda (Pilihan / Boleh Dikosongkan)' : 'Your Name (Optional)'}
+                  <Label htmlFor="name" className="text-xs font-semibold">
+                    Participant Name / Company (Optional)
                   </Label>
                   <Input
-                    id="fb-name"
+                    id="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder={lang === 'ms' ? 'Cth: Ahmad / Kosongkan untuk Tanpa Nama' : 'e.g. Ahmad or leave blank for Anonymous'}
-                    className="h-10 text-sm"
+                    placeholder="e.g. Ahmad bin Abdullah"
+                    className="h-10 text-xs sm:text-sm"
                   />
                 </div>
 
-                {/* Overall Rating (1-5 Stars) */}
-                <div className="space-y-2 rounded-xl bg-slate-50 dark:bg-slate-900 p-4 border">
-                  <Label className="text-xs font-bold text-foreground block">
-                    {lang === 'ms' ? '1. Penilaian Keseluruhan Sesi' : '1. Overall Session Rating'}
-                  </Label>
-                  <div className="flex items-center gap-2">
+                {/* Question 1: Overall Satisfaction */}
+                <div className="space-y-2 rounded-xl border p-3.5 bg-muted/20">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-semibold">
+                      1. Overall Session Satisfaction
+                    </Label>
+                    <Badge variant="outline" className="text-xs font-bold text-amber-600 border-amber-400">
+                      {rating} / 5 Stars
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-center gap-2 pt-1">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
                         key={star}
                         type="button"
                         onClick={() => setRating(star)}
-                        className="p-1 transition-transform hover:scale-110 focus:outline-none"
+                        className={`p-1.5 rounded-lg transition-transform hover:scale-110 ${
+                          star <= rating ? 'text-amber-500' : 'text-muted-foreground/30'
+                        }`}
                       >
-                        <Star
-                          className={`h-7 w-7 sm:h-8 sm:w-8 ${
-                            star <= rating
-                              ? 'fill-[#D4A017] text-[#D4A017]'
-                              : 'text-slate-300 dark:text-slate-700'
-                          }`}
-                        />
+                        <Star className="h-7 w-7 fill-current" />
                       </button>
                     ))}
-                    <span className="ml-2 text-xs font-bold text-[#D4A017]">{rating} / 5</span>
                   </div>
                 </div>
 
-                {/* Question 2: Trainer Knowledge */}
-                <div className="space-y-2">
+                {/* Question 2: Trainer Mastery */}
+                <div className="space-y-2 rounded-xl border p-3.5 bg-muted/20">
                   <div className="flex items-center justify-between">
                     <Label className="text-xs font-semibold">
-                      {lang === 'ms' ? '2. Pengetahuan & Penguasaan Jurulatih' : '2. Trainer Knowledge & Expertise'}
+                      2. Trainer Subject Matter Mastery
                     </Label>
-                    <span className="text-xs font-bold text-primary">{trainerKnowledge} / 5</span>
+                    <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                      {trainerKnowledge} / 5
+                    </span>
                   </div>
-                  <input
-                    type="range"
-                    min="1"
-                    max="5"
-                    value={trainerKnowledge}
-                    onChange={(e) => setTrainerKnowledge(Number(e.target.value))}
-                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700 accent-primary"
-                  />
+                  <div className="grid grid-cols-5 gap-1 pt-1">
+                    {[1, 2, 3, 4, 5].map((score) => (
+                      <Button
+                        key={score}
+                        type="button"
+                        size="sm"
+                        variant={trainerKnowledge === score ? 'default' : 'outline'}
+                        onClick={() => setTrainerKnowledge(score)}
+                        className="h-8 text-xs font-bold"
+                      >
+                        {score}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Question 3: Content Clarity */}
-                <div className="space-y-2">
+                <div className="space-y-2 rounded-xl border p-3.5 bg-muted/20">
                   <div className="flex items-center justify-between">
                     <Label className="text-xs font-semibold">
-                      {lang === 'ms' ? '3. Kejelasan Kandungan & Modul' : '3. Content Clarity & Structure'}
+                      3. Clarity &amp; Delivery of Content
                     </Label>
-                    <span className="text-xs font-bold text-primary">{contentClarity} / 5</span>
+                    <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                      {contentClarity} / 5
+                    </span>
                   </div>
-                  <input
-                    type="range"
-                    min="1"
-                    max="5"
-                    value={contentClarity}
-                    onChange={(e) => setContentClarity(Number(e.target.value))}
-                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700 accent-primary"
-                  />
+                  <div className="grid grid-cols-5 gap-1 pt-1">
+                    {[1, 2, 3, 4, 5].map((score) => (
+                      <Button
+                        key={score}
+                        type="button"
+                        size="sm"
+                        variant={contentClarity === score ? 'default' : 'outline'}
+                        onClick={() => setContentClarity(score)}
+                        className="h-8 text-xs font-bold"
+                      >
+                        {score}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Question 4: Practical Applicability */}
-                <div className="space-y-2">
+                <div className="space-y-2 rounded-xl border p-3.5 bg-muted/20">
                   <div className="flex items-center justify-between">
                     <Label className="text-xs font-semibold">
-                      {lang === 'ms' ? '4. Kebolehlaksanaan untuk Perniagaan Anda' : '4. Applicability to Your Business'}
+                      4. Practical Applicability to Business
                     </Label>
-                    <span className="text-xs font-bold text-primary">{practicalUse} / 5</span>
+                    <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                      {practicalUse} / 5
+                    </span>
                   </div>
-                  <input
-                    type="range"
-                    min="1"
-                    max="5"
-                    value={practicalUse}
-                    onChange={(e) => setPracticalUse(Number(e.target.value))}
-                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700 accent-primary"
-                  />
+                  <div className="grid grid-cols-5 gap-1 pt-1">
+                    {[1, 2, 3, 4, 5].map((score) => (
+                      <Button
+                        key={score}
+                        type="button"
+                        size="sm"
+                        variant={practicalUse === score ? 'default' : 'outline'}
+                        onClick={() => setPracticalUse(score)}
+                        className="h-8 text-xs font-bold"
+                      >
+                        {score}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
 
-                {/* Comment */}
+                {/* Comments */}
                 <div className="space-y-1.5">
                   <Label htmlFor="comment" className="text-xs font-semibold">
-                    {lang === 'ms' ? 'Komen / Cadangan Penambahbaikan' : 'Comments / Suggestions'}
+                    Suggestions, Comments &amp; Testimonials
                   </Label>
                   <Textarea
                     id="comment"
+                    rows={3}
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    placeholder={lang === 'ms' ? 'Kongsi pandangan anda mengenai sesi ini...' : 'Share your feedback on this session...'}
-                    rows={3}
-                    className="text-sm resize-none"
+                    placeholder="Share what you liked most about today's session..."
+                    className="text-xs sm:text-sm resize-none"
                   />
                 </div>
 
-                {/* Submit */}
                 <Button
                   type="submit"
                   disabled={submitting}
-                  className="w-full h-11 bg-gradient-to-r from-[#0B1F3A] to-[#1E3A8A] text-white font-bold text-xs gap-2 shadow-md hover:opacity-95"
+                  className="w-full h-11 bg-[#0B1F3A] text-white hover:bg-[#112D55] font-bold text-xs sm:text-sm gap-2 shadow-md"
                 >
                   {submitting ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>{lang === 'ms' ? 'Menghantar Maklum Balas...' : 'Submitting Feedback...'}</span>
+                      <span>Submitting Feedback...</span>
                     </>
                   ) : (
                     <>
                       <HeartHandshake className="h-4 w-4 text-[#D4A017]" />
-                      <span>{lang === 'ms' ? 'Hantar Maklum Balas' : 'Submit Feedback'}</span>
+                      <span>Submit Official Feedback</span>
                     </>
                   )}
                 </Button>
@@ -285,8 +301,13 @@ function FeedbackFormContent() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t bg-card py-3.5 text-center text-xs text-muted-foreground">
-        <p>© 2026 INSKEN · Institut Keusahawanan Negara</p>
+      <footer className="border-t bg-muted/20 py-4 text-xs text-muted-foreground">
+        <div className="mx-auto flex max-w-3xl flex-col items-center justify-between gap-2 px-4 sm:flex-row">
+          <p>© 2026 INSKEN · ASEAN MSMEs AI Skills Training Programme</p>
+          <div className="flex items-center gap-3">
+            <Link href="/" className="hover:text-foreground">Registration</Link>
+          </div>
+        </div>
       </footer>
     </div>
   );
@@ -294,7 +315,13 @@ function FeedbackFormContent() {
 
 export default function FeedbackPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Memuatkan...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-slate-50">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      }
+    >
       <FeedbackFormContent />
     </Suspense>
   );

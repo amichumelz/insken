@@ -1,11 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Globe } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import React, { createContext, useContext } from 'react';
 
-export type Language = 'ms' | 'en';
+export type Language = 'en';
 
 export interface Translations {
   // Brand & General
@@ -17,6 +14,7 @@ export interface Translations {
   
   // Navigation & Actions
   navDashboard: string;
+  navSchedules: string;
   navTrainers: string;
   navRegistry: string;
   navRegisterAdmin: string;
@@ -134,133 +132,15 @@ export interface Translations {
 }
 
 export const translations: Record<Language, Translations> = {
-  ms: {
-    brandTitle: 'INSKEN Portal',
-    brandSub: 'ASEAN MSMEs AI Skills Training Programme',
-    participantBadge: 'Pendaftaran Peserta',
-    adminBadge: 'Pentadbir',
-    checkinBadge: 'Kaunter Kehadiran',
-    
-    navDashboard: 'Dashboard Eksekutif',
-    navTrainers: 'Prestasi Jurulatih',
-    navRegistry: 'Pangkalan Data Peserta',
-    navRegisterAdmin: 'Pendaftaran (Admin)',
-    navCheckinAdmin: 'Kehadiran (Admin)',
-    navAlreadyRegistered: 'Sudah Daftar?',
-    navCheckAttendance: 'Semak Kehadiran',
-    navNotRegistered: 'Belum Daftar?',
-    navRegisterNow: 'Daftar Sekarang',
-    navPublicRegister: 'Portal Pendaftaran',
-    navPublicCheckin: 'Portal Kehadiran',
-    navLogin: 'Log Masuk',
-    navLogout: 'Log Keluar',
-    navRefresh: 'Muat Semula',
-    navAdminAccess: 'Akses Pentadbir (Admin)',
-    navBackToHome: 'Kembali ke Utama',
-
-    regOfficialForm: 'Borang Pendaftaran Rasmi',
-    regTitle: 'Pendaftaran Program Latihan A.I. PMKS ASEAN',
-    regSubtitle: 'Sila lengkapkan butiran perniagaan anda. Pas kehadiran digital ber-QR akan dijana secara automatik.',
-    regIcRoutingBadge: 'Pengesahan IC Unik & Laluan Kapasiti Automatik',
-    regFormTitle: 'Maklumat Pendaftaran Peserta',
-    regFormSubtitle: 'Setiap No. Kad Pengenalan hanya sah untuk 1 pendaftaran.',
-    regFullName: 'Nama Penuh (Seperti Dalam IC/Pasport)',
-    regIcNumber: 'Nombor Kad Pengenalan / Pasport',
-    regIcPlaceholder: 'Cth: 881024-14-5231 atau 881024145231',
-    regEmail: 'Alamat Emel Perniagaan',
-    regPhone: 'Nombor Telefon (WhatsApp)',
-    regSector: 'Sektor Perniagaan',
-    regSelectSector: 'Pilih Sektor Perniagaan',
-    regRegion: 'Wilayah / Zon Latihan',
-    regSelectRegion: 'Pilih Wilayah Latihan',
-    regPreferredMode: 'Pilihan Mod Kehadiran',
-    regPhysicalMode: 'Fizikal (Bersemuka)',
-    regOnlineMode: 'Dalam Talian (Online Zoom)',
-    regPhysicalDesc: 'Tertakluk kepada had kapasiti kerusi dewan fizikal wilayah.',
-    regOnlineDesc: 'Akses tanpa had melalui platform sesi interaktif live.',
-    regCapacityWarning: 'Dewan fizikal telah penuh (Kapasiti 100%). Anda akan dialihkan secara automatik ke Mod Online.',
-    regSubmitBtn: 'Hantar Pendaftaran & Jana Pas QR',
-    regSubmitting: 'Mengesahkan & Menjana Pas...',
-    regSuccessTitle: 'Pendaftaran Berjaya Disahkan!',
-    regSuccessMsg: 'Pas Kehadiran Digital anda telah sedia. Sila simpan atau tangkap layar (*screenshot*) kod QR ini.',
-    regParticipantId: 'ID Peserta Rasmi',
-    regAssignedMode: 'Mod Disahkan',
-    regDownloadPass: 'Muat Turun Slip Pengesahan',
-    regWhatsAppPreview: 'Pratonton Pengesahan WhatsApp',
-    regRegisterAnother: 'Daftar Peserta Lain',
-    regSlipTitle: 'SLIP PENGESAHAN PENDAFTARAN',
-    regQrLockedBadge: 'KOD QR KEHADIRAN (DIAKTIFKAN PADA HARI KELAS)',
-    regQrLockedDesc: 'Sila simpan kod QR ini. Imbasan kehadiran hanya akan dibuka pada hari sesi latihan anda bermula.',
-    regEventDateLabel: 'Tarikh Sesi Program',
-    regConfirmedBadge: 'TEMPAT DISAHKAN',
-
-    checkinCounterTitle: 'Kaunter Imbasan Kehadiran',
-    checkinMainTitle: 'Pengesahan Kehadiran Peserta (Check-in)',
-    checkinSubtitle: 'Imbas kod QR pada Pas Digital anda atau masukkan No. IC / ID Peserta untuk mengesahkan kehadiran.',
-    checkinInstantBadge: 'Pengesahan Serta-merta ke Cloudflare D1',
-    checkinInputLabel: 'Nombor IC atau ID Peserta (ASEAN-XXXXX)',
-    checkinInputPlaceholder: 'Masukkan No. IC atau ID Peserta...',
-    checkinInputHelp: 'Contoh format: 881024-14-5231 atau ASEAN-01234',
-    checkinModeLabel: 'Pilih Mod Kehadiran Hari Ini',
-    checkinPhysicalBtn: 'Fizikal (Di Dewan)',
-    checkinOnlineBtn: 'Dalam Talian (Online)',
-    checkinSubmitBtn: 'Sahkan Kehadiran Peserta',
-    checkinVerifying: 'Menyemak Pangkalan Data...',
-    checkinSuccessTitle: 'Kehadiran Berjaya Direkodkan!',
-    checkinAlreadyTitle: 'Peserta Ini Sudah Mendaftar Kehadiran',
-    checkinNotFoundTitle: 'Rekod Peserta Tidak Dijumpai',
-    checkinSector: 'Sektor',
-    checkinRegion: 'Wilayah',
-    checkinTime: 'Masa Kehadiran',
-
-    loginTitle: 'Log Masuk Pentadbir',
-    loginSubtitle: 'Akses ke Executive Dashboard, Trainer Performance & Registry Peserta.',
-    loginEmail: 'Emel Rasmi Pentadbir',
-    loginPassword: 'Kata Laluan',
-    loginSubmitBtn: 'Log Masuk ke Dashboard',
-    loginLoggingIn: 'Mengesahkan...',
-    loginNoAccount: 'Belum mempunyai akaun pentadbir?',
-    loginCreateAccount: 'Daftar Akaun Admin',
-    loginParticipantPrompt: 'Anda peserta latihan?',
-
-    adminRegTitle: 'Daftar Akaun Pentadbir',
-    adminRegSubtitle: 'Cipta akaun pegawai atau pentadbir operasi INSKEN.',
-    adminRegName: 'Nama Penuh Pegawai',
-    adminRegRole: 'Peranan / Jawatan',
-    adminRegRoleAdmin: 'Pentadbir (Full Admin Access)',
-    adminRegRoleStaff: 'Pegawai Operasi (Staff)',
-    adminRegSubmitBtn: 'Daftar & Masuk ke Dashboard',
-    adminRegHaveAccount: 'Sudah mempunyai akaun?',
-
-    dashGlobalKpi: 'KPI Global Program',
-    dashOfTarget: 'daripada sasaran',
-    dashActiveAlerts: 'amaran kritikal',
-    dashSystemsHealthy: 'Semua sistem operasi stabil',
-    dashLiveDb: 'Pangkalan Data Live',
-    dashRegionalProgress: 'Kemajuan Sasaran Mengikut Wilayah',
-    dashSectoralBreakdown: 'Pecahan Sektor Perniagaan PMKS',
-    dashTrainerPerformance: 'Prestasi & Maklum Balas Jurulatih',
-    dashMasterRegistry: 'Pangkalan Data Penuh Peserta',
-    dashAlertsSystem: 'Sistem Amaran Automatik',
-    dashTotalParticipants: 'Jumlah Pendaftaran',
-    dashAttended: 'Kehadiran Selesai',
-    dashCapacity: 'Kapasiti',
-    dashSearchPlaceholder: 'Cari nama, IC, ID atau emel...',
-    dashFilterRegion: 'Semua Wilayah',
-    dashFilterStatus: 'Semua Status',
-    dashExportCsv: 'Eksport CSV',
-    dashName: 'Nama Peserta',
-    dashStatus: 'Status Kehadiran',
-    dashActions: 'Tindakan',
-  },
   en: {
     brandTitle: 'INSKEN Portal',
-    brandSub: 'ASEAN MSME A.I. Skills Training Program',
+    brandSub: 'ASEAN MSMEs AI Skills Training Programme',
     participantBadge: 'Participant Registration',
     adminBadge: 'Administrator',
-    checkinBadge: 'Attendance Counter',
+    checkinBadge: 'Attendance Check-in',
     
     navDashboard: 'Executive Dashboard',
+    navSchedules: 'Session & Coach Management',
     navTrainers: 'Trainer Performance',
     navRegistry: 'Participant Registry',
     navRegisterAdmin: 'Registration (Admin)',
@@ -278,8 +158,8 @@ export const translations: Record<Language, Translations> = {
     navBackToHome: 'Back to Home',
 
     regOfficialForm: 'Official Registration Form',
-    regTitle: 'ASEAN MSME A.I. Training Program Registration',
-    regSubtitle: 'Please complete your business details below. A digital QR entry pass will be generated instantly.',
+    regTitle: 'ASEAN MSMEs AI Skills Training Programme Registration',
+    regSubtitle: 'Please complete your enterprise details below. A digital QR attendance pass will be generated instantly.',
     regIcRoutingBadge: 'Unique IC Verification & Automatic Capacity Routing',
     regFormTitle: 'Participant Details',
     regFormSubtitle: 'Each National IC / Passport is valid for only one registration.',
@@ -293,37 +173,37 @@ export const translations: Record<Language, Translations> = {
     regRegion: 'Training Region / Zone',
     regSelectRegion: 'Select Training Region',
     regPreferredMode: 'Preferred Attendance Mode',
-    regPhysicalMode: 'Physical (In-Person)',
-    regOnlineMode: 'Online (Interactive Zoom)',
+    regPhysicalMode: 'Physical (Hall)',
+    regOnlineMode: 'Online (Interactive Virtual)',
     regPhysicalDesc: 'Subject to regional physical venue seating capacity limits.',
     regOnlineDesc: 'Unlimited access via interactive live online sessions.',
     regCapacityWarning: 'Physical venue is currently full (100% Capacity). You will be automatically routed to Online Mode.',
-    regSubmitBtn: 'Submit Registration & Generate QR Pass',
+    regSubmitBtn: 'Submit Registration & Generate Digital Pass',
     regSubmitting: 'Validating & Generating Pass...',
     regSuccessTitle: 'Registration Successfully Confirmed!',
-    regSuccessMsg: 'Your Digital QR Attendance Pass is ready. Please save or screenshot this pass for event entry.',
+    regSuccessMsg: 'Your Official Digital QR Attendance Pass is ready. Please save or screenshot this pass for event entry.',
     regParticipantId: 'Official Participant ID',
     regAssignedMode: 'Confirmed Mode',
     regDownloadPass: 'Download Confirmation Slip',
     regWhatsAppPreview: 'WhatsApp Confirmation Preview',
     regRegisterAnother: 'Register Another Participant',
     regSlipTitle: 'REGISTRATION CONFIRMATION SLIP',
-    regQrLockedBadge: 'ATTENDANCE QR (ACTIVE ON EVENT DAY)',
-    regQrLockedDesc: 'Please save this QR code. Attendance scanning will open on your session date.',
+    regQrLockedBadge: 'OFFICIAL ATTENDANCE PASS',
+    regQrLockedDesc: 'Please save this QR pass. Present this QR code or scan to confirm your attendance.',
     regEventDateLabel: 'Session Date',
     regConfirmedBadge: 'SEAT CONFIRMED',
 
     checkinCounterTitle: 'Attendance Check-in Desk',
     checkinMainTitle: 'Participant Attendance Check-in',
-    checkinSubtitle: 'Scan the QR code on your Digital Pass or enter your IC / Participant ID to confirm attendance.',
-    checkinInstantBadge: 'Instant Sync with Cloudflare D1 Database',
-    checkinInputLabel: 'National IC or Participant ID (ASEAN-XXXXX)',
+    checkinSubtitle: 'Scan the on-screen QR code or enter your IC / Participant ID to confirm attendance.',
+    checkinInstantBadge: 'Instant Sync with Cloudflare Database',
+    checkinInputLabel: 'National IC or Participant ID (e.g. ASEAN-00001)',
     checkinInputPlaceholder: 'Enter IC or Participant ID...',
-    checkinInputHelp: 'Example format: 881024-14-5231 or ASEAN-01234',
+    checkinInputHelp: 'Example format: 881024-14-5231 or ASEAN-00001',
     checkinModeLabel: 'Today\'s Attendance Mode',
-    checkinPhysicalBtn: 'Physical (On-site)',
+    checkinPhysicalBtn: 'Physical (Hall)',
     checkinOnlineBtn: 'Online (Virtual)',
-    checkinSubmitBtn: 'Confirm Participant Attendance',
+    checkinSubmitBtn: 'Confirm Attendance Now',
     checkinVerifying: 'Verifying Registry...',
     checkinSuccessTitle: 'Attendance Successfully Recorded!',
     checkinAlreadyTitle: 'Participant Already Checked In',
@@ -351,11 +231,11 @@ export const translations: Record<Language, Translations> = {
     adminRegSubmitBtn: 'Register & Access Dashboard',
     adminRegHaveAccount: 'Already have an account?',
 
-    dashGlobalKpi: 'Global Program KPI',
+    dashGlobalKpi: 'Global Programme KPI',
     dashOfTarget: 'of target',
     dashActiveAlerts: 'critical alerts',
-    dashSystemsHealthy: 'All operations healthy',
-    dashLiveDb: 'Live D1 Database',
+    dashSystemsHealthy: 'All systems operational',
+    dashLiveDb: 'Live DB',
     dashRegionalProgress: 'Regional Capacity & Progress',
     dashSectoralBreakdown: 'MSME Business Sectors Breakdown',
     dashTrainerPerformance: 'Trainer Performance & Feedback',
@@ -382,19 +262,19 @@ interface LanguageContextType {
 }
 
 const LanguageContext = createContext<LanguageContextType>({
-  lang: 'ms',
+  lang: 'en',
   setLang: () => {},
-  t: translations.ms,
+  t: translations.en,
   toggleLang: () => {},
 });
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const lang: Language = 'ms';
+  const lang: Language = 'en';
   const setLang = () => {};
   const toggleLang = () => {};
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang, t: translations.ms, toggleLang }}>
+    <LanguageContext.Provider value={{ lang, setLang, t: translations.en, toggleLang }}>
       {children}
     </LanguageContext.Provider>
   );
@@ -404,9 +284,6 @@ export function useLanguage() {
   return useContext(LanguageContext);
 }
 
-/**
- * LanguageToggle is now disabled — website is strictly in Bahasa Melayu.
- */
 export function LanguageToggle({ className }: { className?: string }) {
   return null;
 }

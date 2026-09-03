@@ -1,24 +1,19 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, Suspense } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ScanLine,
   CheckCircle2,
-  QrCode,
-  Sparkles,
   ArrowRight,
   MapPin,
   Calendar,
-  GraduationCap,
   Loader2,
-  ShieldCheck,
   UserCheck,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -41,7 +36,7 @@ function CheckinContent() {
     const cleanId = identifier.trim();
 
     if (!cleanId) {
-      toast.error('Sila masukkan No. IC atau ID Peserta anda.');
+      toast.error('Please enter your National IC or Participant ID.');
       return;
     }
 
@@ -60,19 +55,18 @@ function CheckinContent() {
 
       const data = await res.json();
       if (res.ok && data.ok) {
-        toast.success('Kehadiran anda telah berjaya disahkan!');
-        setAttendedRecord(data.participant || { participantId: cleanId, name: 'Peserta' });
+        toast.success('Your attendance has been verified!');
+        setAttendedRecord(data.participant || { participantId: cleanId, name: 'Participant' });
 
-        // Auto navigate to their digital pass after 1.5s
         const passId = data.participant?.participantId || cleanId;
         setTimeout(() => {
           router.push(`/pass/${encodeURIComponent(passId)}`);
         }, 1500);
       } else {
-        toast.error(data.message || 'Rekod peserta tidak dijumpai. Sila pastikan No. IC anda betul.');
+        toast.error(data.message || 'Participant record not found. Please verify your IC number.');
       }
     } catch {
-      toast.error('Ralat sambungan pelayan. Sila cuba lagi.');
+      toast.error('Network connection error. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -93,9 +87,9 @@ function CheckinContent() {
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="font-semibold text-xs sm:text-base truncate">INSKEN · Pengesahan Kehadiran</span>
+                <span className="font-semibold text-xs sm:text-base truncate">INSKEN · Attendance Verification</span>
                 <span className="shrink-0 rounded bg-emerald-500/20 px-2 py-0.5 text-[9px] sm:text-[10px] font-bold text-emerald-300">
-                  Check-in Sesi
+                  Session Check-in
                 </span>
               </div>
               <p className="text-[10px] sm:text-[11px] text-white/70 truncate hidden xs:block sm:block">
@@ -111,7 +105,7 @@ function CheckinContent() {
                 size="sm"
                 className="h-8 border-white/20 bg-white/10 text-white hover:bg-white/20 text-xs gap-1"
               >
-                <span>Daftar Peserta</span>
+                <span>Registration</span>
               </Button>
             </Link>
           </div>
@@ -125,7 +119,7 @@ function CheckinContent() {
           <div className="bg-gradient-to-r from-[#0B1F3A] via-[#112D55] to-[#0B1F3A] text-white p-5 sm:p-6 text-center space-y-2">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 px-3 py-1 text-xs font-bold text-emerald-300">
               <ScanLine className="h-3.5 w-3.5" />
-              <span>PENGESAHAN KEHADIRAN SESI HARI INI</span>
+              <span>TODAY'S ATTENDANCE CHECK-IN</span>
             </div>
             <h2 className="text-base sm:text-lg font-black text-white">
               {sessionName}
@@ -155,16 +149,16 @@ function CheckinContent() {
                 </div>
                 <div className="space-y-1">
                   <h3 className="text-lg font-black text-foreground">
-                    Kehadiran Anda Telah Disahkan!
+                    Attendance Successfully Verified!
                   </h3>
                   <p className="text-xs text-muted-foreground">
-                    Membuka Pas Kehadiran Digital Rasmi anda...
+                    Opening your Official Digital Pass...
                   </p>
                 </div>
                 <div className="pt-2">
                   <Link href={`/pass/${encodeURIComponent(attendedRecord.participantId || identifier)}`}>
                     <Button className="h-10 bg-[#0B1F3A] text-white hover:bg-[#112D55] text-xs font-bold gap-1.5 shadow">
-                      <span>Buka Pas Digital Saya</span>
+                      <span>Open My Digital Pass</span>
                       <ArrowRight className="h-4 w-4 text-[#D4A017]" />
                     </Button>
                   </Link>
@@ -175,19 +169,19 @@ function CheckinContent() {
                 <div className="rounded-xl bg-indigo-50/60 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-900/50 p-3.5 text-xs text-indigo-950 dark:text-indigo-200 flex items-start gap-2.5">
                   <UserCheck className="h-4 w-4 text-indigo-600 shrink-0 mt-0.5" />
                   <div className="leading-relaxed">
-                    Sila masukkan <strong>No. Kad Pengenalan (IC)</strong> atau <strong>ID Peserta</strong> (cth: <em>ASEAN-00011</em>) yang telah anda daftarkan untuk merekodkan kehadiran.
+                    Please enter your registered <strong>National IC Number</strong> or <strong>Participant ID</strong> (e.g. <em>ASEAN-00001</em>) to record attendance.
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
                   <Label htmlFor="id-input" className="text-xs font-bold">
-                    Nombor Kad Pengenalan / ID Peserta
+                    National IC / Participant ID
                   </Label>
                   <Input
                     id="id-input"
                     type="text"
                     required
-                    placeholder="Contoh: 880115-14-5521 atau ASEAN-00011"
+                    placeholder="e.g. 880115-14-5521 or ASEAN-00001"
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     className="h-11 text-sm font-semibold tracking-wide"
@@ -203,12 +197,12 @@ function CheckinContent() {
                   {submitting ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Mengesahkan Kehadiran...</span>
+                      <span>Verifying Attendance...</span>
                     </>
                   ) : (
                     <>
                       <ScanLine className="h-4 w-4" />
-                      <span>Sahkan Kehadiran Sekarang</span>
+                      <span>Confirm Attendance Now</span>
                     </>
                   )}
                 </Button>
@@ -223,7 +217,7 @@ function CheckinContent() {
         <div className="mx-auto flex max-w-4xl flex-col items-center justify-between gap-2 px-4 sm:flex-row">
           <p>© 2026 INSKEN · ASEAN MSMEs AI Skills Training Programme</p>
           <div className="flex items-center gap-3">
-            <Link href="/" className="hover:text-foreground">Portal Pendaftaran</Link>
+            <Link href="/" className="hover:text-foreground">Registration Portal</Link>
           </div>
         </div>
       </footer>

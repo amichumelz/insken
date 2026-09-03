@@ -66,7 +66,7 @@ export default function Home() {
       {/* Clean Public Footer */}
       <footer className="border-t bg-card py-4 text-center text-xs text-muted-foreground mt-8">
         <div className="mx-auto max-w-5xl px-4 flex flex-col sm:flex-row items-center justify-between gap-2.5">
-          <p>© 2026 INSKEN · Institut Keusahawanan Negara</p>
+          <p>© 2026 INSKEN · National Entrepreneurship Institute</p>
           <p className="text-[11px] text-muted-foreground">
             ASEAN MSMEs AI Skills Training Programme
           </p>

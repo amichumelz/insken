@@ -9,13 +9,9 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
   CheckCircle2,
-  Calendar,
-  MapPin,
-  Video,
   QrCode,
   Sparkles,
   ShieldCheck,
-  Clock,
   Loader2,
   ArrowLeft,
   ScanLine,
@@ -47,7 +43,7 @@ interface PassData {
 export default function ParticipantPassPage() {
   const routeParams = useParams();
   const participantId = (routeParams?.id as string) || '';
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
 
   const [data, setData] = useState<PassData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -60,7 +56,7 @@ export default function ParticipantPassPage() {
       const json = (await res.json()) as PassData;
       setData(json);
     } catch {
-      toast.error('Ralat memuatkan pas peserta.');
+      toast.error('Failed to load participant pass.');
     } finally {
       setLoading(false);
     }
@@ -85,13 +81,13 @@ export default function ParticipantPassPage() {
 
       const resData = await res.json();
       if (res.ok && resData.ok) {
-        toast.success('Kehadiran anda telah berjaya disahkan!');
+        toast.success('Your attendance has been recorded successfully!');
         loadPass();
       } else {
-        toast.error(resData.message || 'Pengesahan kehadiran gagal.');
+        toast.error(resData.message || 'Attendance recording failed.');
       }
     } catch {
-      toast.error('Ralat rangkaian semasa merekod kehadiran.');
+      toast.error('Network connection error.');
     } finally {
       setCheckingIn(false);
     }
@@ -114,7 +110,7 @@ export default function ParticipantPassPage() {
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="font-semibold text-xs sm:text-base truncate">{t.brandTitle}</span>
                 <span className="shrink-0 rounded bg-[#D4A017]/20 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold text-[#F59E0B]">
-                  Pas Digital Rasmi
+                  Official Digital Pass
                 </span>
               </div>
               <p className="text-[10px] sm:text-[11px] text-white/70 truncate hidden xs:block sm:block">
@@ -131,7 +127,7 @@ export default function ParticipantPassPage() {
                 className="h-8 border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white text-xs gap-1"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Laman Utama</span>
+                <span className="hidden sm:inline">Home</span>
               </Button>
             </Link>
           </div>
@@ -144,7 +140,7 @@ export default function ParticipantPassPage() {
           <div className="flex flex-col items-center justify-center py-20 space-y-3">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="text-xs text-muted-foreground">
-              Memuatkan maklumat pas peserta...
+              Loading participant pass details...
             </p>
           </div>
         ) : !data || !data.ok || !data.participant ? (
@@ -154,17 +150,17 @@ export default function ParticipantPassPage() {
             </div>
             <div className="space-y-1">
               <h3 className="text-base font-bold text-foreground">
-                Pas Tidak Dijumpai
+                Pass Not Found
               </h3>
               <p className="text-xs text-muted-foreground">
-                {data?.message || 'Maklumat pendaftaran tidak sah atau belum didaftarkan.'}
+                {data?.message || 'Participant registration details are invalid or not found.'}
               </p>
             </div>
             <div className="pt-2">
               <Link href="/">
                 <Button className="h-9 text-xs font-semibold gap-1.5">
                   <ArrowLeft className="h-3.5 w-3.5" />
-                  Daftar Sekarang
+                  Register Now
                 </Button>
               </Link>
             </div>
@@ -192,20 +188,20 @@ export default function ParticipantPassPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="text-sm sm:text-base font-bold text-foreground">
-                      {data.isAttended ? 'Kehadiran Disahkan' : 'Pas Kehadiran Aktif'}
+                      {data.isAttended ? 'Attendance Verified' : 'Active Attendance Pass'}
                     </span>
                     <Badge
                       className={`text-[10px] font-bold uppercase ${
                         data.isAttended ? 'bg-emerald-600 text-white' : 'bg-emerald-600 text-white'
                       }`}
                     >
-                      {data.isAttended ? 'SELESAI' : 'AKTIF'}
+                      {data.isAttended ? 'ATTENDED' : 'ACTIVE'}
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {data.isAttended && data.participant.checkInAt
-                      ? `Cop masa kehadiran: ${new Date(data.participant.checkInAt).toLocaleString('en-MY', { hour12: false })}`
-                      : 'Tunjukkan kod QR di bawah kepada urusetia atau tekan butang pengesahan kehadiran untuk merekod kehadiran.'}
+                      ? `Timestamp: ${new Date(data.participant.checkInAt).toLocaleString('en-US', { hour12: true })}`
+                      : 'Show this QR pass at the hall entrance or click the button below to confirm your attendance.'}
                   </p>
                 </div>
               </div>
@@ -217,7 +213,7 @@ export default function ParticipantPassPage() {
                 {/* Header Badge */}
                 <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-[#D4A017] backdrop-blur">
                   <ShieldCheck className="h-3.5 w-3.5" />
-                  <span>PAS KEHADIRAN DIGITAL RASMI</span>
+                  <span>OFFICIAL DIGITAL ATTENDANCE PASS</span>
                 </div>
 
                 {/* QR Code Container */}
@@ -263,19 +259,19 @@ export default function ParticipantPassPage() {
                       {checkingIn ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>Mengesahkan...</span>
+                          <span>Verifying...</span>
                         </>
                       ) : (
                         <>
                           <ScanLine className="h-4 w-4" />
-                          <span>Sahkan Kehadiran Sekarang</span>
+                          <span>Confirm Attendance Now</span>
                         </>
                       )}
                     </Button>
                   ) : (
                     <div className="w-full rounded-lg bg-emerald-500/20 border border-emerald-400/40 p-2.5 text-center text-xs font-bold text-emerald-300 flex items-center justify-center gap-1.5">
                       <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                      <span>Kehadiran Telah Direkodkan</span>
+                      <span>Attendance Recorded Successfully</span>
                     </div>
                   )}
                 </div>
@@ -283,7 +279,7 @@ export default function ParticipantPassPage() {
 
               {/* Card Footer Info */}
               <div className="border-t border-white/10 bg-black/20 px-5 py-3 text-center text-[11px] text-white/60">
-                ASEAN MSME A.I. Skills Training · Institut Keusahawanan Negara (INSKEN)
+                ASEAN MSMEs AI Skills Training Programme · Institut Keusahawanan Negara (INSKEN)
               </div>
             </Card>
           </div>
@@ -293,9 +289,9 @@ export default function ParticipantPassPage() {
       {/* Footer */}
       <footer className="border-t bg-muted/20 py-4 text-xs text-muted-foreground">
         <div className="mx-auto flex max-w-4xl flex-col items-center justify-between gap-2 px-4 sm:flex-row">
-          <p>© 2026 INSKEN · Program Latihan Kemahiran A.I. PMKS ASEAN</p>
+          <p>© 2026 INSKEN · ASEAN MSMEs AI Skills Training Programme</p>
           <div className="flex items-center gap-3">
-            <Link href="/" className="hover:text-foreground">Portal Pendaftaran</Link>
+            <Link href="/" className="hover:text-foreground">Registration Portal</Link>
           </div>
         </div>
       </footer>

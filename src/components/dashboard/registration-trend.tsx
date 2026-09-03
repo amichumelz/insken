@@ -12,7 +12,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import { Activity, Calendar } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
 
 export function RegistrationTrend({ trend }: { trend: TrendPoint[] }) {
@@ -29,11 +29,11 @@ export function RegistrationTrend({ trend }: { trend: TrendPoint[] }) {
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg font-bold">
             <Activity className="h-5 w-5 text-indigo-600" />
-            <span>Trend Pendaftaran Peserta</span>
+            <span>Participant Registration Velocity</span>
           </CardTitle>
           <div className="text-right">
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-              Bulan Kemuncak
+              Peak Month
             </div>
             <div className="text-sm font-bold tabular-nums text-foreground">
               {peakMonth.month} <span className="text-muted-foreground">·</span>{' '}
@@ -42,7 +42,7 @@ export function RegistrationTrend({ trend }: { trend: TrendPoint[] }) {
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          Pendaftaran bulanan peserta · 12 bulan terkini ({total12.toLocaleString()} jumlah keseluruhan)
+          Monthly registrations · last 12 months ({total12.toLocaleString()} total registrations)
         </p>
       </CardHeader>
       <CardContent className="px-2 sm:px-6 pb-5">
@@ -85,17 +85,17 @@ export function RegistrationTrend({ trend }: { trend: TrendPoint[] }) {
                 }}
                 labelStyle={{ color: '#D4A017', fontWeight: 700 }}
                 formatter={(value: number, name: string) => [
-                  `${value.toLocaleString()} Peserta`,
-                  name === 'physical' ? 'Fizikal (Dewan)' : 'Dalam Talian (Online)',
+                  `${value.toLocaleString()} Participants`,
+                  name === 'physical' ? 'Physical (Hall)' : 'Online (Virtual)',
                 ]}
-                labelFormatter={(label) => `Bulan: ${label}`}
+                labelFormatter={(label) => `Month: ${label}`}
               />
               <Legend
                 verticalAlign="bottom"
                 height={28}
                 iconType="circle"
                 wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
-                formatter={(value) => (value === 'physical' ? 'Fizikal (Dewan)' : 'Dalam Talian (Online)')}
+                formatter={(value) => (value === 'physical' ? 'Physical (Hall)' : 'Online (Virtual)')}
               />
               <Bar dataKey="physical" name="physical" stackId="a" fill="url(#physicalBarReg)" radius={[0, 0, 0, 0]} />
               <Bar dataKey="online" name="online" stackId="a" fill="url(#onlineBarReg)" radius={[4, 4, 0, 0]} />

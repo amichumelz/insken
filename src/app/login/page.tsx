@@ -8,12 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Lock, Mail, Loader2, ShieldCheck, ArrowRight, UserPlus, QrCode } from 'lucide-react';
-import { useLanguage, LanguageToggle } from '@/lib/i18n';
+import { Lock, Mail, Loader2, ShieldCheck, UserPlus } from 'lucide-react';
+import { useLanguage } from '@/lib/i18n';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,7 +21,7 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) {
-      toast.error(lang === 'ms' ? 'Sila masukkan Emel dan Kata Laluan.' : 'Please enter Email and Password.');
+      toast.error('Please enter Email and Password.');
       return;
     }
 
@@ -35,14 +35,14 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (res.ok && data.ok) {
-        toast.success(lang === 'ms' ? `Selamat kembali, ${data.user.name}!` : `Welcome back, ${data.user.name}!`);
+        toast.success(`Welcome back, ${data.user.name}!`);
         router.push('/admin');
         router.refresh();
       } else {
-        toast.error(data.message || (lang === 'ms' ? 'Log masuk gagal. Sila semak emel atau kata laluan.' : 'Login failed. Please check credentials.'));
+        toast.error(data.message || 'Login failed. Please check your credentials.');
       }
     } catch {
-      toast.error(lang === 'ms' ? 'Ralat sambungan ke pelayan.' : 'Server connection error.');
+      toast.error('Server connection error.');
     } finally {
       setLoading(false);
     }
@@ -75,8 +75,6 @@ export default function LoginPage() {
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <LanguageToggle />
-
             <Link href="/">
               <Button
                 variant="outline"
@@ -84,7 +82,7 @@ export default function LoginPage() {
                 className="h-8 border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white text-xs gap-1 px-2 sm:px-3"
               >
                 <UserPlus className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Portal:</span> {t.participantBadge}
+                <span className="hidden sm:inline">Participant</span> Portal
               </Button>
             </Link>
           </div>
@@ -99,26 +97,28 @@ export default function LoginPage() {
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary mb-2">
                 <ShieldCheck className="h-6 w-6 text-primary" />
               </div>
-              <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight">{t.loginTitle}</CardTitle>
+              <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight">
+                {t.loginTitle}
+              </CardTitle>
               <CardDescription className="text-xs sm:text-sm">
                 {t.loginSubtitle}
               </CardDescription>
             </CardHeader>
-            <CardContent className="px-4 sm:px-6 pb-6">
+            <CardContent className="px-4 sm:px-6 pb-6 space-y-4">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="email" className="text-xs font-semibold">
                     {t.loginEmail}
                   </Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="email"
                       type="email"
                       placeholder="admin@insken.gov.my"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-9 h-11 text-sm"
+                      className="pl-9 h-10 text-sm"
                       required
                     />
                   </div>
@@ -129,67 +129,57 @@ export default function LoginPage() {
                     {t.loginPassword}
                   </Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="password"
                       type="password"
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-9 h-11 text-sm"
+                      className="pl-9 h-10 text-sm"
                       required
                     />
                   </div>
                 </div>
 
-                <Button type="submit" disabled={loading} className="w-full h-11 text-sm font-semibold gap-2 bg-[#0B1F3A] hover:bg-[#1E3A8A] text-white">
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full h-10 text-sm font-semibold gap-2 bg-gradient-to-r from-[#0B1F3A] to-[#1E3A8A] text-white hover:opacity-95"
+                >
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
                       {t.loginLoggingIn}
                     </>
                   ) : (
-                    <>
-                      {t.loginSubmitBtn}
-                      <ArrowRight className="h-4 w-4 text-[#D4A017]" />
-                    </>
+                    t.loginSubmitBtn
                   )}
                 </Button>
               </form>
 
-              <div className="mt-6 pt-4 border-t text-center space-y-2">
-                <p className="text-xs text-muted-foreground">
-                  {t.loginNoAccount}{' '}
-                  <Link href="/register-admin" className="font-semibold text-primary hover:underline">
-                    {t.loginCreateAccount}
-                  </Link>
-                </p>
+              <div className="pt-2 text-center text-xs text-muted-foreground border-t">
+                {t.loginNoAccount}{' '}
+                <Link
+                  href="/register-admin"
+                  className="font-semibold text-primary hover:underline"
+                >
+                  {t.loginCreateAccount}
+                </Link>
               </div>
             </CardContent>
           </Card>
-
-          {/* Quick links for Participants */}
-          <div className="rounded-xl border bg-card/60 p-4 text-center space-y-2 shadow-sm">
-            <p className="text-xs font-medium text-muted-foreground">{t.loginParticipantPrompt}</p>
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <Link href="/">
-                <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
-                  <UserPlus className="h-3 w-3" /> {t.navPublicRegister}
-                </Button>
-              </Link>
-              <Link href="/checkin">
-                <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
-                  <QrCode className="h-3 w-3" /> {t.navPublicCheckin}
-                </Button>
-              </Link>
-            </div>
-          </div>
         </div>
       </main>
 
       {/* Footer */}
       <footer className="border-t bg-card py-4 text-center text-xs text-muted-foreground">
-        <p>© 2026 INSKEN · Institut Keusahawanan Negara</p>
+        <div className="mx-auto max-w-5xl px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p>© 2026 INSKEN · Operations &amp; Intelligence</p>
+          <p className="text-[11px] text-muted-foreground">
+            ASEAN MSMEs AI Skills Training Programme
+          </p>
+        </div>
       </footer>
     </div>
   );

@@ -9,12 +9,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Lock, Mail, User, Shield, Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
-import { useLanguage, LanguageToggle } from '@/lib/i18n';
+import { Lock, Mail, User, Shield, Loader2, ArrowLeft } from 'lucide-react';
+import { useLanguage } from '@/lib/i18n';
 
 export default function RegisterAdminPage() {
   const router = useRouter();
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,11 +24,11 @@ export default function RegisterAdminPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !password.trim()) {
-      toast.error(lang === 'ms' ? 'Sila lengkapkan semua maklumat pendaftaran.' : 'Please complete all registration fields.');
+      toast.error('Please complete all registration fields.');
       return;
     }
     if (password.length < 6) {
-      toast.error(lang === 'ms' ? 'Kata laluan sekurang-kurangnya 6 aksara.' : 'Password must be at least 6 characters.');
+      toast.error('Password must be at least 6 characters.');
       return;
     }
 
@@ -42,14 +42,14 @@ export default function RegisterAdminPage() {
       const data = await res.json();
 
       if (res.ok && data.ok) {
-        toast.success(lang === 'ms' ? 'Akaun admin berjaya didaftarkan!' : 'Admin account registered successfully!');
+        toast.success('Admin account registered successfully!');
         router.push('/admin');
         router.refresh();
       } else {
-        toast.error(data.message || (lang === 'ms' ? 'Pendaftaran akaun gagal.' : 'Registration failed.'));
+        toast.error(data.message || 'Registration failed.');
       }
     } catch {
-      toast.error(lang === 'ms' ? 'Ralat sambungan ke pelayan.' : 'Server connection error.');
+      toast.error('Server connection error.');
     } finally {
       setLoading(false);
     }
@@ -82,8 +82,6 @@ export default function RegisterAdminPage() {
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <LanguageToggle />
-
             <Link href="/login">
               <Button
                 variant="outline"
@@ -98,7 +96,7 @@ export default function RegisterAdminPage() {
         </div>
       </header>
 
-      {/* Main Registration Card */}
+      {/* Main Register Card */}
       <main className="flex-1 flex items-center justify-center px-3 sm:px-4 py-8 sm:py-12">
         <div className="w-full max-w-md space-y-4 sm:space-y-6">
           <Card className="border shadow-lg">
@@ -106,26 +104,27 @@ export default function RegisterAdminPage() {
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary mb-2">
                 <Shield className="h-6 w-6 text-primary" />
               </div>
-              <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight">{t.adminRegTitle}</CardTitle>
+              <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight">
+                {t.adminRegTitle}
+              </CardTitle>
               <CardDescription className="text-xs sm:text-sm">
                 {t.adminRegSubtitle}
               </CardDescription>
             </CardHeader>
-            <CardContent className="px-4 sm:px-6 pb-6">
+            <CardContent className="px-4 sm:px-6 pb-6 space-y-4">
               <form onSubmit={handleRegister} className="space-y-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="name" className="text-xs font-semibold">
                     {t.adminRegName}
                   </Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="name"
-                      type="text"
-                      placeholder="Ahmad Zaki"
+                      placeholder="e.g. Mohd Faiz"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="pl-9 h-11 text-sm"
+                      className="pl-9 h-10 text-sm"
                       required
                     />
                   </div>
@@ -136,14 +135,14 @@ export default function RegisterAdminPage() {
                     {t.loginEmail}
                   </Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="email"
                       type="email"
-                      placeholder="zaki@insken.gov.my"
+                      placeholder="officer@insken.gov.my"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-9 h-11 text-sm"
+                      className="pl-9 h-10 text-sm"
                       required
                     />
                   </div>
@@ -154,24 +153,27 @@ export default function RegisterAdminPage() {
                     {t.loginPassword}
                   </Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="password"
                       type="password"
-                      placeholder="Minimum 6 aksara / characters"
+                      placeholder="At least 6 characters"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-9 h-11 text-sm"
+                      className="pl-9 h-10 text-sm"
                       required
+                      minLength={6}
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">{t.adminRegRole}</Label>
+                  <Label htmlFor="role" className="text-xs font-semibold">
+                    {t.adminRegRole}
+                  </Label>
                   <Select value={role} onValueChange={setRole}>
-                    <SelectTrigger className="h-11 text-sm">
-                      <SelectValue placeholder="Pilih peranan" />
+                    <SelectTrigger id="role" className="h-10 text-sm">
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ADMIN">{t.adminRegRoleAdmin}</SelectItem>
@@ -180,28 +182,30 @@ export default function RegisterAdminPage() {
                   </Select>
                 </div>
 
-                <Button type="submit" disabled={loading} className="w-full h-11 text-sm font-semibold gap-2 bg-[#0B1F3A] hover:bg-[#1E3A8A] text-white mt-2">
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full h-10 text-sm font-semibold gap-2 bg-gradient-to-r from-[#0B1F3A] to-[#1E3A8A] text-white hover:opacity-95"
+                >
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      {lang === 'ms' ? 'Mendaftar Akaun...' : 'Registering Account...'}
+                      Creating Account...
                     </>
                   ) : (
-                    <>
-                      {t.adminRegSubmitBtn}
-                      <ArrowRight className="h-4 w-4 text-[#D4A017]" />
-                    </>
+                    t.adminRegSubmitBtn
                   )}
                 </Button>
               </form>
 
-              <div className="mt-6 pt-4 border-t text-center">
-                <p className="text-xs text-muted-foreground">
-                  {t.adminRegHaveAccount}{' '}
-                  <Link href="/login" className="font-semibold text-primary hover:underline">
-                    {t.navLogin}
-                  </Link>
-                </p>
+              <div className="pt-2 text-center text-xs text-muted-foreground border-t">
+                {t.adminRegHaveAccount}{' '}
+                <Link
+                  href="/login"
+                  className="font-semibold text-primary hover:underline"
+                >
+                  {t.navLogin}
+                </Link>
               </div>
             </CardContent>
           </Card>
@@ -210,7 +214,12 @@ export default function RegisterAdminPage() {
 
       {/* Footer */}
       <footer className="border-t bg-card py-4 text-center text-xs text-muted-foreground">
-        <p>© 2026 INSKEN · Institut Keusahawanan Negara</p>
+        <div className="mx-auto max-w-5xl px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p>© 2026 INSKEN · Operations &amp; Intelligence</p>
+          <p className="text-[11px] text-muted-foreground">
+            ASEAN MSMEs AI Skills Training Programme
+          </p>
+        </div>
       </footer>
     </div>
   );

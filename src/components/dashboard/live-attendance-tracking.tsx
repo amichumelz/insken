@@ -17,7 +17,6 @@ import {
 import {
   Activity,
   MapPin,
-  Video,
   RefreshCw,
   Radio,
   Clock,
@@ -25,7 +24,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/i18n';
 
-const REFRESH_INTERVAL_MS = 30000; // 30 seconds
+const REFRESH_INTERVAL_MS = 30000;
 
 const DEFAULT_LIVE_DATA: LiveCheckinsResponse = {
   timestamp: new Date().toISOString(),
@@ -55,13 +54,13 @@ const DEFAULT_LIVE_DATA: LiveCheckinsResponse = {
   ],
   regionAttendance: [],
   feed: [
-    { participantId: 'ASEAN-01458', name: 'Ahmad bin Abdullah', sector: 'Retail', region: 'KL', status: 'Attended_Physical', checkInAt: new Date().toISOString() },
-    { participantId: 'ASEAN-01459', name: 'Siti binti Rahman', sector: 'F&B', region: 'JHR', status: 'Attended_Online', checkInAt: new Date().toISOString() },
+    { participantId: 'ASEAN-00001', name: 'Ahmad bin Abdullah', sector: 'Retail', region: 'KL', status: 'Attended_Physical', checkInAt: new Date().toISOString() },
+    { participantId: 'ASEAN-00002', name: 'Siti binti Rahman', sector: 'Food & Beverage', region: 'JHR', status: 'Attended_Online', checkInAt: new Date().toISOString() },
   ],
 };
 
 export function LiveAttendanceTracking({ refreshTick = 0 }: { refreshTick?: number }) {
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
   const [data, setData] = useState<LiveCheckinsResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(new Date());
@@ -78,7 +77,7 @@ export function LiveAttendanceTracking({ refreshTick = 0 }: { refreshTick?: numb
         }
       }
     } catch {
-      // Keep existing data
+      // Retain data
     } finally {
       setLoading(false);
     }
@@ -97,7 +96,7 @@ export function LiveAttendanceTracking({ refreshTick = 0 }: { refreshTick?: numb
           }
         }
       } catch {
-        // Fallback
+        // Retain
       }
     })();
 
@@ -128,22 +127,22 @@ export function LiveAttendanceTracking({ refreshTick = 0 }: { refreshTick?: numb
             <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
           </span>
           <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
-            {lang === 'ms' ? 'PEMANTAUAN KEHADIRAN LANGSUNG' : 'LIVE ATTENDANCE TRACKING'}
+            LIVE ATTENDANCE TRACKING
           </span>
           <span className="hidden text-[11px] text-muted-foreground sm:inline">
-            {lang === 'ms' ? 'Kemas kini automatik setiap 30s' : 'Auto-refreshing every 30s'}
+            Auto-refreshing every 30s
           </span>
         </div>
         <div className="flex items-center gap-2">
           {lastUpdated && (
             <span className="font-mono text-[10px] text-muted-foreground flex items-center">
               <Clock className="mr-1 h-3 w-3" />
-              {lastUpdated.toLocaleTimeString('en-MY', { hour12: false })}
+              {lastUpdated.toLocaleTimeString('en-US', { hour12: true })}
             </span>
           )}
           <Button variant="ghost" size="sm" onClick={load} disabled={loading} className="h-7 px-2 text-xs">
             <RefreshCw className={cn('h-3 w-3 mr-1', loading && 'animate-spin')} />
-            <span>{t.navRefresh}</span>
+            <span>Refresh</span>
           </Button>
         </div>
       </div>
@@ -170,7 +169,6 @@ function CheckinVelocityChart({
   peakHour: string;
   peakCount: number;
 }) {
-  const { lang } = useLanguage();
   const total24 = velocity.reduce((s, v) => s + v.total, 0);
 
   return (
@@ -179,11 +177,11 @@ function CheckinVelocityChart({
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg font-bold">
             <Activity className="h-5 w-5 text-emerald-600" />
-            <span>Trend Kehadiran Peserta</span>
+            <span>Participant Attendance Velocity</span>
           </CardTitle>
           <div className="text-right">
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-              Waktu Kemuncak
+              Peak Hour
             </div>
             <div className="text-sm font-bold tabular-nums text-foreground">
               {peakHour} <span className="text-muted-foreground">·</span>{' '}
@@ -192,7 +190,7 @@ function CheckinVelocityChart({
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          Kehadiran peserta mengikut jam · 24 jam terkini ({total24.toLocaleString()} jumlah kehadiran)
+          Hourly attendance check-ins · last 24 hours ({total24.toLocaleString()} total check-ins)
         </p>
       </CardHeader>
       <CardContent className="px-2 sm:px-6 pb-5">
@@ -235,17 +233,17 @@ function CheckinVelocityChart({
                 }}
                 labelStyle={{ color: '#D4A017', fontWeight: 700 }}
                 formatter={(value: number, name: string) => [
-                  `${value.toLocaleString()} Peserta`,
-                  name === 'physical' ? 'Fizikal (Dewan)' : 'Dalam Talian (Online)',
+                  `${value.toLocaleString()} Participants`,
+                  name === 'physical' ? 'Physical (Hall)' : 'Online (Virtual)',
                 ]}
-                labelFormatter={(label) => `Waktu: ${label}`}
+                labelFormatter={(label) => `Time: ${label}`}
               />
               <Legend
                 verticalAlign="bottom"
                 height={28}
                 iconType="circle"
                 wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
-                formatter={(value) => (value === 'physical' ? 'Fizikal (Dewan)' : 'Dalam Talian (Online)')}
+                formatter={(value) => (value === 'physical' ? 'Physical (Hall)' : 'Online (Virtual)')}
               />
               <Bar dataKey="physical" name="physical" stackId="a" fill="url(#physicalBarLive)" radius={[0, 0, 0, 0]} />
               <Bar dataKey="online" name="online" stackId="a" fill="url(#onlineBarLive)" radius={[4, 4, 0, 0]} />
@@ -258,64 +256,54 @@ function CheckinVelocityChart({
 }
 
 function LiveFeed({ feed }: { feed: LiveCheckinsResponse['feed'] }) {
-  const { lang } = useLanguage();
-
   return (
     <Card className="border shadow-sm">
       <CardHeader className="pb-3 px-4 sm:px-6 pt-5">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg font-bold">
             <Radio className="h-5 w-5 text-emerald-600 animate-pulse" />
-            {lang === 'ms' ? 'Suapan Kehadiran Langsung' : 'Live Check-in Feed'}
+            <span>Live Attendance Feed</span>
           </CardTitle>
-          <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
-            {feed.length} terkini
-          </span>
+          <span className="text-xs text-muted-foreground">Real-time check-in stream</span>
         </div>
-        <p className="text-xs text-muted-foreground">
-          {lang === 'ms' ? 'Peserta yang baru mendaftar / mengesahkan kehadiran' : 'Latest participant check-in events'}
-        </p>
       </CardHeader>
       <CardContent className="px-4 sm:px-6 pb-5">
-        {feed.length === 0 ? (
-          <div className="py-8 text-center text-xs text-muted-foreground">
-            {lang === 'ms' ? 'Belum ada kehadiran direkodkan hari ini.' : 'No check-ins recorded yet today.'}
-          </div>
-        ) : (
-          <div className="divide-y divide-border/60">
-            {feed.slice(0, 8).map((p) => {
-              const isPhys = p.status.includes('Physical');
-              const timeStr = new Date(p.checkInAt).toLocaleTimeString('en-MY', {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false,
-              });
-
-              return (
-                <div key={p.participantId + p.checkInAt} className="flex items-center justify-between py-2.5 text-xs">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className={cn(
-                      'flex h-7 w-7 shrink-0 items-center justify-center rounded-md font-mono text-[10px] font-bold',
-                      isPhys ? 'bg-[#1E3A8A]/10 text-[#1E3A8A] dark:text-blue-400' : 'bg-[#D4A017]/15 text-[#B45309] dark:text-amber-400',
-                    )}>
-                      {isPhys ? <MapPin className="h-3.5 w-3.5" /> : <Video className="h-3.5 w-3.5" />}
-                    </span>
-                    <div className="min-w-0">
-                      <div className="font-semibold truncate text-foreground">{p.name}</div>
-                      <div className="text-[11px] text-muted-foreground">
-                        <span className="font-mono text-primary font-medium">{p.participantId}</span> · {p.region} · {p.sector}
-                      </div>
+        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+          {feed.length === 0 ? (
+            <p className="text-xs text-muted-foreground py-4 text-center">
+              No recent check-ins recorded yet today.
+            </p>
+          ) : (
+            feed.map((item, idx) => (
+              <div
+                key={idx}
+                className="flex items-center justify-between p-2.5 rounded-lg border bg-muted/20 text-xs gap-2 hover:bg-muted/40 transition-colors"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 font-bold shrink-0 text-[10px]">
+                    ✓
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-foreground truncate">{item.name}</div>
+                    <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 truncate">
+                      <span className="font-mono text-indigo-600 dark:text-indigo-400">{item.participantId}</span>
+                      <span>·</span>
+                      <span>{item.sector}</span>
+                      <span>·</span>
+                      <span className="flex items-center gap-0.5">
+                        <MapPin className="h-2.5 w-2.5" />
+                        {item.region}
+                      </span>
                     </div>
                   </div>
-                  <div className="shrink-0 text-right font-mono text-[11px] text-muted-foreground pl-2">
-                    {timeStr}
-                  </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
+                <div className="text-right shrink-0 text-[11px] font-mono text-muted-foreground">
+                  {new Date(item.checkInAt).toLocaleTimeString('en-US', { hour12: true })}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </CardContent>
     </Card>
   );

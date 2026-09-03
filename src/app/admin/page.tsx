@@ -26,7 +26,6 @@ import {
   GraduationCap,
   ExternalLink,
   LogOut,
-  LogIn,
   Loader2,
   Calendar,
   Tv,
@@ -37,7 +36,7 @@ type TabId = 'dashboard' | 'schedules' | 'trainers' | 'registry';
 
 export default function AdminPage() {
   const router = useRouter();
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(true);
@@ -47,7 +46,7 @@ export default function AdminPage() {
 
   const TABS: Array<{ id: TabId; label: string; icon: React.ElementType }> = [
     { id: 'dashboard', label: t.navDashboard, icon: LayoutDashboard },
-    { id: 'schedules', label: 'Pengurusan Sesi & Jurulatih', icon: Calendar },
+    { id: 'schedules', label: t.navSchedules, icon: Calendar },
     { id: 'trainers',  label: t.navTrainers, icon: GraduationCap },
     { id: 'registry',  label: t.navRegistry, icon: Users },
   ];
@@ -79,7 +78,7 @@ export default function AdminPage() {
       setStats(data);
       setRefreshTick((n) => n + 1);
     } catch {
-      toast.error('Gagal memuatkan data statistik.');
+      toast.error('Failed to load statistical data.');
     } finally {
       setLoading(false);
     }
@@ -94,10 +93,10 @@ export default function AdminPage() {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
       setCurrentUser(null);
-      toast.success('Log keluar berjaya.');
+      toast.success('Logged out successfully.');
       router.push('/login');
     } catch {
-      toast.error('Ralat semasa log keluar.');
+      toast.error('Error during logout.');
     }
   };
 
@@ -106,7 +105,7 @@ export default function AdminPage() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-background space-y-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <p className="text-sm text-muted-foreground">
-          Mengesahkan akses pentadbir...
+          Verifying administrator access...
         </p>
       </div>
     );
@@ -160,7 +159,7 @@ export default function AdminPage() {
                 className="inline-flex items-center gap-1.5 rounded-md border border-indigo-300 bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-900 transition-colors hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300"
               >
                 <Tv className="h-3.5 w-3.5 text-indigo-600" />
-                <span>Portal Jurulatih (Coach)</span>
+                <span>Coach Portal</span>
                 <ExternalLink className="h-2.5 w-2.5 opacity-60" />
               </Link>
 
@@ -170,7 +169,7 @@ export default function AdminPage() {
                 className="inline-flex items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-900 transition-colors hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
               >
                 <UserPlus className="h-3.5 w-3.5 text-amber-600" />
-                <span>Portal Peserta</span>
+                <span>Registration Portal</span>
                 <ExternalLink className="h-2.5 w-2.5 opacity-60" />
               </Link>
             </div>
@@ -205,7 +204,7 @@ export default function AdminPage() {
                 <div className="space-y-4">
                   <SectionHeader
                     title={t.dashMasterRegistry}
-                    subtitle="Pangkalan data peserta aktif bagi Program Latihan Kemahiran A.I. PMKS ASEAN."
+                    subtitle="Active participant database for the ASEAN MSMEs AI Skills Training Programme."
                   />
                   <ParticipantsTable />
                   <RegistrationTrend trend={stats.trend} />
@@ -214,9 +213,9 @@ export default function AdminPage() {
             </>
           ) : (
             <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
-              Gagal memuatkan data dashboard.
+              Failed to load dashboard data.
               <Button variant="outline" size="sm" onClick={loadStats} className="ml-2">
-                <RefreshCw className="h-3 w-3" /> Cuba Semula
+                <RefreshCw className="h-3 w-3" /> Retry
               </Button>
             </div>
           )}
@@ -278,14 +277,14 @@ function Header({
             className="h-8 border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white text-xs gap-1.5 px-2 sm:px-2.5"
           >
             <RefreshCw className={cn('h-3.5 w-3.5', refreshing && 'animate-spin')} />
-            <span className="hidden sm:inline">Kemas Kini</span>
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
 
           {user && (
             <div className="flex items-center gap-1.5 sm:gap-2 border-l border-white/20 pl-2 sm:pl-2.5">
               <div className="hidden sm:flex flex-col items-end text-[11px] leading-tight text-white/90">
                 <span className="font-semibold">{user.name}</span>
-                <span className="text-[10px] text-[#D4A017] font-semibold">{user.role}</span>
+                <span className="text-[10px] text-[#D4A017] uppercase tracking-wider">{user.role}</span>
               </div>
               <Button
                 variant="ghost"
@@ -294,7 +293,7 @@ function Header({
                 className="h-8 text-rose-300 hover:bg-rose-500/20 hover:text-rose-100 text-xs gap-1 px-2"
               >
                 <LogOut className="h-3.5 w-3.5" />
-                <span className="hidden md:inline">Log Keluar</span>
+                <span className="hidden md:inline">Log Out</span>
               </Button>
             </div>
           )}
@@ -350,9 +349,9 @@ function Footer() {
         <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground/80">
           <span>Cron: 00:00 GMT+8</span>
           <span>·</span>
-          <span>WhatsApp Business API aktif</span>
+          <span>WhatsApp Business API Active</span>
           <span>·</span>
-          <span>Penyelarasan Automatik Bersambung</span>
+          <span>Automatic Cloudflare Sync Online</span>
         </div>
       </div>
     </footer>
