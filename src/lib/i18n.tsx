@@ -128,6 +128,8 @@ export interface Translations {
   dashExportCsv: string;
   dashName: string;
   dashStatus: string;
+  dashRegisteredDate: string;
+  dashCheckinDate: string;
   dashActions: string;
 }
 
@@ -250,6 +252,8 @@ export const translations: Record<Language, Translations> = {
     dashExportCsv: 'Export CSV',
     dashName: 'Participant Name',
     dashStatus: 'Status',
+    dashRegisteredDate: 'Registered Date',
+    dashCheckinDate: 'Check-in Date',
     dashActions: 'Actions',
   },
 };

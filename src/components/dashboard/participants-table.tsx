@@ -219,24 +219,25 @@ export function ParticipantsTable() {
                 <th className="px-3 sm:px-4 py-2.5 font-medium">{t.dashName}</th>
                 <th className="hidden px-3 sm:px-4 py-2.5 font-medium md:table-cell">{t.regIcNumber}</th>
                 <th className="hidden px-3 sm:px-4 py-2.5 font-medium lg:table-cell">
-                  {t.regSector} <span className="ml-1 text-[9px] font-normal text-muted-foreground">({lang === 'ms' ? 'klik untuk sunting' : 'click to edit'})</span>
+                  {t.regSector} <span className="ml-1 text-[9px] font-normal text-muted-foreground">(click to edit)</span>
                 </th>
                 <th className="px-3 sm:px-4 py-2.5 font-medium">{t.checkinRegion}</th>
                 <th className="px-3 sm:px-4 py-2.5 font-medium">{t.dashStatus}</th>
-                <th className="hidden px-3 sm:px-4 py-2.5 font-medium sm:table-cell">{t.checkinTime}</th>
+                <th className="hidden px-3 sm:px-4 py-2.5 font-medium md:table-cell">{t.dashRegisteredDate}</th>
+                <th className="hidden px-3 sm:px-4 py-2.5 font-medium sm:table-cell">{t.dashCheckinDate}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">
-                    {lang === 'ms' ? 'Memuatkan pangkalan data...' : 'Loading registry...'}
+                  <td colSpan={8} className="px-3 py-8 text-center text-muted-foreground">
+                    Loading registry...
                   </td>
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">
-                    {lang === 'ms' ? 'Tiada rekod peserta dijumpai.' : 'No participants found.'}
+                  <td colSpan={8} className="px-3 py-8 text-center text-muted-foreground">
+                    No participants found.
                   </td>
                 </tr>
               ) : (
@@ -318,10 +319,19 @@ export function ParticipantsTable() {
                         {p.status.replace(/_/g, ' ')}
                       </span>
                     </td>
-                    <td className="hidden px-3 py-2 text-[11px] text-muted-foreground sm:table-cell">
-                      {p.checkInAt
-                        ? new Date(p.checkInAt).toLocaleDateString('en-MY', { day: '2-digit', month: 'short' })
+                    <td className="hidden whitespace-nowrap px-3 py-2 text-[11px] font-mono text-muted-foreground md:table-cell">
+                      {p.createdAt
+                        ? new Date(p.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
                         : '—'}
+                    </td>
+                    <td className="hidden whitespace-nowrap px-3 py-2 text-[11px] font-mono sm:table-cell">
+                      {p.checkInAt ? (
+                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                          {new Date(p.checkInAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground/60">—</span>
+                      )}
                     </td>
                   </tr>
                 ))
