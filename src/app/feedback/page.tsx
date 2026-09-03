@@ -24,9 +24,13 @@ import { useLanguage } from '@/lib/i18n';
 function FeedbackFormContent() {
   const searchParams = useSearchParams();
 
-  const trainerId = searchParams.get('trainer') || 'coach-farhan';
+  const trainerId = searchParams.get('trainer') || 'coach-mohsin';
   const trainerNameParam = searchParams.get('trainerName');
-  const trainerName = trainerNameParam ? decodeURIComponent(trainerNameParam) : (trainerId.includes('nadia') ? 'Dr. Nadia (Coach B)' : 'Mr. Farhan (Coach A)');
+  const trainerName = trainerNameParam
+    ? decodeURIComponent(trainerNameParam)
+    : trainerId.includes('adly')
+      ? 'Coach Dr. Adly'
+      : 'Coach Mohsin';
   const phase = searchParams.get('phase') || 'post';
   const sessionParam = searchParams.get('session') || 'ASEAN MSMEs AI Skills Training Programme';
 

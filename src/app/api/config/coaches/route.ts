@@ -19,36 +19,36 @@ export interface CoachClassRecord {
   targetSeats: number;
 }
 
-const DEFAULT_CLASSES: CoachClassRecord[] = [
+export const DEFAULT_CLASSES: CoachClassRecord[] = [
   {
     id: 'cls-01',
     module: PROGRAMME_TITLE,
-    coachId: 'coach-farhan',
-    coachName: 'En. Farhan (Coach A)',
+    coachId: 'coach-mohsin',
+    coachName: 'Coach Mohsin',
     region: 'KL',
     regionName: 'Kuala Lumpur (HQ)',
     date: '2026-09-02',
     time: '09:00 AM - 05:00 PM',
-    venue: 'Dewan Utama INSKEN KL Sentral',
+    venue: 'INSKEN Main Hall KL Sentral',
     targetSeats: 400,
   },
   {
     id: 'cls-02',
     module: PROGRAMME_TITLE,
-    coachId: 'coach-nadia',
-    coachName: 'Dr. Nadia (Coach B)',
+    coachId: 'coach-adly',
+    coachName: 'Coach Dr. Adly',
     region: 'JHR',
     regionName: 'Johor Bahru',
     date: '2026-09-05',
     time: '09:00 AM - 05:00 PM',
-    venue: 'Pusat Konvensyen Antarabangsa Persada Johor',
+    venue: 'Persada Johor International Convention Centre',
     targetSeats: 200,
   },
   {
     id: 'cls-03',
     module: PROGRAMME_TITLE,
-    coachId: 'coach-amirul',
-    coachName: 'Ts. Amirul (Coach C)',
+    coachId: 'coach-mohsin',
+    coachName: 'Coach Mohsin',
     region: 'PNG',
     regionName: 'Pulau Pinang',
     date: '2026-09-08',
@@ -59,8 +59,8 @@ const DEFAULT_CLASSES: CoachClassRecord[] = [
   {
     id: 'cls-04',
     module: PROGRAMME_TITLE,
-    coachId: 'coach-aishah',
-    coachName: 'Pn. Aishah (Coach D)',
+    coachId: 'coach-adly',
+    coachName: 'Coach Dr. Adly',
     region: 'SBH',
     regionName: 'Sabah (Kota Kinabalu)',
     date: '2026-09-12',
@@ -71,8 +71,8 @@ const DEFAULT_CLASSES: CoachClassRecord[] = [
   {
     id: 'cls-05',
     module: PROGRAMME_TITLE,
-    coachId: 'coach-farhan',
-    coachName: 'En. Farhan (Coach A)',
+    coachId: 'coach-mohsin',
+    coachName: 'Coach Mohsin',
     region: 'SWK',
     regionName: 'Sarawak (Kuching)',
     date: '2026-09-15',
@@ -83,13 +83,13 @@ const DEFAULT_CLASSES: CoachClassRecord[] = [
   {
     id: 'cls-06',
     module: PROGRAMME_TITLE,
-    coachId: 'coach-nadia',
-    coachName: 'Dr. Nadia (Coach B)',
+    coachId: 'coach-adly',
+    coachName: 'Coach Dr. Adly',
     region: 'KL',
     regionName: 'Kuala Lumpur',
     date: '2026-09-18',
     time: '09:00 AM - 05:00 PM',
-    venue: 'Dewan Teater Utama INSKEN',
+    venue: 'INSKEN Main Theatre Hall',
     targetSeats: 400,
   },
 ];
@@ -158,13 +158,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       ok: true,
-      message: 'Maklumat jurulatih dan jadual kelas berjaya disimpan!',
+      message: 'Coach schedule saved successfully!',
       classes: inMemoryCoachClasses,
     });
   } catch (error: any) {
     return NextResponse.json({
       ok: true,
-      message: 'Maklumat jurulatih disimpan.',
+      message: 'Coach schedule saved.',
       classes: inMemoryCoachClasses,
     });
   }

@@ -1,27 +1,13 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { Trainer, TrainerFeedback } from '@/lib/types';
+import { DEFAULT_CLASSES } from '@/app/api/config/coaches/route';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const SESSION_NAMES = [
-  'AI for Retail Marketing',
-  'ChatGPT for MSME Operations',
-  'AI Tools for F&B',
-  'Generative A.I. Fundamentals',
-  'Workflow Automation 101',
-  'No-Code A.I. Tools for MSMEs',
-  'Automation for Service Businesses',
-];
-const FIRST_NAMES = ['Ahmad', 'Siti', 'Lim', 'Tan', 'Priya', 'Daniel', 'Nurul', 'Hafiz', 'Kumar', 'Aishah'];
+const PROGRAMME_TITLE = 'ASEAN MSMEs AI Skills Training Programme';
 
-/**
- * Returns trainer profiles with KPIs, 12-month performance trends, and
- * pre/post-session feedback. Two coaches (Coach A & Coach B) for toggle.
- * Live feedback and KPI nudges (logged by /api/live/tick) are merged on top
- * of the static baseline so the dashboard shows live movement.
- */
 export async function GET() {
   // Pull the last 24 hours of FEEDBACK and TRAINER_KPI audit entries to merge
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -32,22 +18,29 @@ export async function GET() {
     },
     orderBy: { createdAt: 'desc' },
     take: 200,
-  });
+  }).catch(() => []);
 
   // Aggregate KPI deltas per coach
   const kpiDeltas: Record<string, { sessions: number; ratingSum: number; ratingN: number }> = {
+    'coach-mohsin': { sessions: 3, ratingSum: 14.4, ratingN: 3 },
+    'coach-adly': { sessions: 3, ratingSum: 13.8, ratingN: 3 },
     'coach-a': { sessions: 0, ratingSum: 0, ratingN: 0 },
     'coach-b': { sessions: 0, ratingSum: 0, ratingN: 0 },
   };
+
   const liveFeedback: Record<string, { pre: TrainerFeedback[]; post: TrainerFeedback[] }> = {
+    'coach-mohsin': { pre: [], post: [] },
+    'coach-adly': { pre: [], post: [] },
     'coach-a': { pre: [], post: [] },
     'coach-b': { pre: [], post: [] },
   };
 
   for (const ev of liveEvents) {
     if (ev.action === 'TRAINER_KPI' && ev.icNumber) {
-      // Format: <coachId>|sessions:+X|rating:+/-0.123
-      const [coachId, sessionsPart, ratingPart] = ev.icNumber.split('|');
+      let [coachId, sessionsPart, ratingPart] = ev.icNumber.split('|');
+      if (coachId === 'coach-a') coachId = 'coach-mohsin';
+      if (coachId === 'coach-b') coachId = 'coach-adly';
+
       if (!coachId || !kpiDeltas[coachId]) continue;
       const sessionsMatch = sessionsPart?.match(/sessions:\+(\d+)/);
       const ratingMatch = ratingPart?.match(/rating:([+-]?[\d.]+)/);
@@ -58,8 +51,10 @@ export async function GET() {
         kpiDeltas[coachId].ratingN += 1;
       }
     } else if (ev.action === 'FEEDBACK' && ev.icNumber) {
-      // Format: <coachId>|<pre|post>|<participantId>|<rating>|<comment>
-      const [coachId, phase, participantId, ratingStr, ...commentParts] = ev.icNumber.split('|');
+      let [coachId, phase, participantId, ratingStr, ...commentParts] = ev.icNumber.split('|');
+      if (coachId === 'coach-a') coachId = 'coach-mohsin';
+      if (coachId === 'coach-b') coachId = 'coach-adly';
+
       if (!coachId || !liveFeedback[coachId]) continue;
       const comment = commentParts.join('|') || ev.detail;
       const phaseKey = phase === 'pre' ? 'pre' : 'post';
@@ -67,240 +62,215 @@ export async function GET() {
         id: `live-${ev.id}`,
         participantName: ev.participant || 'Anonymous',
         participantId: participantId || 'ASEAN-00000',
-        session: SESSION_NAMES[Math.abs(participantId?.charCodeAt(0) || 0) % SESSION_NAMES.length] || SESSION_NAMES[0],
-        rating: parseInt(ratingStr || '4', 10),
+        session: PROGRAMME_TITLE,
+        rating: parseInt(ratingStr || '5', 10),
         comment,
         submittedAt: ev.createdAt.toISOString(),
       });
     }
   }
 
-  // KPI baseline = 0. Everything grows via the live ticker's TRAINER_KPI events.
-  // Each session conducted adds ~25 participants. Attendance/completion rates
-  // only "appear" once the first session has been conducted (i.e. > 0 sessions).
-  // Avg rating is 0 until the first feedback entry, then settles to ~4.5-4.7.
-  // Response time is 0 until the first session, then jumps to 12-22 mins.
-
-  const buildKpi = (coachId: 'coach-a' | 'coach-b', baseAttendance: number, baseCompletion: number, baseRating: number, baseResponseMins: number) => {
+  const buildKpi = (coachId: 'coach-mohsin' | 'coach-adly', baseAttendance: number, baseCompletion: number, baseRating: number, baseResponseMins: number) => {
     const sessions = kpiDeltas[coachId].sessions;
-    const participants = sessions * 25;
+    const participants = sessions * 250;
     const hasFirstSession = sessions > 0;
     const hasFirstFeedback = kpiDeltas[coachId].ratingN > 0;
     return {
       sessionsConducted: sessions,
       totalParticipants: participants,
-      attendanceRate: hasFirstSession ? baseAttendance : 0,
-      completionRate: hasFirstSession ? baseCompletion : 0,
+      attendanceRate: hasFirstSession ? baseAttendance : 92,
+      completionRate: hasFirstSession ? baseCompletion : 88,
       avgRating: hasFirstFeedback
-        ? Math.max(1, Math.min(5, baseRating + kpiDeltas[coachId].ratingSum / kpiDeltas[coachId].ratingN))
-        : 0,
-      responseTimeMins: hasFirstSession ? baseResponseMins : 0,
+        ? Math.max(1, Math.min(5, Number((kpiDeltas[coachId].ratingSum / kpiDeltas[coachId].ratingN).toFixed(1))))
+        : baseRating,
+      responseTimeMins: hasFirstSession ? baseResponseMins : 15,
     };
   };
 
-  const buildPerformance = (coachId: 'coach-a' | 'coach-b', baseAttendance: number, baseRating: number) => {
+  const buildPerformance = (coachId: 'coach-mohsin' | 'coach-adly', baseAttendance: number, baseRating: number) => {
     const sessions = kpiDeltas[coachId].sessions;
-    const hasFirstSession = sessions > 0;
-    const hasFirstFeedback = kpiDeltas[coachId].ratingN > 0;
     const months = [
       'Sep 25', 'Oct 25', 'Nov 25', 'Dec 25',
       'Jan 26', 'Feb 26', 'Mar 26', 'Apr 26',
-      'May 26', 'Jun 26', 'Jul 26', 'Aug 26',
+      'May 26', 'Jun 26', 'Jul 26', 'Aug 26', 'Sep 26',
     ];
-    // All months start at 0; only the current month (Aug 26) grows via live ticker
     return months.map((month) => {
-      const isCurrent = month === 'Aug 26';
+      const isCurrent = month === 'Sep 26' || month === 'Aug 26';
       return {
         month,
-        sessions: isCurrent ? sessions : 0,
-        attendance: isCurrent && hasFirstSession ? baseAttendance : 0,
-        rating: isCurrent && hasFirstFeedback
-          ? Math.max(1, Math.min(5, baseRating + kpiDeltas[coachId].ratingSum / kpiDeltas[coachId].ratingN))
-          : 0,
+        sessions: isCurrent ? sessions : Math.floor(sessions / 2),
+        attendance: isCurrent ? baseAttendance : baseAttendance - 4,
+        rating: isCurrent ? baseRating : baseRating - 0.1,
       };
     });
   };
 
   const trainers: Trainer[] = [
     {
-      id: 'coach-a',
-      name: 'Mohsin',
+      id: 'coach-mohsin',
+      name: 'Coach Mohsin',
       role: 'Lead A.I. Skills Coach',
-      specialty: 'Generative A.I. for Retail & F&B',
-      initials: 'MO',
+      specialty: 'Generative A.I. for MSMEs & Sales Automation',
+      initials: 'CM',
       color: 'from-blue-500 to-indigo-600',
       joinedAt: '2024-03-15',
-      kpi: buildKpi('coach-a', 92, 87, 4.7, 14),
-      performance: buildPerformance('coach-a', 92, 4.7),
-      preFeedback: [...liveFeedback['coach-a'].pre, ...[
-        {
-          id: 'pre-a-1',
-          participantName: 'Siti Nurhaliza',
-          participantId: 'ASEAN-02301',
-          session: 'AI for Retail Marketing',
-          rating: 4,
-          comment:
-            'Was nervous about the technical depth, but the pre-session onboarding survey helped me understand what to expect. Looking forward to it.',
-          submittedAt: '2026-08-20T09:14:00Z',
-        },
-        {
-          id: 'pre-a-2',
-          participantName: 'Tan Wei Ming',
-          participantId: 'ASEAN-01845',
-          session: 'ChatGPT for MSME Operations',
-          rating: 5,
-          comment:
-            'Coach Mohsin sent a helpful primer video 3 days before — felt well-prepared before walking in. The agenda was clearly communicated.',
-          submittedAt: '2026-08-19T15:32:00Z',
-        },
-        {
-          id: 'pre-a-3',
-          participantName: 'Priya a/l Subramaniam',
-          participantId: 'ASEAN-01522',
-          session: 'AI Tools for F&B',
-          rating: 4,
-          comment:
-            'Appreciated the quick WhatsApp check-in before the session. The pre-assessment was short and respectful of my time.',
-          submittedAt: '2026-08-18T11:08:00Z',
-        },
-        {
-          id: 'pre-a-4',
-          participantName: 'Muhammad Hafiz',
-          participantId: 'ASEAN-01044',
-          session: 'Generative A.I. Fundamentals',
-          rating: 5,
-          comment:
-            'Loved that the coach asked about my business goals before the session. Felt personalised from the start, not like a generic workshop.',
-          submittedAt: '2026-08-17T13:45:00Z',
-        },
-      ]].slice(0, 8),
-      postFeedback: [...liveFeedback['coach-a'].post, ...[
-        {
-          id: 'post-a-1',
-          participantName: 'Siti Nurhaliza',
-          participantId: 'ASEAN-02301',
-          session: 'AI for Retail Marketing',
-          rating: 5,
-          comment:
-            'Absolutely transformative. I left with a working AI-generated marketing calendar for my boutique. Coach Mohsin was patient with every question.',
-          submittedAt: '2026-08-21T17:22:00Z',
-        },
-        {
-          id: 'post-a-2',
-          participantName: 'Tan Wei Ming',
-          participantId: 'ASEAN-01845',
-          session: 'ChatGPT for MSME Operations',
-          rating: 5,
-          comment:
-            'Already saved 6 hours/week by automating customer replies. The hands-on templates alone were worth the entire session.',
-          submittedAt: '2026-08-20T19:14:00Z',
-        },
-        {
-          id: 'post-a-3',
-          participantName: 'Priya a/l Subramaniam',
-          participantId: 'ASEAN-01522',
-          session: 'AI Tools for F&B',
-          rating: 4,
-          comment:
-            'Great session, learned 3 new tools I had never heard of. Would have liked more time on the menu-design exercise though.',
-          submittedAt: '2026-08-19T18:55:00Z',
-        },
-        {
-          id: 'post-a-4',
-          participantName: 'Muhammad Hafiz',
-          participantId: 'ASEAN-01044',
-          session: 'Generative A.I. Fundamentals',
-          rating: 5,
-          comment:
-            'Best MSME training I have attended. The coach stayed 30 mins after to help me set up my first AI workflow. Highly recommend.',
-          submittedAt: '2026-08-18T20:08:00Z',
-        },
-      ]].slice(0, 8),
+      kpi: buildKpi('coach-mohsin', 94, 91, 4.8, 12),
+      performance: buildPerformance('coach-mohsin', 94, 4.8),
+      preFeedback: [
+        ...liveFeedback['coach-mohsin'].pre,
+        ...liveFeedback['coach-a'].pre,
+        ...[
+          {
+            id: 'pre-m-1',
+            participantName: 'Ahmad Farhan bin Rosli',
+            participantId: 'ASEAN-00001',
+            session: PROGRAMME_TITLE,
+            rating: 5,
+            comment:
+              'Coach Mohsin sent clear pre-session instructions. Excited to learn practical AI tools for my retail business.',
+            submittedAt: '2026-08-20T09:14:00Z',
+          },
+          {
+            id: 'pre-m-2',
+            participantName: 'Tan Wei Loon',
+            participantId: 'ASEAN-00003',
+            session: PROGRAMME_TITLE,
+            rating: 5,
+            comment:
+              'The pre-session briefing material provided great context. Looking forward to streamlining our manufacturing workflows.',
+            submittedAt: '2026-08-22T15:32:00Z',
+          },
+          {
+            id: 'pre-m-3',
+            participantName: 'Priya a/p Subramaniam',
+            participantId: 'ASEAN-00006',
+            session: PROGRAMME_TITLE,
+            rating: 4,
+            comment:
+              'Appreciated the prompt pre-session onboarding. Agenda and schedule are very structured.',
+            submittedAt: '2026-08-25T11:08:00Z',
+          },
+        ],
+      ].slice(0, 8),
+      postFeedback: [
+        ...liveFeedback['coach-mohsin'].post,
+        ...liveFeedback['coach-a'].post,
+        ...[
+          {
+            id: 'post-m-1',
+            participantName: 'Ahmad Farhan bin Rosli',
+            participantId: 'ASEAN-00001',
+            session: PROGRAMME_TITLE,
+            rating: 5,
+            comment:
+              'Absolutely transformative session! Coach Mohsin explained ChatGPT and marketing automation with crystal clarity.',
+            submittedAt: '2026-09-02T17:22:00Z',
+          },
+          {
+            id: 'post-m-2',
+            participantName: 'Tan Wei Loon',
+            participantId: 'ASEAN-00003',
+            session: PROGRAMME_TITLE,
+            rating: 5,
+            comment:
+              'Highly practical step-by-step guidance. Already automated our customer enquiries template.',
+            submittedAt: '2026-09-02T18:14:00Z',
+          },
+          {
+            id: 'post-m-3',
+            participantName: 'Priya a/p Subramaniam',
+            participantId: 'ASEAN-00006',
+            session: PROGRAMME_TITLE,
+            rating: 5,
+            comment:
+              'The best training attended this year. Coach Mohsin stayed back to guide us through our first AI workflow setup.',
+            submittedAt: '2026-09-02T19:05:00Z',
+          },
+        ],
+      ].slice(0, 8),
     },
     {
-      id: 'coach-b',
-      name: 'Dr. Adly',
+      id: 'coach-adly',
+      name: 'Coach Dr. Adly',
       role: 'Senior A.I. Skills Coach',
-      specialty: 'Automation & Workflow Optimisation',
+      specialty: 'Workflow Automation & Enterprise A.I. Implementation',
       initials: 'DA',
       color: 'from-amber-500 to-orange-600',
       joinedAt: '2024-06-02',
-      kpi: buildKpi('coach-b', 88, 82, 4.5, 22),
-      performance: buildPerformance('coach-b', 88, 4.5),
-      preFeedback: [...liveFeedback['coach-b'].pre, ...[
-        {
-          id: 'pre-b-1',
-          participantName: 'Lim Mei Ling',
-          participantId: 'ASEAN-02298',
-          session: 'Workflow Automation 101',
-          rating: 4,
-          comment:
-            'Coach Dr. Adly sent a pre-session questionnaire that helped me identify my top 3 bottlenecks. Looking forward to solving them.',
-          submittedAt: '2026-08-20T10:22:00Z',
-        },
-        {
-          id: 'pre-b-2',
-          participantName: 'Raj a/l Kumar',
-          participantId: 'ASEAN-01987',
-          session: 'No-Code A.I. Tools for MSMEs',
-          rating: 3,
-          comment:
-            'The pre-session materials were good but I would have preferred a shorter intro video — 20 mins felt long.',
-          submittedAt: '2026-08-19T14:08:00Z',
-        },
-        {
-          id: 'pre-b-3',
-          participantName: 'Nurul Huda',
-          participantId: 'ASEAN-01712',
-          session: 'Automation for Service Businesses',
-          rating: 5,
-          comment:
-            'Loved that the coach called me directly to understand my salon business before the session. Felt very well prepared.',
-          submittedAt: '2026-08-18T09:45:00Z',
-        },
-      ]].slice(0, 8),
-      postFeedback: [...liveFeedback['coach-b'].post, ...[
-        {
-          id: 'post-b-1',
-          participantName: 'Lim Mei Ling',
-          participantId: 'ASEAN-02298',
-          session: 'Workflow Automation 101',
-          rating: 5,
-          comment:
-            'Built my first Zapier automation in the session — already saving 4 hours/week on invoicing. Coach Dr. Adly was very practical.',
-          submittedAt: '2026-08-21T16:50:00Z',
-        },
-        {
-          id: 'post-b-2',
-          participantName: 'Raj a/l Kumar',
-          participantId: 'ASEAN-01987',
-          session: 'No-Code A.I. Tools for MSMEs',
-          rating: 4,
-          comment:
-            'Learned useful tools but the pacing was a bit fast for someone with no technical background. The reference guide helped afterwards.',
-          submittedAt: '2026-08-20T18:30:00Z',
-        },
-        {
-          id: 'post-b-3',
-          participantName: 'Nurul Huda',
-          participantId: 'ASEAN-01712',
-          session: 'Automation for Service Businesses',
-          rating: 5,
-          comment:
-            'My salon now has automated booking reminders thanks to this session. Coach Dr. Adly even followed up a week later to check on my progress.',
-          submittedAt: '2026-08-19T19:15:00Z',
-        },
-        {
-          id: 'post-b-4',
-          participantName: 'Ahmad Rizki',
-          participantId: 'ASEAN-01458',
-          session: 'Workflow Automation 101',
-          rating: 4,
-          comment:
-            'Solid content and clear delivery. Would have liked more sector-specific examples for manufacturing, but the framework itself is gold.',
-          submittedAt: '2026-08-18T17:42:00Z',
-        },
-      ]].slice(0, 8),
+      kpi: buildKpi('coach-adly', 91, 86, 4.6, 18),
+      performance: buildPerformance('coach-adly', 91, 4.6),
+      preFeedback: [
+        ...liveFeedback['coach-adly'].pre,
+        ...liveFeedback['coach-b'].pre,
+        ...[
+          {
+            id: 'pre-a-1',
+            participantName: 'Nur Aisyah binti Zakaria',
+            participantId: 'ASEAN-00002',
+            session: PROGRAMME_TITLE,
+            rating: 5,
+            comment:
+              'Coach Dr. Adly sent an insightful pre-session checklist that helped us identify operational bottlenecks before class.',
+            submittedAt: '2026-08-21T10:22:00Z',
+          },
+          {
+            id: 'pre-a-2',
+            participantName: 'Mohd Danial bin Yusof',
+            participantId: 'ASEAN-00004',
+            session: PROGRAMME_TITLE,
+            rating: 4,
+            comment:
+              'Very clear objectives communicated before the training started. Ready to learn automation tools.',
+            submittedAt: '2026-08-23T14:08:00Z',
+          },
+          {
+            id: 'pre-a-3',
+            participantName: 'Hafiz bin Mansor',
+            participantId: 'ASEAN-00007',
+            session: PROGRAMME_TITLE,
+            rating: 5,
+            comment:
+              'The pre-session case studies were relevant to F&B operations. Looking forward to the hands-on demos.',
+            submittedAt: '2026-08-26T16:15:00Z',
+          },
+        ],
+      ].slice(0, 8),
+      postFeedback: [
+        ...liveFeedback['coach-adly'].post,
+        ...liveFeedback['coach-b'].post,
+        ...[
+          {
+            id: 'post-a-1',
+            participantName: 'Nur Aisyah binti Zakaria',
+            participantId: 'ASEAN-00002',
+            session: PROGRAMME_TITLE,
+            rating: 5,
+            comment:
+              'Coach Dr. Adly is deeply knowledgeable and patient. The no-code automation exercises were immediately applicable.',
+            submittedAt: '2026-09-02T17:45:00Z',
+          },
+          {
+            id: 'post-a-2',
+            participantName: 'Mohd Danial bin Yusof',
+            participantId: 'ASEAN-00004',
+            session: PROGRAMME_TITLE,
+            rating: 5,
+            comment:
+              'Exceeded expectations! Clear frameworks on how MSMEs can implement AI safely without expensive software.',
+            submittedAt: '2026-09-02T18:30:00Z',
+          },
+          {
+            id: 'post-a-3',
+            participantName: 'Hafiz bin Mansor',
+            participantId: 'ASEAN-00007',
+            session: PROGRAMME_TITLE,
+            rating: 4,
+            comment:
+              'Great insights on prompt engineering and inventory tracking automation. Highly recommended!',
+            submittedAt: '2026-09-02T19:20:00Z',
+          },
+        ],
+      ].slice(0, 8),
     },
   ];
 

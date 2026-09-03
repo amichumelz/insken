@@ -35,7 +35,7 @@ const fmt = (n: number) => n.toLocaleString('en-US');
 
 export function TrainerPerformance({ refreshTick = 0 }: { refreshTick?: number }) {
   const [trainers, setTrainers] = useState<Trainer[]>([]);
-  const [activeId, setActiveId] = useState<string>('coach-a');
+  const [activeId, setActiveId] = useState<string>('coach-mohsin');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
