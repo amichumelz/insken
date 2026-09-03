@@ -3,16 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import QRCode from 'qrcode';
 import {
   GraduationCap,
@@ -23,41 +14,106 @@ import {
   MapPin,
   Clock,
   Radio,
-  FileSpreadsheet,
   Lock,
-  ArrowLeft,
   MessageSquareHeart,
-  Presentation,
   CheckCircle2,
+  Play,
+  Layers,
+  ChevronRight,
 } from 'lucide-react';
-import { useLanguage, LanguageToggle } from '@/lib/i18n';
 import Link from 'next/link';
 
-const MODULES = [
-  'Generative A.I. Fundamentals for MSMEs',
-  'AI for Retail Marketing & Sales',
-  'ChatGPT for MSME Daily Operations',
-  'No-Code A.I. Tools & Workflow Automation',
-  'AI for F&B and Inventory Management',
-  'Automation for Service Businesses',
-];
+interface TrainingClass {
+  id: string;
+  module: string;
+  coachId: 'coach-a' | 'coach-b';
+  coachName: string;
+  region: string;
+  regionName: string;
+  date: string;
+  time: string;
+  venue: string;
+  targetSeats: number;
+}
 
-const REGIONS = [
-  { code: 'KL', name: 'Kuala Lumpur (KL)' },
-  { code: 'JHR', name: 'Johor (JHR)' },
-  { code: 'PNG', name: 'Pulau Pinang (PNG)' },
-  { code: 'SBH', name: 'Sabah (SBH)' },
-  { code: 'SWK', name: 'Sarawak (SWK)' },
+const SCHEDULED_CLASSES: TrainingClass[] = [
+  {
+    id: 'cls-01',
+    module: 'AI for Retail Marketing & Sales Automation',
+    coachId: 'coach-a',
+    coachName: 'En. Farhan (Coach A)',
+    region: 'KL',
+    regionName: 'Kuala Lumpur (HQ)',
+    date: '2026-09-02',
+    time: '09:00 AM - 05:00 PM',
+    venue: 'Dewan Utama INSKEN KL Sentral',
+    targetSeats: 400,
+  },
+  {
+    id: 'cls-02',
+    module: 'ChatGPT & Prompt Engineering for MSME Daily Operations',
+    coachId: 'coach-a',
+    coachName: 'En. Farhan (Coach A)',
+    region: 'JHR',
+    regionName: 'Johor Bahru',
+    date: '2026-09-05',
+    time: '09:00 AM - 05:00 PM',
+    venue: 'Pusat Konvensyen Antarabangsa Persada Johor',
+    targetSeats: 200,
+  },
+  {
+    id: 'cls-03',
+    module: 'Generative A.I. Fundamentals & Content Creation for MSMEs',
+    coachId: 'coach-b',
+    coachName: 'Dr. Nadia (Coach B)',
+    region: 'PNG',
+    regionName: 'Pulau Pinang',
+    date: '2026-09-08',
+    time: '09:00 AM - 05:00 PM',
+    venue: 'Setia SPICE Convention Centre, Penang',
+    targetSeats: 200,
+  },
+  {
+    id: 'cls-04',
+    module: 'No-Code A.I. Tools & Automated Business Workflows',
+    coachId: 'coach-b',
+    coachName: 'Dr. Nadia (Coach B)',
+    region: 'SBH',
+    regionName: 'Sabah (Kota Kinabalu)',
+    date: '2026-09-12',
+    time: '09:00 AM - 05:00 PM',
+    venue: 'Sabah International Convention Centre (SICC)',
+    targetSeats: 200,
+  },
+  {
+    id: 'cls-05',
+    module: 'AI for F&B, Smart Inventory & Customer Retention',
+    coachId: 'coach-a',
+    coachName: 'En. Farhan (Coach A)',
+    region: 'SWK',
+    regionName: 'Sarawak (Kuching)',
+    date: '2026-09-15',
+    time: '09:00 AM - 05:00 PM',
+    venue: 'Borneo Convention Centre Kuching (BCCK)',
+    targetSeats: 200,
+  },
+  {
+    id: 'cls-06',
+    module: 'Automation & A.I. Lead Generation for Service Businesses',
+    coachId: 'coach-b',
+    coachName: 'Dr. Nadia (Coach B)',
+    region: 'KL',
+    regionName: 'Kuala Lumpur',
+    date: '2026-09-18',
+    time: '09:00 AM - 05:00 PM',
+    venue: 'Dewan Teater Utama INSKEN',
+    targetSeats: 400,
+  },
 ];
 
 export default function CoachPortalPage() {
-  const { lang } = useLanguage();
-
-  const [coach, setCoach] = useState('coach-a');
-  const [region, setRegion] = useState('KL');
-  const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [selectedModule, setSelectedModule] = useState(MODULES[0]);
-  const [activeScreenTab, setActiveScreenTab] = useState<'attendance' | 'feedback'>('attendance');
+  const [selectedClass, setSelectedClass] = useState<TrainingClass>(SCHEDULED_CLASSES[0]);
+  const [activeScreenMode, setActiveScreenMode] = useState<'attendance' | 'feedback'>('attendance');
   const [feedbackPhase, setFeedbackPhase] = useState<'pre' | 'post'>('post');
 
   const [attendanceQrUrl, setAttendanceQrUrl] = useState('');
@@ -81,12 +137,12 @@ export default function CoachPortalPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Generate QR codes dynamically based on coach settings
+  // Generate QR codes matching official format
   useEffect(() => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://insken.workers.dev';
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://insken.1211111996.workers.dev';
 
-    // Attendance QR URL
-    const attendanceUrl = `${origin}/?date=${sessionDate}&region=${region}&coach=${coach}`;
+    // 1. Attendance QR URL (points to official participant checkin / registration)
+    const attendanceUrl = `${origin}/?session=${encodeURIComponent(selectedClass.module)}&region=${selectedClass.region}&date=${selectedClass.date}&coach=${selectedClass.coachId}`;
     QRCode.toDataURL(attendanceUrl, {
       errorCorrectionLevel: 'H',
       margin: 1,
@@ -94,17 +150,15 @@ export default function CoachPortalPage() {
       color: { dark: '#0B1F3A', light: '#FFFFFF' },
     }).then(setAttendanceQrUrl);
 
-    // Feedback QR URL
-    const feedbackUrl = `${origin}/feedback?trainer=${coach}&phase=${feedbackPhase}&session=${encodeURIComponent(selectedModule)}`;
+    // 2. Feedback QR URL
+    const feedbackUrl = `${origin}/feedback?trainer=${selectedClass.coachId}&phase=${feedbackPhase}&session=${encodeURIComponent(selectedClass.module)}&region=${selectedClass.region}`;
     QRCode.toDataURL(feedbackUrl, {
       errorCorrectionLevel: 'H',
       margin: 1,
       width: 480,
       color: { dark: '#0B1F3A', light: '#FFFFFF' },
     }).then(setFeedbackQrUrl);
-  }, [coach, region, sessionDate, selectedModule, feedbackPhase]);
-
-  const coachName = coach === 'coach-a' ? 'En. Farhan (Coach A)' : 'Dr. Nadia (Coach B)';
+  }, [selectedClass, feedbackPhase]);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col justify-between">
@@ -123,17 +177,20 @@ export default function CoachPortalPage() {
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="font-semibold text-xs sm:text-base truncate">INSKEN · Operations</span>
                 <span className="shrink-0 rounded bg-indigo-500/20 px-2 py-0.5 text-[9px] sm:text-[10px] font-bold text-indigo-300">
-                  {lang === 'ms' ? 'Portal Jurulatih (Coach)' : 'Coach Portal'}
+                  Portal Jurulatih (Coach)
                 </span>
               </div>
               <p className="text-[10px] sm:text-[11px] text-white/70 truncate hidden xs:block sm:block">
-                Paparan Skrin Projektor Kehadiran &amp; Borang Maklum Balas Mengikut Tarikh Kelas
+                Pilih Sesi Kelas untuk Menjana Paparan Skrin QR Kehadiran (16:9) &amp; Maklum Balas
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <LanguageToggle />
+            <div className="font-mono text-xs font-bold text-white/90 bg-white/10 px-3 py-1 rounded-md hidden sm:flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5 text-[#D4A017]" />
+              <span>{currentTime}</span>
+            </div>
             <Link href="/admin">
               <Button
                 variant="outline"
@@ -150,121 +207,131 @@ export default function CoachPortalPage() {
 
       {/* Main Content */}
       <main className="mx-auto w-full max-w-[1600px] flex-1 px-3 sm:px-4 py-4 sm:py-6 space-y-6">
-        {/* Coach Session Control Bar */}
+        
+        {/* 1. Class Selection Section */}
         <Card className="border shadow-sm bg-card">
           <CardHeader className="pb-3 px-4 sm:px-6 pt-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <GraduationCap className="h-5 w-5 text-indigo-600" />
+                <Layers className="h-5 w-5 text-indigo-600" />
                 <CardTitle className="text-base sm:text-lg">
-                  {lang === 'ms' ? 'Tetapan Sesi Latihan Jurulatih' : 'Trainer Session Configuration'}
+                  Senarai Jadual Sesi Latihan Jurulatih
                 </CardTitle>
               </div>
-              <Badge variant="outline" className="text-xs font-mono font-bold bg-muted w-fit">
-                {currentTime}
+              <Badge className="bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-300 text-xs">
+                {SCHEDULED_CLASSES.length} Sesi Berjadual
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground">
-              {lang === 'ms'
-                ? 'Pilih nama jurulatih, tarikh kelas, dan modul untuk menjana paparan skrin dewan yang bersesuaian.'
-                : 'Configure your active session date and module to generate the tailored hall projection screen.'}
+              Pilih kelas di bawah untuk memaparkan Kod QR Kehadiran Dewan (16:9) atau Kod QR Borang Maklum Balas pada skrin projektor.
             </p>
           </CardHeader>
           <CardContent className="px-4 sm:px-6 pb-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-              {/* Coach Selector */}
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">
-                  {lang === 'ms' ? 'Nama Jurulatih' : 'Coach Profile'}
-                </Label>
-                <Select value={coach} onValueChange={setCoach}>
-                  <SelectTrigger className="h-10 text-xs sm:text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="coach-a">En. Farhan (Coach A - Retail & Ops)</SelectItem>
-                    <SelectItem value="coach-b">Dr. Nadia (Coach B - GenAI & Tech)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              {SCHEDULED_CLASSES.map((cls) => {
+                const isSelected = selectedClass.id === cls.id;
 
-              {/* Date Selector */}
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">
-                  {lang === 'ms' ? 'Tarikh Sesi Kelas' : 'Session Date'}
-                </Label>
-                <Input
-                  type="date"
-                  value={sessionDate}
-                  onChange={(e) => setSessionDate(e.target.value)}
-                  className="h-10 text-xs sm:text-sm"
-                />
-              </div>
+                return (
+                  <div
+                    key={cls.id}
+                    className={`rounded-xl border p-4 transition-all flex flex-col justify-between space-y-3 ${
+                      isSelected
+                        ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/30 shadow-md ring-2 ring-indigo-500/30'
+                        : 'border-border bg-card hover:border-indigo-300 hover:bg-muted/30'
+                    }`}
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-1">
+                        <Badge variant="outline" className="text-[10px] font-bold text-indigo-700 dark:text-indigo-300 border-indigo-300 bg-indigo-50/50">
+                          {cls.region} · {cls.regionName}
+                        </Badge>
+                        <span className="font-mono text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
+                          <Calendar className="h-3 w-3 text-[#D4A017]" />
+                          {cls.date}
+                        </span>
+                      </div>
 
-              {/* Region */}
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">
-                  {lang === 'ms' ? 'Wilayah Latihan' : 'Training Region'}
-                </Label>
-                <Select value={region} onValueChange={setRegion}>
-                  <SelectTrigger className="h-10 text-xs sm:text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {REGIONS.map((r) => (
-                      <SelectItem key={r.code} value={r.code}>
-                        {r.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                      <h4 className="text-xs sm:text-sm font-bold text-foreground leading-snug line-clamp-2">
+                        {cls.module}
+                      </h4>
 
-              {/* Module */}
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">
-                  {lang === 'ms' ? 'Modul / Topik Latihan' : 'Module / Topic'}
-                </Label>
-                <Select value={selectedModule} onValueChange={setSelectedModule}>
-                  <SelectTrigger className="h-10 text-xs sm:text-sm truncate">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MODULES.map((m) => (
-                      <SelectItem key={m} value={m} className="text-xs sm:text-sm">
-                        {m}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                      <div className="text-[11px] text-muted-foreground space-y-0.5">
+                        <div className="flex items-center gap-1 text-foreground font-medium">
+                          <GraduationCap className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
+                          <span>{cls.coachName}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          <span className="truncate">{cls.venue}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="pt-2 border-t flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setSelectedClass(cls);
+                          setActiveScreenMode('attendance');
+                        }}
+                        className={`flex-1 h-8 text-[11px] font-bold gap-1 shadow-sm ${
+                          isSelected && activeScreenMode === 'attendance'
+                            ? 'bg-[#0B1F3A] text-white hover:bg-[#112D55]'
+                            : 'bg-primary/10 text-primary hover:bg-primary hover:text-white'
+                        }`}
+                      >
+                        <Tv className="h-3.5 w-3.5" />
+                        <span>Papar Skrin QR</span>
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedClass(cls);
+                          setActiveScreenMode('feedback');
+                        }}
+                        className={`h-8 px-2.5 text-[11px] font-semibold gap-1 ${
+                          isSelected && activeScreenMode === 'feedback'
+                            ? 'border-indigo-600 bg-indigo-100 text-indigo-900 font-bold'
+                            : ''
+                        }`}
+                      >
+                        <MessageSquareHeart className="h-3.5 w-3.5 text-[#D4A017]" />
+                        <span>Feedback</span>
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
 
-        {/* Mode Selector Tabs (Attendance Screen vs Feedback Form Screen) */}
+        {/* 2. Mode Tabs Selector */}
         <div className="flex items-center gap-2 border-b pb-2">
           <Button
-            variant={activeScreenTab === 'attendance' ? 'default' : 'outline'}
-            onClick={() => setActiveScreenTab('attendance')}
+            variant={activeScreenMode === 'attendance' ? 'default' : 'outline'}
+            onClick={() => setActiveScreenMode('attendance')}
             className="h-10 text-xs sm:text-sm font-semibold gap-2"
           >
             <Tv className="h-4 w-4" />
-            <span>{lang === 'ms' ? '1. Skrin Kehadiran Dewan (16:9)' : '1. Attendance Screen (16:9)'}</span>
+            <span>1. Paparan Skrin Kehadiran Dewan (16:9)</span>
           </Button>
 
           <Button
-            variant={activeScreenTab === 'feedback' ? 'default' : 'outline'}
-            onClick={() => setActiveScreenTab('feedback')}
+            variant={activeScreenMode === 'feedback' ? 'default' : 'outline'}
+            onClick={() => setActiveScreenMode('feedback')}
             className="h-10 text-xs sm:text-sm font-semibold gap-2"
           >
             <MessageSquareHeart className="h-4 w-4 text-[#D4A017]" />
-            <span>{lang === 'ms' ? '2. Skrin Borang Maklum Balas (QR)' : '2. Feedback Form Screen (QR)'}</span>
+            <span>2. Paparan Skrin Borang Maklum Balas (QR)</span>
           </Button>
         </div>
 
-        {/* TAB 1: ATTENDANCE PROJECTOR DISPLAY (16:9 WIDESCREEN) */}
-        {activeScreenTab === 'attendance' && (
+        {/* 3. TAB 1: ATTENDANCE PROJECTOR DISPLAY (16:9 WIDESCREEN) */}
+        {activeScreenMode === 'attendance' && (
           <div className="overflow-hidden rounded-2xl border-2 border-[#0B1F3A] bg-[#0B1F3A] text-white shadow-2xl">
             {/* Top Presentation Bar */}
             <div className="bg-[#071526] px-6 py-3.5 border-b border-white/10 flex items-center justify-between">
@@ -281,7 +348,7 @@ export default function CoachPortalPage() {
                     INSKEN · PROGRAM LATIHAN KEMAHIRAN A.I. PMKS ASEAN
                   </h2>
                   <p className="text-xs text-[#D4A017] font-semibold">
-                    {coachName} · {region} · {sessionDate}
+                    {selectedClass.coachName} · {selectedClass.regionName} · {selectedClass.date}
                   </p>
                 </div>
               </div>
@@ -318,7 +385,7 @@ export default function CoachPortalPage() {
 
                 <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1 text-xs font-bold text-[#D4A017]">
                   <Sparkles className="h-3.5 w-3.5" />
-                  <span>{lang === 'ms' ? 'Imbas QR untuk Pendaftaran / Kehadiran' : 'Scan for Attendance Confirmation'}</span>
+                  <span>Imbas QR untuk Pendaftaran / Pengesahan Kehadiran</span>
                 </div>
               </div>
 
@@ -326,15 +393,13 @@ export default function CoachPortalPage() {
               <div className="md:col-span-7 space-y-4">
                 <div>
                   <Badge className="bg-[#D4A017] text-[#0B1F3A] font-bold text-xs uppercase mb-2">
-                    {selectedModule}
+                    {selectedClass.module}
                   </Badge>
                   <h3 className="text-xl sm:text-3xl font-black text-white">
-                    {lang === 'ms' ? 'Selamat Datang ke Sesi Pembelajaran Hari Ini!' : 'Welcome to Today\'s Class Session!'}
+                    Selamat Datang ke Sesi Pembelajaran Hari Ini!
                   </h3>
                   <p className="text-xs sm:text-sm text-white/75 mt-1 leading-relaxed">
-                    {lang === 'ms'
-                      ? 'Sila gunakan kamera telefon pintar anda untuk mengimbas kod QR di sebelah bagi mengesahkan kehadiran rasmi kelas hari ini.'
-                      : 'Please scan the on-screen QR code using your smartphone camera to record your official attendance.'}
+                    Sila gunakan kamera telefon pintar anda untuk mengimbas kod QR di sebelah bagi mengesahkan kehadiran rasmi kelas hari ini.
                   </p>
                 </div>
 
@@ -353,17 +418,17 @@ export default function CoachPortalPage() {
                   </div>
                 </div>
 
-                <div className="rounded-xl bg-black/30 p-3.5 border border-white/10 flex items-center justify-between text-xs text-white/80">
-                  <span>Jurulatih: <strong className="text-white">{coachName}</strong></span>
-                  <span className="font-mono text-[#D4A017]">Wilayah: {region} · {sessionDate}</span>
+                <div className="rounded-xl bg-black/30 p-3.5 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-white/80 gap-2">
+                  <span>Jurulatih: <strong className="text-white">{selectedClass.coachName}</strong></span>
+                  <span className="font-mono text-[#D4A017]">{selectedClass.venue} · {selectedClass.date}</span>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* TAB 2: FEEDBACK FORM PROJECTOR DISPLAY */}
-        {activeScreenTab === 'feedback' && (
+        {/* 4. TAB 2: FEEDBACK FORM PROJECTOR DISPLAY */}
+        {activeScreenMode === 'feedback' && (
           <div className="overflow-hidden rounded-2xl border-2 border-indigo-900 bg-[#0B1F3A] text-white shadow-2xl">
             {/* Top Feedback Bar */}
             <div className="bg-[#071526] px-6 py-3.5 border-b border-white/10 flex items-center justify-between">
@@ -380,7 +445,7 @@ export default function CoachPortalPage() {
                     BORANG MAKLUM BALAS &amp; PENILAIAN LATIHAN A.I.
                   </h2>
                   <p className="text-xs text-[#D4A017] font-semibold">
-                    {coachName} · {selectedModule}
+                    {selectedClass.coachName} · {selectedClass.module}
                   </p>
                 </div>
               </div>
@@ -441,14 +506,10 @@ export default function CoachPortalPage() {
                     {feedbackPhase === 'pre' ? 'Kaji Selidik Pra-Latihan' : 'Penilaian Sesi Selesai'}
                   </Badge>
                   <h3 className="text-xl sm:text-3xl font-black text-white">
-                    {lang === 'ms'
-                      ? 'Sila Lengkapkan Borang Maklum Balas Anda'
-                      : 'Please Complete Your Session Feedback'}
+                    Sila Lengkapkan Borang Maklum Balas Anda
                   </h3>
                   <p className="text-xs sm:text-sm text-white/75 mt-1 leading-relaxed">
-                    {lang === 'ms'
-                      ? 'Pandangan dan penilaian anda amat penting bagi memastikan modul bimbingan A.I. ini memberi impak maksimum kepada perniagaan PMKS anda.'
-                      : 'Your honest feedback ensures that INSKEN continues to deliver maximum value for your enterprise.'}
+                    Pandangan dan penilaian anda amat penting bagi memastikan modul bimbingan A.I. ini memberi impak maksimum kepada perniagaan PMKS anda.
                   </p>
                 </div>
 
