@@ -171,27 +171,28 @@ function CheckinVelocityChart({
   peakCount: number;
 }) {
   const { lang } = useLanguage();
+  const total24 = velocity.reduce((s, v) => s + v.total, 0);
 
   return (
     <Card className="border shadow-sm">
       <CardHeader className="pb-3 px-4 sm:px-6 pt-5">
         <div className="flex items-center justify-between gap-2">
-          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg font-bold">
             <Activity className="h-5 w-5 text-emerald-600" />
-            {lang === 'ms' ? 'Kelajuan Kehadiran' : 'Check-in Velocity'}
+            <span>Trend Kehadiran Peserta</span>
           </CardTitle>
           <div className="text-right">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              {lang === 'ms' ? 'Waktu Kemuncak' : 'Peak Hour'}
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+              Waktu Kemuncak
             </div>
             <div className="text-sm font-bold tabular-nums text-foreground">
               {peakHour} <span className="text-muted-foreground">·</span>{' '}
-              <span className="text-emerald-600">{peakCount}</span>
+              <span className="text-emerald-600">{peakCount.toLocaleString()}</span>
             </div>
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          {lang === 'ms' ? 'Kehadiran setiap jam · 24 jam lepas' : 'Hourly check-ins · last 24 hours'}
+          Kehadiran peserta mengikut jam · 24 jam terkini ({total24.toLocaleString()} jumlah kehadiran)
         </p>
       </CardHeader>
       <CardContent className="px-2 sm:px-6 pb-5">
@@ -199,13 +200,13 @@ function CheckinVelocityChart({
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={velocity} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
               <defs>
-                <linearGradient id="physicalBar" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id="physicalBarLive" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#1E3A8A" stopOpacity={0.95} />
-                  <stop offset="100%" stopColor="#1E3A8A" stopOpacity={0.55} />
+                  <stop offset="100%" stopColor="#3B82F6" stopOpacity={0.75} />
                 </linearGradient>
-                <linearGradient id="onlineBar" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id="onlineBarLive" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#D4A017" stopOpacity={0.95} />
-                  <stop offset="100%" stopColor="#D4A017" stopOpacity={0.55} />
+                  <stop offset="100%" stopColor="#F59E0B" stopOpacity={0.75} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(120,120,120,0.12)" vertical={false} />
@@ -214,7 +215,7 @@ function CheckinVelocityChart({
                 tick={{ fontSize: 10, fill: '#6b7280' }}
                 tickLine={false}
                 axisLine={false}
-                interval={2}
+                interval={0}
               />
               <YAxis
                 tick={{ fontSize: 10, fill: '#6b7280' }}
@@ -223,22 +224,31 @@ function CheckinVelocityChart({
                 allowDecimals={false}
               />
               <Tooltip
+                cursor={{ fill: 'rgba(120,120,120,0.06)' }}
                 contentStyle={{
-                  backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  backgroundColor: 'rgba(11, 31, 58, 0.96)',
+                  border: '1px solid rgba(255,255,255,0.12)',
                   borderRadius: 8,
                   fontSize: 12,
                   color: '#fff',
+                  padding: '8px 12px',
                 }}
+                labelStyle={{ color: '#D4A017', fontWeight: 700 }}
+                formatter={(value: number, name: string) => [
+                  `${value.toLocaleString()} Peserta`,
+                  name === 'physical' ? 'Fizikal (Dewan)' : 'Dalam Talian (Online)',
+                ]}
+                labelFormatter={(label) => `Waktu: ${label}`}
               />
               <Legend
                 verticalAlign="bottom"
                 height={28}
                 iconType="circle"
                 wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
+                formatter={(value) => (value === 'physical' ? 'Fizikal (Dewan)' : 'Dalam Talian (Online)')}
               />
-              <Bar dataKey="physical" name="Physical" fill="url(#physicalBar)" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="online" name="Online" fill="url(#onlineBar)" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="physical" name="physical" stackId="a" fill="url(#physicalBarLive)" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="online" name="online" stackId="a" fill="url(#onlineBarLive)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
