@@ -389,30 +389,12 @@ const LanguageContext = createContext<LanguageContextType>({
 });
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLangState] = useState<Language>('ms');
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('insken_lang') as Language;
-      if (saved === 'ms' || saved === 'en') {
-        setLangState(saved);
-      }
-    } catch {}
-  }, []);
-
-  const setLang = (newLang: Language) => {
-    setLangState(newLang);
-    try {
-      localStorage.setItem('insken_lang', newLang);
-    } catch {}
-  };
-
-  const toggleLang = () => {
-    setLang(lang === 'ms' ? 'en' : 'ms');
-  };
+  const lang: Language = 'ms';
+  const setLang = () => {};
+  const toggleLang = () => {};
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang, t: translations[lang], toggleLang }}>
+    <LanguageContext.Provider value={{ lang, setLang, t: translations.ms, toggleLang }}>
       {children}
     </LanguageContext.Provider>
   );
@@ -423,47 +405,8 @@ export function useLanguage() {
 }
 
 /**
- * Sleek, touch-friendly bilingual switcher component
+ * LanguageToggle is now disabled — website is strictly in Bahasa Melayu.
  */
 export function LanguageToggle({ className }: { className?: string }) {
-  const { lang, setLang } = useLanguage();
-
-  return (
-    <div
-      className={cn(
-        'inline-flex items-center rounded-lg border border-white/20 bg-white/10 p-0.5 text-xs font-medium text-white shadow-sm',
-        className
-      )}
-      role="group"
-      aria-label="Language Toggle"
-    >
-      <button
-        type="button"
-        onClick={() => setLang('ms')}
-        className={cn(
-          'flex items-center gap-1 rounded-md px-2 py-1 transition-all min-h-[28px]',
-          lang === 'ms'
-            ? 'bg-[#D4A017] font-bold text-[#0B1F3A] shadow-sm'
-            : 'text-white/80 hover:text-white hover:bg-white/10'
-        )}
-      >
-        <span className="text-xs">🇲🇾</span>
-        <span>BM</span>
-      </button>
-
-      <button
-        type="button"
-        onClick={() => setLang('en')}
-        className={cn(
-          'flex items-center gap-1 rounded-md px-2 py-1 transition-all min-h-[28px]',
-          lang === 'en'
-            ? 'bg-[#D4A017] font-bold text-[#0B1F3A] shadow-sm'
-            : 'text-white/80 hover:text-white hover:bg-white/10'
-        )}
-      >
-        <span className="text-xs">🇬🇧</span>
-        <span>EN</span>
-      </button>
-    </div>
-  );
+  return null;
 }
