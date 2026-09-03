@@ -1,13 +1,11 @@
 'use client';
 
-import Link from 'next/link';
 import { RegistrationConsole } from '@/components/dashboard/registration-console';
-import { Sparkles, QrCode, ShieldCheck, Lock, GraduationCap } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useLanguage, LanguageToggle } from '@/lib/i18n';
+import { Sparkles, ShieldCheck } from 'lucide-react';
+import { useLanguage } from '@/lib/i18n';
 
 export default function Home() {
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col justify-between">
@@ -34,22 +32,6 @@ export default function Home() {
                 {t.brandSub}
               </p>
             </div>
-          </div>
-
-          {/* Right Header Actions: Language Toggle & Admin Access */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <LanguageToggle />
-
-            <Link href="/admin">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white text-xs gap-1 px-2 sm:px-3"
-              >
-                <Lock className="h-3.5 w-3.5" />
-                <span className="text-[11px] sm:text-xs">{t.navAdminAccess}</span>
-              </Button>
-            </Link>
           </div>
         </div>
       </header>
@@ -81,19 +63,13 @@ export default function Home() {
         <RegistrationConsole />
       </main>
 
-      {/* Footer with Admin Access link */}
+      {/* Clean Public Footer */}
       <footer className="border-t bg-card py-4 text-center text-xs text-muted-foreground mt-8">
         <div className="mx-auto max-w-5xl px-4 flex flex-col sm:flex-row items-center justify-between gap-2.5">
           <p>© 2026 INSKEN · Institut Keusahawanan Negara</p>
-          <div className="flex items-center gap-3 text-[11px]">
-            <Link href="/coach" className="inline-flex items-center gap-1 hover:text-foreground font-medium text-slate-600 dark:text-slate-400">
-              <GraduationCap className="h-3 w-3" /> {lang === 'ms' ? 'Portal Jurulatih' : 'Coach Portal'}
-            </Link>
-            <span>·</span>
-            <Link href="/admin" className="inline-flex items-center gap-1 hover:text-foreground font-medium text-slate-600 dark:text-slate-400">
-              <Lock className="h-3 w-3" /> {t.navAdminAccess}
-            </Link>
-          </div>
+          <p className="text-[11px] text-muted-foreground">
+            ASEAN MSMEs AI Skills Training Programme
+          </p>
         </div>
       </footer>
     </div>
