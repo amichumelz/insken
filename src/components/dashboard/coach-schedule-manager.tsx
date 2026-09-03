@@ -27,6 +27,10 @@ import {
   ExternalLink,
   Layers,
   Tv,
+  Pencil,
+  Check,
+  X,
+  Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
 import { CoachClassRecord, PROGRAMME_TITLE } from '@/app/api/config/coaches/route';
@@ -62,6 +66,14 @@ export function CoachScheduleManager({ onSaved }: { onSaved?: () => void }) {
   const [newRegion, setNewRegion] = useState('KL');
   const [newTime, setNewTime] = useState('09:00 AM - 05:00 PM');
   const [newVenue, setNewVenue] = useState('INSKEN Main Hall KL Sentral');
+
+  // Edit active session state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editCoachName, setEditCoachName] = useState('');
+  const [editRegion, setEditRegion] = useState('KL');
+  const [editVenue, setEditVenue] = useState('');
+  const [editDate, setEditDate] = useState('');
+  const [editTime, setEditTime] = useState('');
 
   const loadAllData = async () => {
     setLoading(true);
@@ -133,7 +145,53 @@ export function CoachScheduleManager({ onSaved }: { onSaved?: () => void }) {
 
   const handleDeleteClass = (id: string) => {
     setClasses((prev) => prev.filter((c) => c.id !== id));
+    if (editingId === id) setEditingId(null);
     toast.info('Session deleted from schedule.');
+  };
+
+  const startEdit = (cls: CoachClassRecord) => {
+    setEditingId(cls.id);
+    setEditCoachName(cls.coachName);
+    setEditRegion(cls.region);
+    setEditVenue(cls.venue);
+    setEditDate(cls.date || dates[cls.region] || '2026-09-02');
+    setEditTime(cls.time || '09:00 AM - 05:00 PM');
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+  };
+
+  const saveEdit = (id: string) => {
+    if (!editCoachName.trim() || !editVenue.trim()) {
+      toast.error('Coach Name and Venue cannot be empty.');
+      return;
+    }
+
+    const regionObj = REGIONS.find((r) => r.code === editRegion) || REGIONS[0];
+    const coachSlug = editCoachName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+
+    setClasses((prev) =>
+      prev.map((c) => {
+        if (c.id === id) {
+          return {
+            ...c,
+            coachName: editCoachName.trim(),
+            coachId: `coach-${coachSlug}`,
+            region: editRegion,
+            regionName: regionObj.name,
+            venue: editVenue.trim(),
+            date: editDate,
+            time: editTime.trim(),
+            module: PROGRAMME_TITLE,
+          };
+        }
+        return c;
+      })
+    );
+
+    setEditingId(null);
+    toast.success('Session details updated!');
   };
 
   const handleSaveAll = async () => {
@@ -148,7 +206,7 @@ export function CoachScheduleManager({ onSaved }: { onSaved?: () => void }) {
       const syncedClasses = classes.map((c) => ({
         ...c,
         module: PROGRAMME_TITLE,
-        date: dates[c.region] || c.date,
+        date: c.date || dates[c.region] || '2026-09-02',
       }));
 
       await fetch('/api/config/coaches', {
@@ -306,7 +364,7 @@ export function CoachScheduleManager({ onSaved }: { onSaved?: () => void }) {
             <div className="space-y-1">
               <Label className="text-xs font-semibold">Coach Name &amp; Profile</Label>
               <Input
-                placeholder="e.g. Dr. Zulkifli (Coach E)"
+                placeholder="e.g. Coach Mohsin or Coach Dr. Adly"
                 value={newCoachName}
                 onChange={(e) => setNewCoachName(e.target.value)}
                 className="h-9 text-xs bg-background"
@@ -362,7 +420,7 @@ export function CoachScheduleManager({ onSaved }: { onSaved?: () => void }) {
         </CardContent>
       </Card>
 
-      {/* SECTION 3: SCHEDULED CLASSES & COACH LIST */}
+      {/* SECTION 3: EDITABLE ACTIVE SESSIONS */}
       <Card className="border shadow-sm">
         <CardHeader className="pb-3 px-4 sm:px-6 pt-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -373,17 +431,115 @@ export function CoachScheduleManager({ onSaved }: { onSaved?: () => void }) {
               </CardTitle>
             </div>
             <Badge variant="outline" className="text-xs font-semibold w-fit">
-              Full 4-Module Syllabus
+              Editable Sessions · Full 4-Module Syllabus
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground">
-            Each session generates unique attendance and feedback QR codes encoding the assigned coach and venue on the Coach Portal.
+            Click <strong>[Edit]</strong> on any active session card below to update coach name, venue, region, date, or time.
           </p>
         </CardHeader>
         <CardContent className="px-4 sm:px-6 pb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
             {classes.map((cls) => {
-              const effectiveDate = dates[cls.region] || cls.date;
+              const isEditing = editingId === cls.id;
+              const effectiveDate = cls.date || dates[cls.region] || '2026-09-02';
+
+              if (isEditing) {
+                return (
+                  <div
+                    key={cls.id}
+                    className="rounded-xl border-2 border-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/30 p-4 space-y-3 shadow-md"
+                  >
+                    <div className="flex items-center justify-between pb-1 border-b">
+                      <span className="text-xs font-bold text-indigo-900 dark:text-indigo-200 flex items-center gap-1">
+                        <Pencil className="h-3.5 w-3.5 text-indigo-600" />
+                        Edit Session: {cls.id}
+                      </span>
+                      <Badge className="bg-indigo-600 text-white text-[10px]">Editing</Badge>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      <div className="space-y-1">
+                        <Label className="text-[11px] font-semibold">Coach Name</Label>
+                        <Input
+                          value={editCoachName}
+                          onChange={(e) => setEditCoachName(e.target.value)}
+                          className="h-8 text-xs bg-background"
+                          placeholder="e.g. Coach Mohsin"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <Label className="text-[11px] font-semibold">Region</Label>
+                          <Select value={editRegion} onValueChange={setEditRegion}>
+                            <SelectTrigger className="h-8 text-xs bg-background">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {REGIONS.map((r) => (
+                                <SelectItem key={r.code} value={r.code} className="text-xs">
+                                  {r.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-1">
+                          <Label className="text-[11px] font-semibold">Date</Label>
+                          <Input
+                            type="date"
+                            value={editDate}
+                            onChange={(e) => setEditDate(e.target.value)}
+                            className="h-8 text-xs font-mono bg-background"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label className="text-[11px] font-semibold">Venue / Hall</Label>
+                        <Input
+                          value={editVenue}
+                          onChange={(e) => setEditVenue(e.target.value)}
+                          className="h-8 text-xs bg-background"
+                          placeholder="Venue / Hall Name"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label className="text-[11px] font-semibold">Session Time</Label>
+                        <Input
+                          value={editTime}
+                          onChange={(e) => setEditTime(e.target.value)}
+                          className="h-8 text-xs font-mono bg-background"
+                          placeholder="09:00 AM - 05:00 PM"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t flex items-center justify-end gap-1.5">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={cancelEdit}
+                        className="h-7 px-2.5 text-xs text-muted-foreground hover:bg-muted"
+                      >
+                        <X className="h-3.5 w-3.5 mr-1" />
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => saveEdit(cls.id)}
+                        className="h-7 px-3 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1 shadow-sm"
+                      >
+                        <Check className="h-3.5 w-3.5" />
+                        Done
+                      </Button>
+                    </div>
+                  </div>
+                );
+              }
 
               return (
                 <div
@@ -424,7 +580,16 @@ export function CoachScheduleManager({ onSaved }: { onSaved?: () => void }) {
                   </div>
 
                   <div className="pt-2 border-t flex items-center justify-between">
-                    <span className="text-[10px] text-muted-foreground">ID: {cls.id}</span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => startEdit(cls)}
+                      className="h-7 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 text-xs gap-1 px-2.5 font-semibold"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      <span>Edit</span>
+                    </Button>
+
                     <Button
                       size="sm"
                       variant="ghost"
