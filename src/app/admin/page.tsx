@@ -12,8 +12,7 @@ import { KpiCards } from '@/components/dashboard/kpi-cards';
 import { ParticipantsTable } from '@/components/dashboard/participants-table';
 import { RegistrationTrend } from '@/components/dashboard/registration-trend';
 import { TrainerPerformance } from '@/components/dashboard/trainer-performance';
-import { EventDateSettingsModal } from '@/components/dashboard/event-date-settings-modal';
-import { CoachManagementModal } from '@/components/dashboard/coach-management-modal';
+import { CoachScheduleManager } from '@/components/dashboard/coach-schedule-manager';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -21,7 +20,6 @@ import Link from 'next/link';
 import {
   LayoutDashboard,
   UserPlus,
-  QrCode,
   Users,
   RefreshCw,
   Sparkles,
@@ -30,10 +28,12 @@ import {
   LogOut,
   LogIn,
   Loader2,
+  Calendar,
+  Tv,
 } from 'lucide-react';
-import { useLanguage, LanguageToggle } from '@/lib/i18n';
+import { useLanguage } from '@/lib/i18n';
 
-type TabId = 'dashboard' | 'trainers' | 'registry';
+type TabId = 'dashboard' | 'schedules' | 'trainers' | 'registry';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -47,6 +47,7 @@ export default function AdminPage() {
 
   const TABS: Array<{ id: TabId; label: string; icon: React.ElementType }> = [
     { id: 'dashboard', label: t.navDashboard, icon: LayoutDashboard },
+    { id: 'schedules', label: 'Pengurusan Sesi & Jurulatih', icon: Calendar },
     { id: 'trainers',  label: t.navTrainers, icon: GraduationCap },
     { id: 'registry',  label: t.navRegistry, icon: Users },
   ];
@@ -78,7 +79,7 @@ export default function AdminPage() {
       setStats(data);
       setRefreshTick((n) => n + 1);
     } catch {
-      toast.error('Failed to load stats — please retry');
+      toast.error('Gagal memuatkan data statistik.');
     } finally {
       setLoading(false);
     }
@@ -93,10 +94,10 @@ export default function AdminPage() {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
       setCurrentUser(null);
-      toast.success(lang === 'ms' ? 'Log keluar berjaya.' : 'Logged out successfully.');
+      toast.success('Log keluar berjaya.');
       router.push('/login');
     } catch {
-      toast.error(lang === 'ms' ? 'Ralat semasa log keluar.' : 'Error during logout.');
+      toast.error('Ralat semasa log keluar.');
     }
   };
 
@@ -105,7 +106,7 @@ export default function AdminPage() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-background space-y-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <p className="text-sm text-muted-foreground">
-          {lang === 'ms' ? 'Mengesahkan akses pentadbir...' : 'Verifying administrator access...'}
+          Mengesahkan akses pentadbir...
         </p>
       </div>
     );
@@ -151,57 +152,60 @@ export default function AdminPage() {
               })}
             </div>
 
-            {/* Event Day Tools: Date Settings, Coach Manager & Coach Portal Link */}
+            {/* Quick links to Coach Portal & Registration */}
             <div className="flex items-center gap-1.5 shrink-0 border-l pl-2 sm:pl-3 ml-1">
-              <EventDateSettingsModal onSaved={loadStats} />
-              <CoachManagementModal />
               <Link
                 href="/coach"
                 target="_blank"
                 className="inline-flex items-center gap-1.5 rounded-md border border-indigo-300 bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-900 transition-colors hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300"
               >
-                <GraduationCap className="h-3.5 w-3.5 text-indigo-600" />
-                <span>{lang === 'ms' ? 'Portal Jurulatih (Coach)' : 'Coach Portal'}</span>
+                <Tv className="h-3.5 w-3.5 text-indigo-600" />
+                <span>Portal Jurulatih (Coach)</span>
                 <ExternalLink className="h-2.5 w-2.5 opacity-60" />
               </Link>
-            </div>
 
-            {/* Quick links to Public Portals */}
-            <div className="flex items-center gap-1.5 shrink-0 border-l pl-2 sm:pl-3 ml-1">
               <Link
                 href="/"
                 target="_blank"
                 className="inline-flex items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-900 transition-colors hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
               >
                 <UserPlus className="h-3.5 w-3.5 text-amber-600" />
-                <span>{t.navPublicRegister}</span>
+                <span>Portal Peserta</span>
                 <ExternalLink className="h-2.5 w-2.5 opacity-60" />
               </Link>
             </div>
           </div>
         </nav>
 
-        {/* Main Admin Content */}
-        <main className="mx-auto w-full max-w-[1600px] flex-1 px-3 sm:px-4 py-4 sm:py-6">
-          {!stats && loading ? (
-            <DashboardSkeleton />
-          ) : stats ? (
+        {/* Main Content Area */}
+        <main className="mx-auto max-w-[1600px] px-3 sm:px-4 py-4 sm:py-6 space-y-6">
+          {stats ? (
             <>
-              {tab === 'dashboard' && <DashboardView stats={stats} refreshTick={refreshTick} />}
+              {/* TAB 1: EXECUTIVE DASHBOARD */}
+              {tab === 'dashboard' && (
+                <DashboardView stats={stats} refreshTick={refreshTick} />
+              )}
+
+              {/* TAB 2: UNIFIED COACH & EVENT SCHEDULE MANAGER (FULL PAGE) */}
+              {tab === 'schedules' && (
+                <div className="space-y-4">
+                  <CoachScheduleManager onSaved={loadStats} />
+                </div>
+              )}
+
+              {/* TAB 3: TRAINER PERFORMANCE & FEEDBACK */}
               {tab === 'trainers' && (
                 <div className="space-y-4">
-                  <SectionHeader
-                    title={t.dashTrainerPerformance}
-                    subtitle="Per-coach KPIs, performance trends, and Pre/Post-Session feedback."
-                  />
                   <TrainerPerformance refreshTick={refreshTick} />
                 </div>
               )}
+
+              {/* TAB 4: MASTER REGISTRY TABLE */}
               {tab === 'registry' && (
                 <div className="space-y-4">
                   <SectionHeader
                     title={t.dashMasterRegistry}
-                    subtitle="Live database view — IC is the unique primary key per PRD section 2."
+                    subtitle="Pangkalan data peserta aktif bagi Program Latihan Kemahiran A.I. PMKS ASEAN."
                   />
                   <ParticipantsTable />
                   <RegistrationTrend trend={stats.trend} />
@@ -210,9 +214,9 @@ export default function AdminPage() {
             </>
           ) : (
             <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
-              Failed to load dashboard data.
+              Gagal memuatkan data dashboard.
               <Button variant="outline" size="sm" onClick={loadStats} className="ml-2">
-                <RefreshCw className="h-3 w-3" /> Retry
+                <RefreshCw className="h-3 w-3" /> Cuba Semula
               </Button>
             </div>
           )}
@@ -259,81 +263,40 @@ function Header({
                 ASEAN MSME A.I.
               </span>
             </div>
-            <p className="truncate text-[10px] sm:text-[11px] text-white/60 hidden sm:block">
-              Autonomous operations agent · 5,000 participants across 5 regions
+            <p className="hidden xs:block truncate text-[10px] sm:text-xs text-white/70">
+              ASEAN MSMEs AI Skills Training Programme
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {stats && (
-            <div className="hidden lg:flex items-center gap-3 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs">
-              <div className="flex items-center gap-1.5">
-                <Sparkles className="h-3 w-3 text-[#D4A017]" />
-                <span className="font-semibold tabular-nums">{stats.global.total.toLocaleString()}</span>
-                <span className="text-white/60">/ 5,000</span>
-              </div>
-              <span className="h-3 w-px bg-white/15" />
-              <div className={cn('flex items-center gap-1', stats.global.criticalAlerts > 0 ? 'text-rose-300' : 'text-emerald-300')}>
-                <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                <span className="text-white/80">
-                  {stats.global.criticalAlerts > 0 ? `${stats.global.criticalAlerts} ${t.dashActiveAlerts}` : t.dashSystemsHealthy}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Real D1 Connected indicator */}
-          <div className="inline-flex items-center gap-1 rounded-md border border-emerald-400/40 bg-emerald-500/10 px-2 py-1 text-[11px] sm:text-xs font-medium text-emerald-300">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            </span>
-            <span className="font-semibold uppercase tracking-wider">Live DB</span>
-          </div>
-
-          <LanguageToggle />
-
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={onRefresh}
             disabled={refreshing}
-            className="h-8 px-2 text-white hover:bg-white/10 hover:text-white"
-            title={t.navRefresh}
+            className="h-8 border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white text-xs gap-1.5 px-2 sm:px-2.5"
           >
             <RefreshCw className={cn('h-3.5 w-3.5', refreshing && 'animate-spin')} />
-            <span className="ml-1 hidden sm:inline">{t.navRefresh}</span>
+            <span className="hidden sm:inline">Kemas Kini</span>
           </Button>
 
-          {/* User Profile / Logout */}
-          {user ? (
-            <div className="flex items-center gap-1.5 border-l border-white/20 pl-2 ml-1">
-              <div className="hidden sm:flex flex-col items-end text-right">
-                <span className="text-xs font-medium text-white truncate max-w-[110px]">{user.name}</span>
-                <span className="text-[9px] text-[#D4A017] font-semibold">{user.role}</span>
+          {user && (
+            <div className="flex items-center gap-1.5 sm:gap-2 border-l border-white/20 pl-2 sm:pl-2.5">
+              <div className="hidden sm:flex flex-col items-end text-[11px] leading-tight text-white/90">
+                <span className="font-semibold">{user.name}</span>
+                <span className="text-[10px] text-[#D4A017] font-semibold">{user.role}</span>
               </div>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={onLogout}
-                className="h-8 border-white/20 bg-white/10 px-2 text-xs text-white hover:bg-rose-500/20 hover:border-rose-400 hover:text-rose-200"
-                title={t.navLogout}
+                className="h-8 text-rose-300 hover:bg-rose-500/20 hover:text-rose-100 text-xs gap-1 px-2"
               >
-                <LogOut className="h-3.5 w-3.5 sm:mr-1" />
-                <span className="hidden sm:inline">{t.navLogout}</span>
+                <LogOut className="h-3.5 w-3.5" />
+                <span className="hidden md:inline">Log Keluar</span>
               </Button>
             </div>
-          ) : (
-            <Link href="/login" className="border-l border-white/20 pl-2 ml-1">
-              <Button
-                size="sm"
-                className="h-8 bg-[#D4A017] text-[#0B1F3A] hover:bg-[#F59E0B] font-semibold text-xs gap-1"
-              >
-                <LogIn className="h-3.5 w-3.5" />
-                <span>{t.navLogin}</span>
-              </Button>
-            </Link>
           )}
         </div>
       </div>
@@ -374,26 +337,6 @@ function DashboardView({ stats, refreshTick }: { stats: StatsResponse; refreshTi
   );
 }
 
-function DashboardSkeleton() {
-  return (
-    <div className="space-y-4 animate-pulse">
-      <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-3 xl:grid-cols-6">
-        <div className="h-28 rounded-lg bg-muted/40 md:col-span-2 lg:col-span-1 xl:col-span-2" />
-        <div className="h-28 rounded-lg bg-muted/40" />
-        <div className="h-28 rounded-lg bg-muted/40" />
-        <div className="h-28 rounded-lg bg-muted/40" />
-        <div className="h-28 rounded-lg bg-muted/40" />
-      </div>
-      <div className="h-80 rounded-lg bg-muted/40" />
-      <div className="h-80 rounded-lg bg-muted/40" />
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="h-80 rounded-lg bg-muted/40" />
-        <div className="h-80 rounded-lg bg-muted/40" />
-      </div>
-    </div>
-  );
-}
-
 function Footer() {
   return (
     <footer className="w-full border-t bg-card py-3.5 text-xs text-muted-foreground mt-12">
@@ -402,14 +345,14 @@ function Footer() {
           <span className="rounded bg-[#1E3A8A] px-1.5 py-0.5 font-mono text-[10px] font-bold text-white uppercase">
             INSKEN
           </span>
-          <span className="text-[11px]">Operations &amp; Data Intelligence Agent · v1.0</span>
+          <span className="text-[11px]">ASEAN MSMEs AI Skills Training Programme</span>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground/80">
           <span>Cron: 00:00 GMT+8</span>
           <span>·</span>
-          <span>WhatsApp Business API active</span>
+          <span>WhatsApp Business API aktif</span>
           <span>·</span>
-          <span>Webhook listeners online</span>
+          <span>Penyelarasan Automatik Bersambung</span>
         </div>
       </div>
     </footer>
