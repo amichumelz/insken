@@ -136,7 +136,7 @@ export interface Translations {
 export const translations: Record<Language, Translations> = {
   ms: {
     brandTitle: 'INSKEN Portal',
-    brandSub: 'Program Latihan Kemahiran A.I. PMKS ASEAN',
+    brandSub: 'ASEAN MSMEs AI Skills Training Programme',
     participantBadge: 'Pendaftaran Peserta',
     adminBadge: 'Pentadbir',
     checkinBadge: 'Kaunter Kehadiran',

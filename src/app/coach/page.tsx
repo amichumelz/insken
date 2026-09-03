@@ -19,7 +19,7 @@ import {
   CheckCircle2,
   Layers,
   XCircle,
-  Eye,
+  ScanLine,
 } from 'lucide-react';
 import Link from 'next/link';
 import { DEFAULT_EVENT_DATES } from '@/lib/event-dates';
@@ -135,7 +135,7 @@ export default function CoachPortalPage() {
           setEventDates(data.dates);
         }
       } catch {
-        // Fallback to default
+        // Fallback
       }
     };
     fetchDates();
@@ -158,13 +158,13 @@ export default function CoachPortalPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // 3. Generate QR codes matching official format
+  // 3. Generate QR codes strictly for ATTENDANCE CHECK-IN (not for registration)
   useEffect(() => {
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://insken.1211111996.workers.dev';
     const effectiveDate = eventDates[selectedClass.region] || selectedClass.defaultDate;
 
-    // Attendance QR URL
-    const attendanceUrl = `${origin}/?session=${encodeURIComponent(selectedClass.module)}&region=${selectedClass.region}&date=${effectiveDate}&coach=${selectedClass.coachId}`;
+    // Attendance QR URL — points to check-in confirmation
+    const attendanceUrl = `${origin}/checkin?session=${encodeURIComponent(selectedClass.module)}&region=${selectedClass.region}&date=${effectiveDate}&coach=${selectedClass.coachId}`;
     QRCode.toDataURL(attendanceUrl, {
       errorCorrectionLevel: 'H',
       margin: 1,
@@ -216,7 +216,7 @@ export default function CoachPortalPage() {
                 </span>
               </div>
               <p className="text-[10px] sm:text-[11px] text-white/70 truncate hidden xs:block sm:block">
-                Pilih Sesi Kelas untuk Menjana Paparan Skrin QR Kehadiran (16:9) &amp; Maklum Balas
+                ASEAN MSMEs AI Skills Training Programme
               </p>
             </div>
           </div>
@@ -258,7 +258,7 @@ export default function CoachPortalPage() {
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground">
-              Klik butang <strong>[Jana QR Paparan Skrin]</strong> pada mana-mana sesi di bawah untuk menjana dan memaparkan kod QR projektor dewan (16:9).
+              Klik butang <strong>[Jana QR Kehadiran]</strong> pada mana-mana sesi di bawah untuk memaparkan kod QR pengesahan kehadiran dewan (16:9) pada skrin projektor.
             </p>
           </CardHeader>
           <CardContent className="px-4 sm:px-6 pb-5">
@@ -314,8 +314,8 @@ export default function CoachPortalPage() {
                             : 'bg-indigo-600 text-white hover:bg-indigo-700'
                         }`}
                       >
-                        <Tv className="h-3.5 w-3.5" />
-                        <span>Jana QR Paparan Skrin</span>
+                        <ScanLine className="h-3.5 w-3.5" />
+                        <span>Jana QR Kehadiran</span>
                       </Button>
 
                       <Button
@@ -352,7 +352,7 @@ export default function CoachPortalPage() {
                     className="h-9 text-xs sm:text-sm font-semibold gap-2"
                   >
                     <Tv className="h-4 w-4" />
-                    <span>1. Paparan Skrin Kehadiran Dewan (16:9)</span>
+                    <span>1. Paparan Skrin Pengesahan Kehadiran (16:9)</span>
                   </Button>
 
                   <Button
@@ -391,7 +391,7 @@ export default function CoachPortalPage() {
                       </div>
                       <div>
                         <h2 className="text-sm sm:text-base font-bold text-white tracking-wide uppercase">
-                          INSKEN · PROGRAM LATIHAN KEMAHIRAN A.I. PMKS ASEAN
+                          ASEAN MSMEs AI Skills Training Programme
                         </h2>
                         <p className="text-xs text-[#D4A017] font-semibold">
                           {selectedClass.coachName} · {selectedClass.regionName} · {activeDate}
@@ -402,7 +402,7 @@ export default function CoachPortalPage() {
                     <div className="flex items-center gap-3">
                       <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-400/40 text-xs px-2.5 py-1 gap-1">
                         <Radio className="h-3 w-3 text-emerald-400 animate-pulse" />
-                        <span>SESI KELAS AKTIF</span>
+                        <span>SESI KEHADIRAN AKTIF</span>
                       </Badge>
                       <div className="font-mono text-xs font-bold text-white/90 bg-white/10 px-3 py-1 rounded-md hidden sm:flex items-center gap-1.5">
                         <Clock className="h-3.5 w-3.5 text-[#D4A017]" />
@@ -419,7 +419,7 @@ export default function CoachPortalPage() {
                         {attendanceQrUrl ? (
                           <img
                             src={attendanceQrUrl}
-                            alt="Class Attendance QR"
+                            alt="Class Attendance Check-in QR"
                             className="h-56 w-56 sm:h-72 sm:w-72 object-contain"
                           />
                         ) : (
@@ -430,8 +430,8 @@ export default function CoachPortalPage() {
                       </div>
 
                       <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1 text-xs font-bold text-[#D4A017]">
-                        <Sparkles className="h-3.5 w-3.5" />
-                        <span>Imbas QR untuk Pendaftaran / Pengesahan Kehadiran</span>
+                        <ScanLine className="h-3.5 w-3.5" />
+                        <span>Imbas QR untuk Pengesahan Kehadiran Kelas (Check-in)</span>
                       </div>
                     </div>
 
@@ -442,10 +442,10 @@ export default function CoachPortalPage() {
                           {selectedClass.module}
                         </Badge>
                         <h3 className="text-xl sm:text-3xl font-black text-white">
-                          Selamat Datang ke Sesi Pembelajaran Hari Ini!
+                          Pengesahan Kehadiran Sesi Latihan
                         </h3>
                         <p className="text-xs sm:text-sm text-white/75 mt-1 leading-relaxed">
-                          Sila gunakan kamera telefon pintar anda untuk mengimbas kod QR di sebelah bagi mengesahkan kehadiran rasmi kelas hari ini.
+                          Sila gunakan kamera telefon pintar anda untuk mengimbas kod QR di sebelah bagi mengesahkan kehadiran anda dalam sesi kelas hari ini.
                         </p>
                       </div>
 
@@ -455,12 +455,12 @@ export default function CoachPortalPage() {
                           <div className="text-white/60 text-[11px] mt-0.5">Buka kamera telefon</div>
                         </div>
                         <div className="rounded-xl bg-white/10 p-3.5 border border-white/15 text-center">
-                          <div className="font-bold text-white text-xs sm:text-sm">2. Sahkan Tempat</div>
-                          <div className="text-white/60 text-[11px] mt-0.5">Nama &amp; No. IC</div>
+                          <div className="font-bold text-white text-xs sm:text-sm">2. Sahkan No. IC / Pas</div>
+                          <div className="text-white/60 text-[11px] mt-0.5">Masukkan No. IC peserta</div>
                         </div>
                         <div className="rounded-xl bg-emerald-500/20 p-3.5 border border-emerald-400/40 text-center">
                           <div className="font-bold text-emerald-300 text-xs sm:text-sm">3. Kehadiran Siap</div>
-                          <div className="text-white/80 text-[11px] mt-0.5">Automatik direkodkan</div>
+                          <div className="text-white/80 text-[11px] mt-0.5">Status kehadiran disahkan</div>
                         </div>
                       </div>
 
@@ -488,7 +488,7 @@ export default function CoachPortalPage() {
                       </div>
                       <div>
                         <h2 className="text-sm sm:text-base font-bold text-white tracking-wide uppercase">
-                          BORANG MAKLUM BALAS &amp; PENILAIAN LATIHAN A.I.
+                          ASEAN MSMEs AI Skills Training Programme
                         </h2>
                         <p className="text-xs text-[#D4A017] font-semibold">
                           {selectedClass.coachName} · {selectedClass.module}
@@ -590,7 +590,7 @@ export default function CoachPortalPage() {
                 Paparan Skrin Projektor Belum Diaktifkan
               </h4>
               <p className="text-xs text-muted-foreground max-w-md mx-auto">
-                Sila klik butang <strong>[Jana QR Paparan Skrin]</strong> pada mana-mana kelas di atas untuk memaparkan kod QR kehadiran (16:9) atau borang maklum balas.
+                Sila klik butang <strong>[Jana QR Kehadiran]</strong> pada mana-mana kelas di atas untuk memaparkan kod QR pengesahan kehadiran dewan (16:9) atau borang maklum balas.
               </p>
             </div>
           )}
@@ -604,7 +604,7 @@ export default function CoachPortalPage() {
             <span className="rounded bg-indigo-700 px-1.5 py-0.5 font-mono text-[10px] font-bold text-white uppercase">
               COACH
             </span>
-            <span className="text-[11px]">INSKEN Training Faculty Portal · ASEAN MSME A.I.</span>
+            <span className="text-[11px]">INSKEN Training Faculty Portal · ASEAN MSMEs AI Skills Training Programme</span>
           </div>
           <div className="flex items-center gap-3 text-[11px]">
             <Link href="/" className="hover:text-foreground">Portal Peserta</Link>
