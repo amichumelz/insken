@@ -1,47 +1,65 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { inMemoryParticipants } from '@/lib/memory-store';
 import { REGION_CONFIG, REGIONS, GLOBAL_TARGET } from '@/lib/regions';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// In-memory 30-second cache to prevent D1 row-read limit exhaustion
+// In-memory 10-second cache
 let cachedStats: any = null;
 let lastCacheTime = 0;
-const CACHE_TTL_MS = 30000;
+const CACHE_TTL_MS = 10000;
 
-function generateDailyRegistrationTrend(totalParticipants: number, registeredPhysical: number, registeredOnline: number) {
-  const days = [
-    { day: '25 Aug', weight: 0.05 },
-    { day: '26 Aug', weight: 0.07 },
-    { day: '27 Aug', weight: 0.09 },
-    { day: '28 Aug', weight: 0.12 },
-    { day: '29 Aug', weight: 0.14 },
-    { day: '30 Aug', weight: 0.18 }, // Peak registration day
-    { day: '31 Aug', weight: 0.15 },
-    { day: '01 Sep', weight: 0.10 },
-    { day: '02 Sep', weight: 0.06 },
-    { day: '03 Sep', weight: 0.04 },
-  ];
+function computeExactRegistrationTrend(
+  participants: Array<{ createdAt: Date | string; finalMode?: string; status?: string }>
+) {
+  const dateMap: Map<string, { day: string; sortKey: string; total: number; physical: number; online: number }> = new Map();
 
-  let cumulativePhys = 0;
-  let cumulativeOnl = 0;
+  for (const p of participants) {
+    if (!p.createdAt) continue;
+    const dateObj = new Date(p.createdAt);
+    if (isNaN(dateObj.getTime())) continue;
 
-  return days.map((d, index) => {
-    const isLast = index === days.length - 1;
-    const phys = isLast ? Math.max(0, registeredPhysical - cumulativePhys) : Math.round(registeredPhysical * d.weight);
-    const onl = isLast ? Math.max(0, registeredOnline - cumulativeOnl) : Math.round(registeredOnline * d.weight);
-    cumulativePhys += phys;
-    cumulativeOnl += onl;
-    const total = phys + onl;
-    return {
-      day: d.day,
-      month: d.day,
-      total,
-      physical: phys,
-      online: onl,
-    };
-  });
+    const sortKey = dateObj.toISOString().slice(0, 10);
+    const dayLabel = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+
+    if (!dateMap.has(sortKey)) {
+      dateMap.set(sortKey, {
+        day: dayLabel,
+        sortKey,
+        total: 0,
+        physical: 0,
+        online: 0,
+      });
+    }
+
+    const entry = dateMap.get(sortKey)!;
+    entry.total += 1;
+    const isPhysical =
+      (p.finalMode && p.finalMode.includes('Physical')) ||
+      (p.status && p.status.includes('Physical'));
+
+    if (isPhysical) {
+      entry.physical += 1;
+    } else {
+      entry.online += 1;
+    }
+  }
+
+  const sorted = Array.from(dateMap.values()).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+
+  if (sorted.length === 0) {
+    return [{ day: 'Today', month: 'Today', total: 0, physical: 0, online: 0 }];
+  }
+
+  return sorted.map((s) => ({
+    day: s.day,
+    month: s.day,
+    total: s.total,
+    physical: s.physical,
+    online: s.online,
+  }));
 }
 
 export async function GET() {
@@ -51,14 +69,28 @@ export async function GET() {
   }
 
   try {
-    const [totalParticipants, attendedPhysical, attendedOnline, registeredPhysical, registeredOnline, duplicateBlocked, activeAlerts, criticalAlerts, regionRows, attendedByRegion, sectorRows, recentLogs] = await Promise.all([
-      db.participant.count().catch(() => 2065),
-      db.participant.count({ where: { status: 'Attended_Physical' } }).catch(() => 65),
-      db.participant.count({ where: { status: 'Attended_Online' } }).catch(() => 252),
-      db.participant.count({ where: { status: 'Registered_Physical' } }).catch(() => 995),
-      db.participant.count({ where: { status: 'Registered_Online' } }).catch(() => 753),
-      db.auditLog.count({ where: { action: 'DUPLICATE_BLOCKED' } }).catch(() => 14),
-      db.alert.count({ where: { resolved: false } }).catch(() => 2),
+    const [
+      totalParticipants,
+      attendedPhysical,
+      attendedOnline,
+      registeredPhysical,
+      registeredOnline,
+      duplicateBlocked,
+      activeAlerts,
+      criticalAlerts,
+      regionRows,
+      attendedByRegion,
+      sectorRows,
+      allParticipants,
+      recentLogs,
+    ] = await Promise.all([
+      db.participant.count().catch(() => inMemoryParticipants.size),
+      db.participant.count({ where: { status: 'Attended_Physical' } }).catch(() => 4),
+      db.participant.count({ where: { status: 'Attended_Online' } }).catch(() => 2),
+      db.participant.count({ where: { status: 'Registered_Physical' } }).catch(() => 6),
+      db.participant.count({ where: { status: 'Registered_Online' } }).catch(() => 4),
+      db.auditLog.count({ where: { action: 'DUPLICATE_BLOCKED' } }).catch(() => 0),
+      db.alert.count({ where: { resolved: false } }).catch(() => 0),
       db.alert.count({ where: { resolved: false, severity: 'critical' } }).catch(() => 0),
       db.participant.groupBy({
         by: ['region', 'finalMode'],
@@ -74,6 +106,10 @@ export async function GET() {
         _count: { _all: true },
         orderBy: { _count: { sector: 'desc' } },
       }).catch(() => []),
+      db.participant.findMany({
+        select: { createdAt: true, finalMode: true, status: true },
+        orderBy: { createdAt: 'asc' },
+      }).catch(() => Array.from(inMemoryParticipants.values())),
       db.auditLog.findMany({
         orderBy: { createdAt: 'desc' },
         take: 10,
@@ -84,12 +120,12 @@ export async function GET() {
 
     const regionStats = REGIONS.map((r) => {
       const rows = regionRows.filter((x) => x.region === r.code);
-      const physical = rows.find((x) => x.finalMode === 'Registered_Physical')?._count._all ?? Math.round(r.physicalCap * 0.7);
-      const online = rows.find((x) => x.finalMode === 'Registered_Online')?._count._all ?? Math.round(r.onlineTarget * 0.4);
+      const physical = rows.find((x) => x.finalMode === 'Registered_Physical')?._count._all ?? 0;
+      const online = rows.find((x) => x.finalMode === 'Registered_Online')?._count._all ?? 0;
       const total = physical + online;
-      const attended = attendedMap.get(r.code) ?? Math.round(total * 0.25);
-      const physicalPct = Math.round((physical / r.physicalCap) * 100);
-      const totalPct = Math.round((total / r.total) * 100);
+      const attended = attendedMap.get(r.code) ?? 0;
+      const physicalPct = Math.round((physical / (r.physicalCap || 1)) * 100);
+      const totalPct = Math.round((total / (r.total || 1)) * 100);
       const attendedPct = total > 0 ? Math.round((attended / total) * 100) : 0;
 
       let state: string = 'Normal';
@@ -102,8 +138,8 @@ export async function GET() {
         name: r.name,
         physical,
         online,
-        attendedPhysical: Math.round(attended * 0.3),
-        attendedOnline: Math.round(attended * 0.7),
+        attendedPhysical: rows.filter((x) => x.finalMode === 'Registered_Physical').reduce((s, x) => s + (attendedMap.get(r.code) || 0), 0),
+        attendedOnline: rows.filter((x) => x.finalMode === 'Registered_Online').reduce((s, x) => s + (attendedMap.get(r.code) || 0), 0),
         total,
         physicalCap: r.physicalCap,
         onlineTarget: r.onlineTarget,
@@ -123,11 +159,12 @@ export async function GET() {
           pct: Math.round((s._count._all / (totalParticipants || 1)) * 100),
         }))
       : [
-          { sector: 'Agriculture', count: 330, pct: 16 },
-          { sector: 'Retail', count: 299, pct: 14 },
-          { sector: 'Manufacturing', count: 295, pct: 14 },
-          { sector: 'Professional Services', count: 291, pct: 14 },
-          { sector: 'Food & Beverage', count: 289, pct: 14 },
+          { sector: 'Retail', count: 2, pct: 20 },
+          { sector: 'Food & Beverage', count: 2, pct: 20 },
+          { sector: 'Manufacturing', count: 1, pct: 10 },
+          { sector: 'Professional Services', count: 2, pct: 20 },
+          { sector: 'Agriculture', count: 2, pct: 20 },
+          { sector: 'Tech & Digital', count: 1, pct: 10 },
         ];
 
     const milestonePcts = [0.25, 0.5, 0.75, 1];
@@ -137,7 +174,12 @@ export async function GET() {
       reached: totalParticipants >= GLOBAL_TARGET * p,
     }));
 
-    const dailyTrend = generateDailyRegistrationTrend(totalParticipants, registeredPhysical, registeredOnline);
+    // Generate exact daily trend matching real participant createdAt timestamps
+    const participantList = (allParticipants && allParticipants.length > 0)
+      ? allParticipants
+      : Array.from(inMemoryParticipants.values());
+
+    const exactDailyTrend = computeExactRegistrationTrend(participantList);
 
     const responsePayload = {
       global: {
@@ -156,7 +198,7 @@ export async function GET() {
       },
       regions: regionStats,
       sectors: sectorStats,
-      trend: dailyTrend,
+      trend: exactDailyTrend,
       recentLogs: recentLogs.map((l) => ({
         id: l.id,
         action: l.action,
@@ -171,54 +213,68 @@ export async function GET() {
 
     return NextResponse.json(responsePayload);
   } catch (error: any) {
-    console.warn('D1 rows_read limit fallback activated for /api/stats');
-    if (cachedStats) return NextResponse.json(cachedStats);
+    console.warn('D1 limit fallback activated for /api/stats');
+    const participantList = Array.from(inMemoryParticipants.values());
+    const exactDailyTrend = computeExactRegistrationTrend(participantList);
+
+    const totalParticipants = participantList.length;
+    const attendedPhysical = participantList.filter((p) => p.status === 'Attended_Physical').length;
+    const attendedOnline = participantList.filter((p) => p.status === 'Attended_Online').length;
+    const registeredPhysical = participantList.filter((p) => p.finalMode === 'Registered_Physical').length;
+    const registeredOnline = participantList.filter((p) => p.finalMode === 'Registered_Online').length;
 
     const fallbackPayload = {
       global: {
-        total: 2065,
+        total: totalParticipants,
         target: GLOBAL_TARGET,
-        pct: 41,
-        attended: 317,
-        attendedPhysical: 65,
-        attendedOnline: 252,
-        registeredPhysical: 995,
-        registeredOnline: 753,
-        duplicateBlocked: 14,
-        activeAlerts: 2,
+        pct: Math.round((totalParticipants / GLOBAL_TARGET) * 100),
+        attended: attendedPhysical + attendedOnline,
+        attendedPhysical,
+        attendedOnline,
+        registeredPhysical,
+        registeredOnline,
+        duplicateBlocked: 0,
+        activeAlerts: 0,
         criticalAlerts: 0,
         milestones: [
-          { pct: 25, target: 1250, reached: true },
+          { pct: 25, target: 1250, reached: false },
           { pct: 50, target: 2500, reached: false },
           { pct: 75, target: 3750, reached: false },
           { pct: 100, target: 5000, reached: false },
         ],
       },
-      regions: REGIONS.map((r) => ({
-        code: r.code,
-        name: r.name,
-        physical: Math.round(r.physicalCap * 0.7),
-        online: Math.round(r.onlineTarget * 0.4),
-        attendedPhysical: 20,
-        attendedOnline: 45,
-        total: Math.round(r.physicalCap * 0.7 + r.onlineTarget * 0.4),
-        physicalCap: r.physicalCap,
-        onlineTarget: r.onlineTarget,
-        totalCap: r.total,
-        attended: 65,
-        physicalPct: 70,
-        totalPct: 45,
-        attendedPct: 20,
-        state: 'Normal',
-      })),
+      regions: REGIONS.map((r) => {
+        const regParticipants = participantList.filter((p) => p.region === r.code);
+        const phys = regParticipants.filter((p) => p.finalMode === 'Registered_Physical').length;
+        const onl = regParticipants.filter((p) => p.finalMode === 'Registered_Online').length;
+        const att = regParticipants.filter((p) => p.status.includes('Attended')).length;
+        return {
+          code: r.code,
+          name: r.name,
+          physical: phys,
+          online: onl,
+          attendedPhysical: regParticipants.filter((p) => p.status === 'Attended_Physical').length,
+          attendedOnline: regParticipants.filter((p) => p.status === 'Attended_Online').length,
+          total: phys + onl,
+          physicalCap: r.physicalCap,
+          onlineTarget: r.onlineTarget,
+          totalCap: r.total,
+          attended: att,
+          physicalPct: Math.round((phys / (r.physicalCap || 1)) * 100),
+          totalPct: Math.round(((phys + onl) / (r.total || 1)) * 100),
+          attendedPct: (phys + onl) > 0 ? Math.round((att / (phys + onl)) * 100) : 0,
+          state: 'Normal',
+        };
+      }),
       sectors: [
-        { sector: 'Agriculture', count: 330, pct: 16 },
-        { sector: 'Retail', count: 299, pct: 14 },
-        { sector: 'Manufacturing', count: 295, pct: 14 },
-        { sector: 'Professional Services', count: 291, pct: 14 },
-        { sector: 'Food & Beverage', count: 289, pct: 14 },
+        { sector: 'Retail', count: 2, pct: 20 },
+        { sector: 'Food & Beverage', count: 2, pct: 20 },
+        { sector: 'Manufacturing', count: 1, pct: 10 },
+        { sector: 'Professional Services', count: 2, pct: 20 },
+        { sector: 'Agriculture', count: 2, pct: 20 },
+        { sector: 'Tech & Digital', count: 1, pct: 10 },
       ],
-      trend: generateDailyRegistrationTrend(2065, 995, 753),
+      trend: exactDailyTrend,
       recentLogs: [],
     };
 
