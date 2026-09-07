@@ -45,7 +45,7 @@ export function RegionalProgressGrid({ regions }: { regions: RegionStat[] }) {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
         {regions.map((r) => {
           const isClosed = r.state === 'Full';
           return (

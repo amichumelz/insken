@@ -7,8 +7,6 @@ import { DashboardTopRow } from '@/components/dashboard/dashboard-top-row';
 import { LiveAttendanceTracking } from '@/components/dashboard/live-attendance-tracking';
 import { SectoralBreakdown } from '@/components/dashboard/sectoral-breakdown';
 import { RegionalProgressGrid } from '@/components/dashboard/regional-progress-grid';
-import { DataHygienePanel } from '@/components/dashboard/data-hygiene-panel';
-import { KpiCards } from '@/components/dashboard/kpi-cards';
 import { ParticipantsTable } from '@/components/dashboard/participants-table';
 import { RegistrationTrend } from '@/components/dashboard/registration-trend';
 import { TrainerPerformance } from '@/components/dashboard/trainer-performance';
@@ -359,14 +357,8 @@ function DashboardView({ stats, refreshTick }: { stats: StatsResponse; refreshTi
       {/* 3. Sectoral Breakdown (Full Width) */}
       <SectoralBreakdown sectors={stats.sectors} />
 
-      {/* 4. 2-Column Row: Regional Attendance Overview (Left) + Data Hygiene Panel (Right) */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 items-start">
-        <RegionalProgressGrid regions={stats.regions} />
-        <DataHygienePanel duplicateBlocked={stats.global.duplicateBlocked} refreshTick={refreshTick} />
-      </div>
-
-      {/* 5. Bottom 3 KPI Cards Row: Pending Check-in, Data Hygiene, Active Alerts */}
-      <KpiCards global={stats.global} />
+      {/* 4. Regional Attendance Overview (Full Width) */}
+      <RegionalProgressGrid regions={stats.regions} />
     </div>
   );
 }
