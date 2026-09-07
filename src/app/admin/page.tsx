@@ -11,6 +11,7 @@ import { ParticipantsTable } from '@/components/dashboard/participants-table';
 import { RegistrationTrend } from '@/components/dashboard/registration-trend';
 import { TrainerPerformance } from '@/components/dashboard/trainer-performance';
 import { CoachScheduleManager } from '@/components/dashboard/coach-schedule-manager';
+import { FinanceMilestoneTracker } from '@/components/dashboard/finance-milestone-tracker';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -28,11 +29,12 @@ import {
   Layers,
   Download,
   Loader2,
+  Wallet,
 } from 'lucide-react';
 import { exportExecutiveDashboardCsv } from '@/lib/export-utils';
 import { useLanguage } from '@/lib/i18n';
 
-type TabId = 'dashboard' | 'schedules' | 'trainers' | 'registry';
+type TabId = 'dashboard' | 'finance' | 'schedules' | 'trainers' | 'registry';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -46,6 +48,7 @@ export default function AdminPage() {
 
   const TABS: Array<{ id: TabId; label: string; icon: React.ElementType }> = [
     { id: 'dashboard', label: t.navDashboard, icon: LayoutDashboard },
+    { id: 'finance',   label: t.navFinance,   icon: Wallet },
     { id: 'schedules', label: t.navSchedules, icon: Calendar },
     { id: 'trainers',  label: t.navTrainers, icon: GraduationCap },
     { id: 'registry',  label: t.navRegistry, icon: Users },
@@ -185,7 +188,14 @@ export default function AdminPage() {
                 <DashboardView stats={stats} refreshTick={refreshTick} />
               )}
 
-              {/* TAB 2: UNIFIED COACH & EVENT SCHEDULE MANAGER (FULL PAGE) */}
+              {/* TAB 2: FINANCE & MILESTONE TRACKING */}
+              {tab === 'finance' && (
+                <div className="space-y-4">
+                  <FinanceMilestoneTracker refreshTick={refreshTick} />
+                </div>
+              )}
+
+              {/* TAB 3: UNIFIED COACH & EVENT SCHEDULE MANAGER (FULL PAGE) */}
               {tab === 'schedules' && (
                 <div className="space-y-4">
                   <CoachScheduleManager onSaved={loadStats} />

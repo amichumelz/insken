@@ -253,3 +253,85 @@ export function exportRegionalProgressCsv(regions: RegionStat[]) {
 
   downloadCsv(`Regional_Attendance_Report_${timestamp}.csv`, csv);
 }
+
+/**
+ * 7. Export Finance & Milestone Payment Tracking Report CSV
+ */
+export function exportFinanceMilestonesCsv(
+  overview: any,
+  programmes: any[],
+  internalDepts: any[],
+  milestones: any[]
+) {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const nowFormatted = new Date().toLocaleString('en-MY');
+
+  let csv = `INSKEN — Finance Tracking & Programme Milestone Payment Audit Report\n`;
+  csv += `Generated On:,"${nowFormatted}"\n\n`;
+
+  // SECTION 1: FINANCIAL OVERVIEW
+  csv += `=== FINANCIAL OVERVIEW ===\n`;
+  csv += `Metric,Amount (RM) / Value\n`;
+  csv += `Total Project Costs,${overview.totalCosts?.toLocaleString('en-US') || 0}\n`;
+  csv += `Net Profit,${overview.netProfit?.toLocaleString('en-US') || 0}\n`;
+  csv += `Profit Margin,${overview.profitMarginPct || 0}%\n`;
+  csv += `Total DE Allocation,${overview.deAllocationTotal?.toLocaleString('en-US') || 0}\n`;
+  csv += `Total DE Utilized,${overview.deUtilizedTotal?.toLocaleString('en-US') || 0}\n`;
+  csv += `Total DE Remaining,${overview.deRemainingTotal?.toLocaleString('en-US') || 0}\n`;
+  csv += `Total Internal Allocation,${overview.internalAllocationTotal?.toLocaleString('en-US') || 0}\n`;
+  csv += `Total Milestones Billed / Claimed,${overview.totalClaimAmount?.toLocaleString('en-US') || 0}\n`;
+  csv += `Total Amount Paid to INSKEN,${overview.totalPaidAmount?.toLocaleString('en-US') || 0}\n`;
+  csv += `Total Outstanding Payment,${overview.totalOutstandingAmount?.toLocaleString('en-US') || 0}\n\n`;
+
+  // SECTION 2: PROGRAMME ALLOCATION BREAKDOWN (DE)
+  csv += `=== PROGRAMME BUDGET ALLOCATION (DE ALLOCATION) ===\n`;
+  csv += `Programme,Allocation (RM),Utilized (RM),Committed (RM),Variance (RM)\n`;
+  for (const p of programmes) {
+    csv += [
+      escapeCsvCell(p.name),
+      p.allocation,
+      p.utilized,
+      p.committed,
+      p.variance,
+    ].join(',') + '\n';
+  }
+  csv += '\n';
+
+  // SECTION 3: INTERNAL DEPARTMENT ALLOCATION
+  csv += `=== INTERNAL DEPARTMENT ALLOCATION ===\n`;
+  csv += `Department,Allocation (RM),Utilized (RM),Committed (RM),Variance (RM)\n`;
+  for (const d of internalDepts) {
+    csv += [
+      escapeCsvCell(d.name),
+      d.allocation,
+      d.utilized,
+      d.committed,
+      d.variance,
+    ].join(',') + '\n';
+  }
+  csv += '\n';
+
+  // SECTION 4: MILESTONE & PAYMENT SCHEDULE (BAYARAN INSKEN)
+  csv += `=== MILESTONE DELIVERABLES & PAYMENT AUDIT (INSKEN) ===\n`;
+  csv += `Milestone #,Title,Deliverables & Scope,Target Due Date,Invoice No.,Claim Amount (RM),Amount Paid (RM),Outstanding (RM),Milestone Status,Payment Status,Payment Date,Recipient,Notes\n`;
+  for (const m of milestones) {
+    csv += [
+      escapeCsvCell(m.milestoneNumber),
+      escapeCsvCell(m.title),
+      escapeCsvCell(m.deliverable),
+      escapeCsvCell(m.dueDate),
+      escapeCsvCell(m.invoiceNo),
+      m.claimAmount,
+      m.amountPaid,
+      m.outstanding,
+      escapeCsvCell(m.milestoneStatus),
+      escapeCsvCell(m.paymentStatus),
+      escapeCsvCell(m.paymentDate || '—'),
+      escapeCsvCell(m.recipient || 'INSKEN'),
+      escapeCsvCell(m.notes || ''),
+    ].join(',') + '\n';
+  }
+
+  downloadCsv(`INSKEN_Finance_Milestones_Report_${timestamp}.csv`, csv);
+}
+

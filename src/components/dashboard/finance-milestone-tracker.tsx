@@ -1,0 +1,1436 @@
+'use client';
+
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import {
+  FinanceProgrammeItem,
+  MilestonePaymentRecord,
+  FinanceOverview,
+  FinanceDataResponse,
+  MilestoneProgressStatus,
+  MilestonePaymentStatus,
+} from '@/lib/types';
+import { exportFinanceMilestonesCsv } from '@/lib/export-utils';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { toast } from 'sonner';
+import {
+  Wallet,
+  TrendingUp,
+  Download,
+  Plus,
+  Edit2,
+  Trash2,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  Search,
+  Filter,
+  RefreshCw,
+  ArrowUpRight,
+  ShieldCheck,
+  FileSpreadsheet,
+  Layers,
+  Banknote,
+  DollarSign,
+  HelpCircle,
+  MoreVertical,
+  Calendar,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const fmtRM = (val: number) => {
+  return `RM ${Number(val || 0).toLocaleString('en-MY', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
+
+const fmtNoDecimals = (val: number) => {
+  return `RM ${Math.round(Number(val || 0)).toLocaleString('en-MY')}`;
+};
+
+export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number }) {
+  const [data, setData] = useState<FinanceDataResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [paymentFilter, setPaymentFilter] = useState<'ALL' | 'PAID' | 'PENDING' | 'IN_REVIEW'>('ALL');
+  const [milestoneFilter, setMilestoneFilter] = useState<'ALL' | 'COMPLETED' | 'IN_PROGRESS' | 'PENDING'>('ALL');
+
+  // Modals state
+  const [isMilestoneModalOpen, setIsMilestoneModalOpen] = useState(false);
+  const [editingMilestone, setEditingMilestone] = useState<MilestonePaymentRecord | null>(null);
+  const [milestoneForm, setMilestoneForm] = useState<Partial<MilestonePaymentRecord>>({
+    milestoneNumber: '',
+    title: '',
+    deliverable: '',
+    dueDate: '',
+    invoiceNo: '',
+    claimAmount: 0,
+    amountPaid: 0,
+    milestoneStatus: 'PENDING',
+    paymentStatus: 'PENDING',
+    paymentDate: '',
+    recipient: 'INSKEN',
+    notes: '',
+  });
+
+  const [isProgModalOpen, setIsProgModalOpen] = useState(false);
+  const [editingProg, setEditingProg] = useState<FinanceProgrammeItem | null>(null);
+  const [progForm, setProgForm] = useState<Partial<FinanceProgrammeItem>>({
+    category: 'DE',
+    name: '',
+    allocation: 0,
+    utilized: 0,
+    committed: 0,
+  });
+
+  const [isOverviewModalOpen, setIsOverviewModalOpen] = useState(false);
+  const [overviewForm, setOverviewForm] = useState({
+    costs: 654791,
+    netProfit: 444962,
+    profitMarginPct: 40,
+  });
+
+  const [saving, setSaving] = useState(false);
+
+  // Fetch Finance & Milestone Data
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/finance/milestones', { cache: 'no-store' });
+      const json = (await res.json()) as FinanceDataResponse;
+      if (json.ok) {
+        setData(json);
+        setOverviewForm({
+          costs: json.overview.totalCosts,
+          netProfit: json.overview.netProfit,
+          profitMarginPct: json.overview.profitMarginPct,
+        });
+      }
+    } catch {
+      toast.error('Failed to load finance records.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData, refreshTick]);
+
+  // Milestone Save
+  const handleSaveMilestone = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!milestoneForm.title || !milestoneForm.milestoneNumber) {
+      toast.error('Please enter Milestone Number and Title.');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const claim = Number(milestoneForm.claimAmount || 0);
+      const paid = Number(milestoneForm.amountPaid || 0);
+      const outstanding = Math.max(0, claim - paid);
+      const paymentStatus: MilestonePaymentStatus =
+        paid >= claim && claim > 0 ? 'PAID' : (milestoneForm.paymentStatus as MilestonePaymentStatus) || 'PENDING';
+
+      const payload: MilestonePaymentRecord = {
+        id: editingMilestone?.id || `ms-${Date.now()}`,
+        milestoneNumber: milestoneForm.milestoneNumber || 'Milestone',
+        title: milestoneForm.title || '',
+        deliverable: milestoneForm.deliverable || '',
+        dueDate: milestoneForm.dueDate || '',
+        invoiceNo: milestoneForm.invoiceNo || '',
+        claimAmount: claim,
+        amountPaid: paid,
+        outstanding,
+        milestoneStatus: (milestoneForm.milestoneStatus as MilestoneProgressStatus) || 'PENDING',
+        paymentStatus,
+        paymentDate: milestoneForm.paymentDate || '',
+        recipient: milestoneForm.recipient || 'INSKEN',
+        notes: milestoneForm.notes || '',
+      };
+
+      const res = await fetch('/api/finance/milestones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'SAVE_MILESTONE', payload }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        toast.success(editingMilestone ? 'Milestone updated!' : 'New milestone added!');
+        setData(json);
+        setIsMilestoneModalOpen(false);
+        setEditingMilestone(null);
+      } else {
+        toast.error(json.error || 'Failed to save milestone.');
+      }
+    } catch {
+      toast.error('An error occurred while saving.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Quick Toggle Paid Status
+  const handleQuickTogglePayment = async (ms: MilestonePaymentRecord) => {
+    const isNowPaid = ms.paymentStatus !== 'PAID';
+    const updated: MilestonePaymentRecord = {
+      ...ms,
+      paymentStatus: isNowPaid ? 'PAID' : 'PENDING',
+      amountPaid: isNowPaid ? ms.claimAmount : 0,
+      outstanding: isNowPaid ? 0 : ms.claimAmount,
+      paymentDate: isNowPaid ? new Date().toLocaleDateString('en-MY', { day: '2-digit', month: 'short', year: 'numeric' }) : '',
+    };
+
+    try {
+      const res = await fetch('/api/finance/milestones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'SAVE_MILESTONE', payload: updated }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        toast.success(isNowPaid ? `Marked ${ms.milestoneNumber} as Paid to INSKEN.` : `Marked ${ms.milestoneNumber} as Pending.`);
+        setData(json);
+      }
+    } catch {
+      toast.error('Failed to update status.');
+    }
+  };
+
+  // Delete Milestone
+  const handleDeleteMilestone = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete ${name}?`)) return;
+    try {
+      const res = await fetch('/api/finance/milestones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'DELETE_MILESTONE', payload: { id } }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        toast.success('Milestone deleted.');
+        setData(json);
+      }
+    } catch {
+      toast.error('Failed to delete milestone.');
+    }
+  };
+
+  // Programme Save
+  const handleSaveProgramme = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!progForm.name) {
+      toast.error('Please enter name.');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const allocation = Number(progForm.allocation || 0);
+      const utilized = Number(progForm.utilized || 0);
+      const committed = Number(progForm.committed || 0);
+      const variance = allocation - utilized;
+
+      const payload: FinanceProgrammeItem = {
+        id: editingProg?.id || `prog-${Date.now()}`,
+        category: (progForm.category as 'DE' | 'INTERNAL') || 'DE',
+        name: progForm.name || '',
+        allocation,
+        utilized,
+        committed,
+        variance,
+      };
+
+      const res = await fetch('/api/finance/milestones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'SAVE_PROGRAMME', payload }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        toast.success('Budget item saved successfully.');
+        setData(json);
+        setIsProgModalOpen(false);
+        setEditingProg(null);
+      } else {
+        toast.error(json.error || 'Failed to save budget item.');
+      }
+    } catch {
+      toast.error('An error occurred.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Delete Programme
+  const handleDeleteProgramme = async (id: string, category: 'DE' | 'INTERNAL', name: string) => {
+    if (!confirm(`Are you sure you want to delete ${name}?`)) return;
+    try {
+      const res = await fetch('/api/finance/milestones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'DELETE_PROGRAMME', payload: { id, category } }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        toast.success('Item deleted.');
+        setData(json);
+      }
+    } catch {
+      toast.error('Failed to delete item.');
+    }
+  };
+
+  // Save Overview (Costs & Profit)
+  const handleSaveOverview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const res = await fetch('/api/finance/milestones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'UPDATE_ALL',
+          payload: {
+            costs: Number(overviewForm.costs),
+            netProfit: Number(overviewForm.netProfit),
+            profitMarginPct: Number(overviewForm.profitMarginPct),
+          },
+        }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        toast.success('Financial overview updated!');
+        setData(json);
+        setIsOverviewModalOpen(false);
+      }
+    } catch {
+      toast.error('Failed to update overview.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Filtered Milestones
+  const filteredMilestones = useMemo(() => {
+    if (!data?.milestones) return [];
+    return data.milestones.filter((m) => {
+      const matchesSearch =
+        m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        m.milestoneNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        m.invoiceNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        m.deliverable.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesPayment = paymentFilter === 'ALL' || m.paymentStatus === paymentFilter;
+      const matchesProgress = milestoneFilter === 'ALL' || m.milestoneStatus === milestoneFilter;
+
+      return matchesSearch && matchesPayment && matchesProgress;
+    });
+  }, [data?.milestones, searchQuery, paymentFilter, milestoneFilter]);
+
+  // Calculations for DE Allocation Bar
+  const deTotal = data?.overview?.deAllocationTotal || 9400000;
+  const deUtilized = data?.overview?.deUtilizedTotal || 4905652.55;
+  const deRemaining = Math.max(0, deTotal - deUtilized);
+  const deUtilizedPct = deTotal > 0 ? (deUtilized / deTotal) * 100 : 0;
+  const deRemainingPct = deTotal > 0 ? (deRemaining / deTotal) * 100 : 0;
+
+  // Calculations for Internal Allocation Bar
+  const intTotal = data?.overview?.internalAllocationTotal || 1956500;
+  const intUtilized = data?.overview?.internalUtilizedTotal || 804262.71;
+  const intRemaining = Math.max(0, intTotal - intUtilized);
+  const intUtilizedPct = intTotal > 0 ? (intUtilized / intTotal) * 100 : 0;
+  const intRemainingPct = intTotal > 0 ? (intRemaining / intTotal) * 100 : 0;
+
+  if (loading && !data) {
+    return (
+      <div className="flex h-64 items-center justify-center space-x-3 text-sm text-muted-foreground">
+        <RefreshCw className="h-5 w-5 animate-spin text-primary" />
+        <span>Loading Finance & Milestone Tracking records...</span>
+      </div>
+    );
+  }
+
+  const overview = data?.overview || ({} as FinanceOverview);
+  const programmes = data?.programmes || [];
+  const internalDepartments = data?.internalDepartments || [];
+
+  return (
+    <div className="space-y-6">
+      {/* 1. Header Bar with Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card border rounded-2xl p-4 sm:p-5 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#0B1F3A] to-[#1E3A8A] text-white shadow-sm">
+            <Wallet className="h-5 w-5 text-[#D4A017]" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base sm:text-lg font-bold text-foreground">
+                Finance &amp; Milestone Tracking
+              </h2>
+              <span className="rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                INSKEN Live Audit
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Trace project deliverables, budget utilization, claims billed, and payment disbursement status to INSKEN.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            size="sm"
+            onClick={() => {
+              setEditingMilestone(null);
+              setMilestoneForm({
+                milestoneNumber: `Milestone ${(data?.milestones?.length || 0) + 1}`,
+                title: '',
+                deliverable: '',
+                dueDate: '',
+                invoiceNo: `INV-INSKEN-2026-00${(data?.milestones?.length || 0) + 1}`,
+                claimAmount: 0,
+                amountPaid: 0,
+                milestoneStatus: 'IN_PROGRESS',
+                paymentStatus: 'PENDING',
+                paymentDate: '',
+                recipient: 'INSKEN',
+                notes: '',
+              });
+              setIsMilestoneModalOpen(true);
+            }}
+            className="h-8 bg-[#0B1F3A] hover:bg-[#112D55] text-white text-xs font-semibold gap-1.5 shadow-sm"
+          >
+            <Plus className="h-3.5 w-3.5 text-[#D4A017]" />
+            <span>+ Add Milestone</span>
+          </Button>
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setEditingProg(null);
+              setProgForm({
+                category: 'DE',
+                name: '',
+                allocation: 0,
+                utilized: 0,
+                committed: 0,
+              });
+              setIsProgModalOpen(true);
+            }}
+            className="h-8 text-xs font-semibold gap-1.5 border-border"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span>+ Add Budget Line</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              exportFinanceMilestonesCsv(
+                overview,
+                programmes,
+                internalDepartments,
+                data?.milestones || []
+              )
+            }
+            className="h-8 border-[#D4A017]/40 bg-[#D4A017]/10 text-foreground hover:bg-[#D4A017]/20 text-xs font-semibold gap-1.5"
+            title="Export Finance & Milestone CSV Report"
+          >
+            <Download className="h-3.5 w-3.5 text-[#D4A017]" />
+            <span className="hidden sm:inline">Export CSV</span>
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={loadData}
+            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+            title="Refresh Data"
+          >
+            <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
+          </Button>
+        </div>
+      </div>
+
+      {/* 2. Top Metric Cards Row (Costs, Net Profit, Total Allocation, Paid to INSKEN, Outstanding) */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+        {/* Card 1: Costs */}
+        <Card className="border-border shadow-sm bg-gradient-to-br from-card to-muted/20 relative overflow-hidden">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                <Banknote className="h-3.5 w-3.5 text-amber-500" />
+                <span>COSTS</span>
+              </div>
+              <button
+                onClick={() => setIsOverviewModalOpen(true)}
+                className="text-[10px] text-muted-foreground hover:text-primary transition-colors"
+                title="Edit Cost"
+              >
+                <Edit2 className="h-3 w-3" />
+              </button>
+            </div>
+            <div className="mt-2 text-xl sm:text-2xl font-black tracking-tight text-foreground">
+              {fmtNoDecimals(overview.totalCosts)}
+            </div>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Operational &amp; venue expenditure
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Card 2: Net Profit */}
+        <Card className="border-border shadow-sm bg-gradient-to-br from-card to-emerald-50/20 dark:to-emerald-950/10 relative overflow-hidden">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                <DollarSign className="h-3.5 w-3.5 text-emerald-600" />
+                <span>NET PROFIT</span>
+              </div>
+              <span className="rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 px-1.5 py-0.5 text-[10px] font-bold">
+                {overview.profitMarginPct}% margin
+              </span>
+            </div>
+            <div className="mt-2 text-xl sm:text-2xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">
+              {fmtNoDecimals(overview.netProfit)}
+            </div>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Net surplus generated
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Card 3: Total Allocation / Grant */}
+        <Card className="border-border shadow-sm bg-card relative overflow-hidden">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <Layers className="h-3.5 w-3.5 text-[#0B1F3A] dark:text-blue-400" />
+              <span>TOTAL GRANT ALLOCATION</span>
+            </div>
+            <div className="mt-2 text-xl sm:text-2xl font-black tracking-tight text-foreground">
+              {fmtNoDecimals(overview.deAllocationTotal)}
+            </div>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Full Programme Allocation (DE)
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Card 4: Sudah Dibayar (Paid to INSKEN) */}
+        <Card className="border-emerald-200 bg-emerald-50/40 dark:border-emerald-900/50 dark:bg-emerald-950/20 shadow-sm relative overflow-hidden">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                <span>SUDAH DIBAYAR (INSKEN)</span>
+              </div>
+              <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                {((overview.totalPaidAmount / (overview.totalClaimAmount || 1)) * 100).toFixed(0)}%
+              </span>
+            </div>
+            <div className="mt-2 text-xl sm:text-2xl font-black tracking-tight text-emerald-700 dark:text-emerald-300">
+              {fmtNoDecimals(overview.totalPaidAmount)}
+            </div>
+            <p className="mt-1 text-[11px] text-emerald-600/80 dark:text-emerald-400/80">
+              Disbursed to INSKEN account
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Card 5: Belum Dibayar (Outstanding Balance) */}
+        <Card className="border-amber-200 bg-amber-50/40 dark:border-amber-900/50 dark:bg-amber-950/20 shadow-sm relative overflow-hidden col-span-2 sm:col-span-1">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-amber-800 dark:text-amber-300">
+                <Clock className="h-3.5 w-3.5 text-amber-600" />
+                <span>BELUM DIBAYAR (OUTSTANDING)</span>
+              </div>
+              <span className="rounded bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 px-1.5 py-0.5 text-[10px] font-bold">
+                Pending
+              </span>
+            </div>
+            <div className="mt-2 text-xl sm:text-2xl font-black tracking-tight text-amber-700 dark:text-amber-400">
+              {fmtNoDecimals(overview.totalOutstandingAmount)}
+            </div>
+            <p className="mt-1 text-[11px] text-amber-700/80 dark:text-amber-400/80">
+              Awaiting milestone milestones
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 3. FINANCE TRACKING SECTION (DE Allocation & Progress Bar) */}
+      <Card className="border-border shadow-sm overflow-hidden">
+        <CardHeader className="bg-[#0B1F3A] text-white py-3.5 px-4 sm:px-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded bg-white/10 text-xs font-mono font-bold text-[#D4A017]">
+                7
+              </span>
+              <CardTitle className="text-sm sm:text-base font-bold tracking-wide uppercase">
+                FINANCE TRACKING
+              </CardTitle>
+            </div>
+            <div className="text-xs text-white/80 font-medium">
+              National Development Allocation
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-4 sm:p-6 space-y-6">
+          {/* DE Allocation Visual Progress Bar (Exact look of screenshot) */}
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <div className="text-sm sm:text-base font-bold text-foreground">
+                DE ALLOCATION: <span className="text-primary">{fmtRM(deTotal)}</span>
+              </div>
+              <div className="flex items-center gap-4 text-xs font-semibold">
+                <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  Utilized: {fmtRM(deUtilized)} ({deUtilizedPct.toFixed(1)}%)
+                </span>
+                <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                  <span className="h-2 w-2 rounded-full bg-amber-400" />
+                  Remaining Allocation: {fmtRM(deRemaining)} ({deRemainingPct.toFixed(1)}%)
+                </span>
+              </div>
+            </div>
+
+            {/* Dual color progress bar (Green & Yellow) */}
+            <div className="h-6 w-full rounded-md overflow-hidden bg-muted flex shadow-inner border">
+              <div
+                style={{ width: `${deUtilizedPct}%` }}
+                className="h-full bg-[#16A34A] transition-all duration-500 flex items-center justify-center text-[10px] font-bold text-white shadow-sm"
+                title={`Utilized: ${fmtRM(deUtilized)}`}
+              >
+                {deUtilizedPct > 10 && `${deUtilizedPct.toFixed(1)}%`}
+              </div>
+              <div
+                style={{ width: `${deRemainingPct}%` }}
+                className="h-full bg-[#EAB308] transition-all duration-500 flex items-center justify-center text-[10px] font-bold text-amber-950 shadow-sm"
+                title={`Remaining: ${fmtRM(deRemaining)}`}
+              >
+                {deRemainingPct > 10 && `${deRemainingPct.toFixed(1)}%`}
+              </div>
+            </div>
+          </div>
+
+          {/* Table 1: Programme Allocation Table (Header in Dark Blue #1E3A8A) */}
+          <div className="overflow-x-auto rounded-lg border">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-[#1E3A8A] text-white uppercase text-[11px] font-bold tracking-wider">
+                <tr>
+                  <th className="py-2.5 px-3">PROGRAMME</th>
+                  <th className="py-2.5 px-3 text-right">ALLOCATION (RM)</th>
+                  <th className="py-2.5 px-3 text-right">UTILIZED (RM)</th>
+                  <th className="py-2.5 px-3 text-right">COMMITTED (RM)</th>
+                  <th className="py-2.5 px-3 text-right">VARIANCE (RM)</th>
+                  <th className="py-2.5 px-2 text-center w-16">ACTION</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border font-medium">
+                {programmes.map((p) => {
+                  const varVal = p.allocation - p.utilized;
+                  return (
+                    <tr key={p.id} className="hover:bg-muted/40 transition-colors">
+                      <td className="py-2 px-3 font-semibold text-foreground uppercase">
+                        {p.name}
+                      </td>
+                      <td className="py-2 px-3 text-right tabular-nums text-foreground">
+                        {p.allocation.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </td>
+                      <td className="py-2 px-3 text-right tabular-nums text-emerald-600 dark:text-emerald-400 font-semibold">
+                        {p.utilized.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </td>
+                      <td className="py-2 px-3 text-right tabular-nums text-muted-foreground">
+                        {p.committed.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </td>
+                      <td className="py-2 px-3 text-right tabular-nums font-bold text-foreground">
+                        {varVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </td>
+                      <td className="py-2 px-2 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => {
+                              setEditingProg(p);
+                              setProgForm(p);
+                              setIsProgModalOpen(true);
+                            }}
+                            className="p-1 hover:text-primary text-muted-foreground rounded"
+                            title="Edit"
+                          >
+                            <Edit2 className="h-3 w-3" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteProgramme(p.id, 'DE', p.name)}
+                            className="p-1 hover:text-destructive text-muted-foreground rounded"
+                            title="Delete"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              {/* Total Row */}
+              <tfoot className="bg-muted/60 font-bold border-t-2 border-border text-foreground">
+                <tr>
+                  <td className="py-2.5 px-3 uppercase">Total</td>
+                  <td className="py-2.5 px-3 text-right tabular-nums">
+                    {deTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                  <td className="py-2.5 px-3 text-right tabular-nums text-emerald-600 dark:text-emerald-400">
+                    {deUtilized.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                  <td className="py-2.5 px-3 text-right tabular-nums text-muted-foreground">
+                    {overview.deCommittedTotal?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                  <td className="py-2.5 px-3 text-right tabular-nums">
+                    {deRemaining.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                  <td className="py-2.5 px-2"></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          {/* Internal Allocation Visual Progress Bar */}
+          <div className="space-y-2 pt-4 border-t">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <div className="text-sm sm:text-base font-bold text-foreground">
+                INTERNAL ALLOCATION: <span className="text-primary">{fmtRM(intTotal)}</span>
+              </div>
+              <div className="flex items-center gap-4 text-xs font-semibold">
+                <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  Utilized: {fmtRM(intUtilized)} ({intUtilizedPct.toFixed(1)}%)
+                </span>
+                <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                  <span className="h-2 w-2 rounded-full bg-amber-400" />
+                  Remaining Allocation: {fmtRM(intRemaining)} ({intRemainingPct.toFixed(1)}%)
+                </span>
+              </div>
+            </div>
+
+            {/* Dual color progress bar (Green & Yellow) */}
+            <div className="h-6 w-full rounded-md overflow-hidden bg-muted flex shadow-inner border">
+              <div
+                style={{ width: `${intUtilizedPct}%` }}
+                className="h-full bg-[#16A34A] transition-all duration-500 flex items-center justify-center text-[10px] font-bold text-white shadow-sm"
+                title={`Utilized: ${fmtRM(intUtilized)}`}
+              >
+                {intUtilizedPct > 10 && `${intUtilizedPct.toFixed(1)}%`}
+              </div>
+              <div
+                style={{ width: `${intRemainingPct}%` }}
+                className="h-full bg-[#EAB308] transition-all duration-500 flex items-center justify-center text-[10px] font-bold text-amber-950 shadow-sm"
+                title={`Remaining: ${fmtRM(intRemaining)}`}
+              >
+                {intRemainingPct > 10 && `${intRemainingPct.toFixed(1)}%`}
+              </div>
+            </div>
+          </div>
+
+          {/* Table 2: Internal Department Allocation Table */}
+          <div className="overflow-x-auto rounded-lg border">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-[#1E3A8A] text-white uppercase text-[11px] font-bold tracking-wider">
+                <tr>
+                  <th className="py-2.5 px-3">DEPARTMENT</th>
+                  <th className="py-2.5 px-3 text-right">ALLOCATION (RM)</th>
+                  <th className="py-2.5 px-3 text-right">UTILIZED (RM)</th>
+                  <th className="py-2.5 px-3 text-right">VARIANCE (RM)</th>
+                  <th className="py-2.5 px-2 text-center w-16">ACTION</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border font-medium">
+                {internalDepartments.map((d) => {
+                  const varVal = d.allocation - d.utilized;
+                  return (
+                    <tr key={d.id} className="hover:bg-muted/40 transition-colors">
+                      <td className="py-2 px-3 font-semibold text-foreground">
+                        {d.name}
+                      </td>
+                      <td className="py-2 px-3 text-right tabular-nums text-foreground">
+                        {d.allocation.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </td>
+                      <td className="py-2 px-3 text-right tabular-nums text-emerald-600 dark:text-emerald-400 font-semibold">
+                        {d.utilized.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </td>
+                      <td
+                        className={cn(
+                          'py-2 px-3 text-right tabular-nums font-bold',
+                          varVal < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-foreground'
+                        )}
+                      >
+                        {varVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </td>
+                      <td className="py-2 px-2 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => {
+                              setEditingProg(d);
+                              setProgForm(d);
+                              setIsProgModalOpen(true);
+                            }}
+                            className="p-1 hover:text-primary text-muted-foreground rounded"
+                            title="Edit"
+                          >
+                            <Edit2 className="h-3 w-3" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteProgramme(d.id, 'INTERNAL', d.name)}
+                            className="p-1 hover:text-destructive text-muted-foreground rounded"
+                            title="Delete"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              {/* Total Row */}
+              <tfoot className="bg-muted/60 font-bold border-t-2 border-border text-foreground">
+                <tr>
+                  <td className="py-2.5 px-3 uppercase">Total Internal</td>
+                  <td className="py-2.5 px-3 text-right tabular-nums">
+                    {intTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                  <td className="py-2.5 px-3 text-right tabular-nums text-emerald-600 dark:text-emerald-400">
+                    {intUtilized.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                  <td className="py-2.5 px-3 text-right tabular-nums">
+                    {intRemaining.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                  <td className="py-2.5 px-2"></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 4. MILESTONES & INSKEN PAYMENT SCHEDULE TRACKER */}
+      <Card className="border-border shadow-sm overflow-hidden">
+        <CardHeader className="bg-card border-b py-4 px-4 sm:px-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-primary" />
+                  Milestone Deliverables &amp; Payment Audit (INSKEN)
+                </CardTitle>
+                <span className="rounded-md bg-primary/10 text-primary px-2 py-0.5 text-xs font-semibold">
+                  {overview.completedMilestonesCount} / {overview.totalMilestonesCount} Completed
+                </span>
+              </div>
+              <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                Trace milestones completed, invoice submissions, and payments received (*Sudah Dibayar*) vs pending (*Belum Dibayar*) by INSKEN.
+              </CardDescription>
+            </div>
+
+            {/* Quick Filters & Search */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative w-48 sm:w-56">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search milestone / invoice..."
+                  className="h-8 pl-8 text-xs"
+                />
+              </div>
+
+              {/* Payment Filter */}
+              <select
+                value={paymentFilter}
+                onChange={(e) => setPaymentFilter(e.target.value as any)}
+                className="h-8 rounded-md border border-input bg-background px-2.5 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary"
+              >
+                <option value="ALL">All Payments</option>
+                <option value="PAID">Sudah Dibayar (Paid)</option>
+                <option value="PENDING">Belum Dibayar (Pending)</option>
+                <option value="IN_REVIEW">Dalam Semakan (In Review)</option>
+              </select>
+
+              {/* Milestone Progress Filter */}
+              <select
+                value={milestoneFilter}
+                onChange={(e) => setMilestoneFilter(e.target.value as any)}
+                className="h-8 rounded-md border border-input bg-background px-2.5 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary"
+              >
+                <option value="ALL">All Progress</option>
+                <option value="COMPLETED">Completed</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="PENDING">Pending</option>
+              </select>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-muted/70 text-muted-foreground uppercase text-[10px] font-bold tracking-wider border-b">
+                <tr>
+                  <th className="py-3 px-4">MILESTONE &amp; DELIVERABLE</th>
+                  <th className="py-3 px-3">DUE DATE</th>
+                  <th className="py-3 px-3">INVOICE NO.</th>
+                  <th className="py-3 px-3 text-right">CLAIM (RM)</th>
+                  <th className="py-3 px-3 text-right">PAID (RM)</th>
+                  <th className="py-3 px-3 text-right">OUTSTANDING (RM)</th>
+                  <th className="py-3 px-3 text-center">MILESTONE STATUS</th>
+                  <th className="py-3 px-3 text-center">PAYMENT STATUS</th>
+                  <th className="py-3 px-4 text-center">ACTION</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filteredMilestones.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="py-8 text-center text-muted-foreground text-xs">
+                      No milestones match the selected filter.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredMilestones.map((m) => {
+                    const isPaid = m.paymentStatus === 'PAID';
+                    const isCompleted = m.milestoneStatus === 'COMPLETED';
+
+                    return (
+                      <tr
+                        key={m.id}
+                        className={cn(
+                          'hover:bg-muted/40 transition-colors',
+                          isPaid ? 'bg-emerald-50/10 dark:bg-emerald-950/5' : ''
+                        )}
+                      >
+                        {/* Milestone & Deliverable */}
+                        <td className="py-3.5 px-4 max-w-xs">
+                          <div className="font-bold text-foreground text-xs flex items-center gap-1.5">
+                            <span>{m.milestoneNumber}:</span>
+                            <span>{m.title}</span>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">
+                            {m.deliverable}
+                          </p>
+                          {m.notes && (
+                            <p className="text-[10px] text-primary/80 italic mt-1">
+                              Note: {m.notes}
+                            </p>
+                          )}
+                        </td>
+
+                        {/* Due Date */}
+                        <td className="py-3.5 px-3 font-medium whitespace-nowrap text-muted-foreground">
+                          {m.dueDate || '—'}
+                        </td>
+
+                        {/* Invoice No */}
+                        <td className="py-3.5 px-3 font-mono font-semibold whitespace-nowrap text-foreground">
+                          {m.invoiceNo || '—'}
+                        </td>
+
+                        {/* Claim Amount */}
+                        <td className="py-3.5 px-3 text-right font-semibold tabular-nums text-foreground">
+                          {fmtRM(m.claimAmount)}
+                        </td>
+
+                        {/* Paid Amount */}
+                        <td className="py-3.5 px-3 text-right font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                          {fmtRM(m.amountPaid)}
+                        </td>
+
+                        {/* Outstanding */}
+                        <td
+                          className={cn(
+                            'py-3.5 px-3 text-right font-bold tabular-nums',
+                            m.outstanding > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'
+                          )}
+                        >
+                          {fmtRM(m.outstanding)}
+                        </td>
+
+                        {/* Milestone Progress Status */}
+                        <td className="py-3.5 px-3 text-center">
+                          {m.milestoneStatus === 'COMPLETED' ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 px-2 py-0.5 text-[11px] font-bold">
+                              <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                              Completed
+                            </span>
+                          ) : m.milestoneStatus === 'IN_PROGRESS' ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 px-2 py-0.5 text-[11px] font-bold">
+                              <Clock className="h-3 w-3 text-blue-600" />
+                              In Progress
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 px-2 py-0.5 text-[11px] font-semibold">
+                              Pending
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Payment Status (Sudah Dibayar vs Belum Dibayar) */}
+                        <td className="py-3.5 px-3 text-center">
+                          {m.paymentStatus === 'PAID' ? (
+                            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500 text-white px-2 py-0.5 text-[11px] font-bold shadow-xs">
+                              <CheckCircle2 className="h-3 w-3" />
+                              Sudah Dibayar
+                            </span>
+                          ) : m.paymentStatus === 'PENDING' ? (
+                            <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 text-amber-900 dark:bg-amber-900/60 dark:text-amber-300 px-2 py-0.5 text-[11px] font-bold border border-amber-300 dark:border-amber-700">
+                              <Clock className="h-3 w-3 text-amber-600" />
+                              Belum Dibayar
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-md bg-purple-100 text-purple-800 dark:bg-purple-900/60 dark:text-purple-300 px-2 py-0.5 text-[11px] font-bold">
+                              Dalam Semakan
+                            </span>
+                          )}
+                          {m.paymentDate && isPaid && (
+                            <div className="text-[10px] text-muted-foreground mt-0.5">
+                              {m.paymentDate}
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Actions */}
+                        <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                          <div className="flex items-center justify-center gap-1.5">
+                            {/* Quick Toggle Paid Button */}
+                            <Button
+                              size="sm"
+                              variant={isPaid ? 'outline' : 'default'}
+                              onClick={() => handleQuickTogglePayment(m)}
+                              className={cn(
+                                'h-7 text-[11px] font-semibold px-2 gap-1 shadow-xs',
+                                !isPaid
+                                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                                  : 'border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/40'
+                              )}
+                              title={isPaid ? 'Mark as Belum Dibayar' : 'Mark as Sudah Dibayar'}
+                            >
+                              <CheckCircle2 className="h-3 w-3" />
+                              <span>{isPaid ? 'Paid' : 'Pay'}</span>
+                            </Button>
+
+                            {/* Edit Milestone */}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setEditingMilestone(m);
+                                setMilestoneForm(m);
+                                setIsMilestoneModalOpen(true);
+                              }}
+                              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                              title="Edit Details"
+                            >
+                              <Edit2 className="h-3 w-3" />
+                            </Button>
+
+                            {/* Delete */}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDeleteMilestone(m.id, m.milestoneNumber)}
+                              className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                              title="Delete"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+
+              {/* Milestone Totals */}
+              <tfoot className="bg-muted/80 font-bold border-t-2 border-border text-foreground text-xs">
+                <tr>
+                  <td colSpan={3} className="py-3 px-4 uppercase">
+                    Total Milestones Claim &amp; Payment Audit
+                  </td>
+                  <td className="py-3 px-3 text-right tabular-nums">
+                    {fmtRM(overview.totalClaimAmount)}
+                  </td>
+                  <td className="py-3 px-3 text-right tabular-nums text-emerald-600 dark:text-emerald-400">
+                    {fmtRM(overview.totalPaidAmount)}
+                  </td>
+                  <td className="py-3 px-3 text-right tabular-nums text-amber-600 dark:text-amber-400">
+                    {fmtRM(overview.totalOutstandingAmount)}
+                  </td>
+                  <td colSpan={3} className="py-3 px-4 text-center text-[11px] text-muted-foreground font-normal">
+                    Recipient: INSKEN Account · Bank Transfer
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* MODAL 1: ADD / EDIT MILESTONE */}
+      <Dialog open={isMilestoneModalOpen} onOpenChange={setIsMilestoneModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              {editingMilestone ? 'Edit Project Milestone & Payment' : 'Add New Project Milestone'}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Configure deliverable scope, invoice claim amount, and payment status to INSKEN.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSaveMilestone} className="space-y-3.5 py-2 text-xs">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Milestone #</Label>
+                <Input
+                  value={milestoneForm.milestoneNumber}
+                  onChange={(e) => setMilestoneForm({ ...milestoneForm, milestoneNumber: e.target.value })}
+                  placeholder="e.g. Milestone 1"
+                  required
+                  className="h-8 text-xs"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Invoice No.</Label>
+                <Input
+                  value={milestoneForm.invoiceNo}
+                  onChange={(e) => setMilestoneForm({ ...milestoneForm, invoiceNo: e.target.value })}
+                  placeholder="e.g. INV-INSKEN-2026-001"
+                  className="h-8 text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs">Milestone Title</Label>
+              <Input
+                value={milestoneForm.title}
+                onChange={(e) => setMilestoneForm({ ...milestoneForm, title: e.target.value })}
+                placeholder="e.g. Inception Report & Participant Mobilisation"
+                required
+                className="h-8 text-xs"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs">Deliverable Scope &amp; Details</Label>
+              <textarea
+                value={milestoneForm.deliverable}
+                onChange={(e) => setMilestoneForm({ ...milestoneForm, deliverable: e.target.value })}
+                placeholder="Describe key deliverables, regions involved, or participant milestones..."
+                rows={2}
+                className="w-full rounded-md border border-input bg-background p-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Target Due Date</Label>
+                <Input
+                  value={milestoneForm.dueDate}
+                  onChange={(e) => setMilestoneForm({ ...milestoneForm, dueDate: e.target.value })}
+                  placeholder="e.g. 15 Aug 2026"
+                  className="h-8 text-xs"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Payment Date (If Paid)</Label>
+                <Input
+                  value={milestoneForm.paymentDate}
+                  onChange={(e) => setMilestoneForm({ ...milestoneForm, paymentDate: e.target.value })}
+                  placeholder="e.g. 20 Aug 2026"
+                  className="h-8 text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Claim Amount (RM)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={milestoneForm.claimAmount}
+                  onChange={(e) => setMilestoneForm({ ...milestoneForm, claimAmount: Number(e.target.value) })}
+                  className="h-8 text-xs font-semibold"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Amount Paid (RM)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={milestoneForm.amountPaid}
+                  onChange={(e) => setMilestoneForm({ ...milestoneForm, amountPaid: Number(e.target.value) })}
+                  className="h-8 text-xs font-semibold text-emerald-600"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Milestone Progress</Label>
+                <select
+                  value={milestoneForm.milestoneStatus}
+                  onChange={(e) => setMilestoneForm({ ...milestoneForm, milestoneStatus: e.target.value as any })}
+                  className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs"
+                >
+                  <option value="COMPLETED">Completed</option>
+                  <option value="IN_PROGRESS">In Progress</option>
+                  <option value="PENDING">Pending</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs">Payment Status (INSKEN)</Label>
+                <select
+                  value={milestoneForm.paymentStatus}
+                  onChange={(e) => setMilestoneForm({ ...milestoneForm, paymentStatus: e.target.value as any })}
+                  className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs font-bold"
+                >
+                  <option value="PAID">Sudah Dibayar (Paid)</option>
+                  <option value="PENDING">Belum Dibayar (Pending)</option>
+                  <option value="IN_REVIEW">Dalam Semakan (In Review)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs">Notes / Audit Remarks</Label>
+              <Input
+                value={milestoneForm.notes}
+                onChange={(e) => setMilestoneForm({ ...milestoneForm, notes: e.target.value })}
+                placeholder="e.g. Paid via EFT transaction #..."
+                className="h-8 text-xs"
+              />
+            </div>
+
+            <DialogFooter className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsMilestoneModalOpen(false)}
+                className="h-8 text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={saving}
+                className="h-8 bg-[#0B1F3A] hover:bg-[#112D55] text-white text-xs font-semibold"
+              >
+                {saving ? 'Saving...' : 'Save Milestone'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL 2: ADD / EDIT PROGRAMME / INTERNAL BUDGET LINE */}
+      <Dialog open={isProgModalOpen} onOpenChange={setIsProgModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Layers className="h-5 w-5 text-primary" />
+              {editingProg ? 'Edit Budget Line' : 'Add New Budget Line'}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Add or adjust programme allocations (DE Allocation or Internal Department).
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSaveProgramme} className="space-y-3.5 py-2 text-xs">
+            <div className="space-y-1">
+              <Label className="text-xs">Category</Label>
+              <select
+                value={progForm.category}
+                onChange={(e) => setProgForm({ ...progForm, category: e.target.value as any })}
+                className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs font-semibold"
+              >
+                <option value="DE">DE Allocation (Programme)</option>
+                <option value="INTERNAL">Internal Department Allocation</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs">Programme / Department Name</Label>
+              <Input
+                value={progForm.name}
+                onChange={(e) => setProgForm({ ...progForm, name: e.target.value })}
+                placeholder="e.g. BANGKIT, BANGKIT SE, Social Entrepreneurship..."
+                required
+                className="h-8 text-xs"
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              <div className="space-y-1">
+                <Label className="text-xs">Allocation (RM)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={progForm.allocation}
+                  onChange={(e) => setProgForm({ ...progForm, allocation: Number(e.target.value) })}
+                  className="h-8 text-xs"
+                  required
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Utilized (RM)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={progForm.utilized}
+                  onChange={(e) => setProgForm({ ...progForm, utilized: Number(e.target.value) })}
+                  className="h-8 text-xs text-emerald-600 font-semibold"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Committed (RM)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={progForm.committed}
+                  onChange={(e) => setProgForm({ ...progForm, committed: Number(e.target.value) })}
+                  className="h-8 text-xs"
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsProgModalOpen(false)}
+                className="h-8 text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={saving}
+                className="h-8 bg-[#0B1F3A] hover:bg-[#112D55] text-white text-xs font-semibold"
+              >
+                {saving ? 'Saving...' : 'Save Budget Line'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL 3: EDIT COSTS & NET PROFIT OVERVIEW */}
+      <Dialog open={isOverviewModalOpen} onOpenChange={setIsOverviewModalOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Banknote className="h-5 w-5 text-amber-500" />
+              Edit Costs &amp; Net Profit
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Update top-level operational costs and profit margins.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSaveOverview} className="space-y-3.5 py-2 text-xs">
+            <div className="space-y-1">
+              <Label className="text-xs">Total Costs (RM)</Label>
+              <Input
+                type="number"
+                step="1"
+                value={overviewForm.costs}
+                onChange={(e) => setOverviewForm({ ...overviewForm, costs: Number(e.target.value) })}
+                className="h-8 text-xs font-semibold"
+                required
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs">Net Profit (RM)</Label>
+              <Input
+                type="number"
+                step="1"
+                value={overviewForm.netProfit}
+                onChange={(e) => setOverviewForm({ ...overviewForm, netProfit: Number(e.target.value) })}
+                className="h-8 text-xs font-semibold text-emerald-600"
+                required
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs">Profit Margin (%)</Label>
+              <Input
+                type="number"
+                step="0.1"
+                value={overviewForm.profitMarginPct}
+                onChange={(e) => setOverviewForm({ ...overviewForm, profitMarginPct: Number(e.target.value) })}
+                className="h-8 text-xs"
+                required
+              />
+            </div>
+
+            <DialogFooter className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsOverviewModalOpen(false)}
+                className="h-8 text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={saving}
+                className="h-8 bg-[#0B1F3A] hover:bg-[#112D55] text-white text-xs font-semibold"
+              >
+                {saving ? 'Saving...' : 'Update Overview'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

@@ -14,6 +14,7 @@ export interface Translations {
   
   // Navigation & Actions
   navDashboard: string;
+  navFinance: string;
   navSchedules: string;
   navTrainers: string;
   navRegistry: string;
@@ -142,6 +143,7 @@ export const translations: Record<Language, Translations> = {
     checkinBadge: 'Attendance Check-in',
     
     navDashboard: 'Executive Dashboard',
+    navFinance: 'Finance & Milestones',
     navSchedules: 'Session & Coach Management',
     navTrainers: 'Trainer Performance',
     navRegistry: 'Participant Registry',

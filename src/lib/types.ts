@@ -212,3 +212,60 @@ export interface RegisterResponse {
   error?: string;
   workflow: WorkflowStep[];
 }
+
+export interface FinanceProgrammeItem {
+  id: string;
+  category: 'DE' | 'INTERNAL';
+  name: string;
+  allocation: number;
+  utilized: number;
+  committed: number;
+  variance: number;
+}
+
+export type MilestoneProgressStatus = 'COMPLETED' | 'IN_PROGRESS' | 'PENDING';
+export type MilestonePaymentStatus = 'PAID' | 'PENDING' | 'IN_REVIEW';
+
+export interface MilestonePaymentRecord {
+  id: string;
+  milestoneNumber: string;
+  title: string;
+  deliverable: string;
+  dueDate: string;
+  invoiceNo: string;
+  claimAmount: number;
+  amountPaid: number;
+  outstanding: number;
+  milestoneStatus: MilestoneProgressStatus;
+  paymentStatus: MilestonePaymentStatus;
+  paymentDate?: string;
+  recipient: string; // 'INSKEN'
+  notes?: string;
+}
+
+export interface FinanceOverview {
+  totalCosts: number;
+  netProfit: number;
+  profitMarginPct: number;
+  deAllocationTotal: number;
+  deUtilizedTotal: number;
+  deCommittedTotal: number;
+  deRemainingTotal: number;
+  internalAllocationTotal: number;
+  internalUtilizedTotal: number;
+  internalRemainingTotal: number;
+  totalMilestonesCount: number;
+  completedMilestonesCount: number;
+  totalClaimAmount: number;
+  totalPaidAmount: number;
+  totalOutstandingAmount: number;
+}
+
+export interface FinanceDataResponse {
+  ok: boolean;
+  overview: FinanceOverview;
+  programmes: FinanceProgrammeItem[];
+  internalDepartments: FinanceProgrammeItem[];
+  milestones: MilestonePaymentRecord[];
+}
+
