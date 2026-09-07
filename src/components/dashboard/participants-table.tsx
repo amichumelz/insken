@@ -13,10 +13,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Participant } from '@/lib/types';
-import { Search, RefreshCw, Users, ChevronLeft, ChevronRight, Pencil, Check, X } from 'lucide-react';
+import { Search, RefreshCw, Users, ChevronLeft, ChevronRight, Pencil, Check, X, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useLanguage } from '@/lib/i18n';
+import { exportParticipantRegistryCsv } from '@/lib/export-utils';
 
 // Same SECTORS list as the Registration form — single source of truth would be nicer,
 // but duplicating keeps both forms decoupled.
@@ -204,6 +205,23 @@ export function ParticipantsTable() {
                 <SelectItem value="Attended_Online">{lang === 'ms' ? 'Hadir (Online)' : 'Attended (Online)'}</SelectItem>
               </SelectContent>
             </Select>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (items.length === 0) {
+                  toast.error('No participant records to export.');
+                  return;
+                }
+                exportParticipantRegistryCsv(items);
+                toast.success(`Exported ${items.length} participant records.`);
+              }}
+              className="h-9 text-xs font-semibold gap-1.5 border-primary/20 hover:bg-primary/5 px-2.5"
+              title="Export Master Registry CSV"
+            >
+              <Download className="h-3.5 w-3.5 text-primary" />
+              <span className="hidden sm:inline">Export CSV</span>
+            </Button>
             <Button variant="ghost" size="icon" onClick={load} disabled={loading} className="h-9 w-9" title={t.navRefresh}>
               <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
             </Button>

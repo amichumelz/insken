@@ -12,8 +12,10 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import { Activity } from 'lucide-react';
+import { Activity, Download } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
+import { Button } from '@/components/ui/button';
+import { exportDailyRegistrationCsv } from '@/lib/export-utils';
 
 export function RegistrationTrend({ trend }: { trend: TrendPoint[] }) {
   const { lang } = useLanguage();
@@ -26,24 +28,40 @@ export function RegistrationTrend({ trend }: { trend: TrendPoint[] }) {
   return (
     <Card className="h-full border shadow-sm">
       <CardHeader className="pb-3 px-4 sm:px-6 pt-5">
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle className="flex items-center gap-2 text-base sm:text-lg font-bold">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
             <Activity className="h-5 w-5 text-indigo-600" />
-            <span>Daily Registration Trend</span>
-          </CardTitle>
-          <div className="text-right">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-              Peak Day
-            </div>
-            <div className="text-sm font-bold tabular-nums text-foreground">
-              {peakDay.day || peakDay.month} <span className="text-muted-foreground">·</span>{' '}
-              <span className="text-indigo-600">{peakDay.total.toLocaleString()}</span>
+            <div>
+              <CardTitle className="text-base sm:text-lg font-bold">
+                Daily Registration Trend
+              </CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Daily participant registrations · Physical vs Online ({total.toLocaleString()} total registrations)
+              </p>
             </div>
           </div>
+          <div className="flex items-center gap-3 self-end sm:self-auto">
+            <div className="text-right">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                Peak Day
+              </div>
+              <div className="text-sm font-bold tabular-nums text-foreground">
+                {peakDay.day || peakDay.month} <span className="text-muted-foreground">·</span>{' '}
+                <span className="text-indigo-600">{peakDay.total.toLocaleString()}</span>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => exportDailyRegistrationCsv(trend)}
+              className="h-8 text-xs font-semibold gap-1.5 border-indigo-300 hover:bg-indigo-50 dark:border-indigo-800 dark:hover:bg-indigo-950/40"
+              title="Export Daily Trend CSV"
+            >
+              <Download className="h-3.5 w-3.5 text-indigo-600" />
+              <span className="hidden sm:inline">Export CSV</span>
+            </Button>
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Daily participant registrations · Physical vs Online ({total.toLocaleString()} total registrations)
-        </p>
       </CardHeader>
       <CardContent className="px-2 sm:px-6 pb-5">
         <div className="h-[260px] sm:h-[300px]">

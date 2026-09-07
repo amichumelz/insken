@@ -3,8 +3,10 @@
 import { SectorStat } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { PieChart as PieIcon, TrendingUp } from 'lucide-react';
+import { PieChart as PieIcon, TrendingUp, Download } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
+import { Button } from '@/components/ui/button';
+import { exportSectoralBreakdownCsv } from '@/lib/export-utils';
 
 const SECTOR_COLORS = [
   '#1E3A8A', // navy
@@ -30,13 +32,27 @@ export function SectoralBreakdown({ sectors }: { sectors: SectorStat[] }) {
   return (
     <Card className="border shadow-sm">
       <CardHeader className="pb-3 px-4 sm:px-6 pt-5">
-        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-          <PieIcon className="h-5 w-5 text-primary" />
-          {lang === 'ms' ? 'Pecahan Sektor Perniagaan PMKS' : 'Sectoral Breakdown'}
-        </CardTitle>
-        <p className="text-xs text-muted-foreground">
-          {lang === 'ms' ? '3 sektor utama yang memacu pendaftaran' : 'Top 3 MSME sectors driving registrations'}
-        </p>
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <PieIcon className="h-5 w-5 text-primary" />
+              {lang === 'ms' ? 'Pecahan Sektor Perniagaan PMKS' : 'Sectoral Breakdown'}
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {lang === 'ms' ? 'Pecahan pendaftaran mengikut sektor perniagaan' : 'MSME registrations distributed by business sector'}
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => exportSectoralBreakdownCsv(sectors)}
+            className="h-8 text-xs font-semibold gap-1.5 border-primary/20 hover:bg-primary/5"
+            title="Export Sectoral Report CSV"
+          >
+            <Download className="h-3.5 w-3.5 text-primary" />
+            <span className="hidden sm:inline">Export CSV</span>
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="px-4 sm:px-6 pb-6">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 items-center">

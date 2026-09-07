@@ -28,8 +28,10 @@ import {
   Quote,
   Calendar,
   RefreshCw,
+  Download,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { exportTrainerPerformanceCsv } from '@/lib/export-utils';
 
 const fmt = (n: number) => n.toLocaleString('en-US');
 
@@ -203,14 +205,27 @@ function CoachProfileHeader({ trainer }: { trainer: Trainer }) {
             })}
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50/60 px-3 py-2 dark:border-amber-900/60 dark:bg-amber-950/20">
-          <Star className="h-5 w-5 fill-amber-500 text-amber-500" />
-          <div>
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Avg Rating</div>
-            <div className="text-base font-bold tabular-nums">
-              {trainer.kpi.avgRating > 0 ? trainer.kpi.avgRating.toFixed(1) : '—'}
+
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-center">
+          <div className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50/60 px-3 py-2 dark:border-amber-900/60 dark:bg-amber-950/20">
+            <Star className="h-5 w-5 fill-amber-500 text-amber-500" />
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Avg Rating</div>
+              <div className="text-base font-bold tabular-nums">
+                {trainer.kpi.avgRating > 0 ? trainer.kpi.avgRating.toFixed(1) : '—'}
+              </div>
             </div>
           </div>
+
+          <Button
+            onClick={() => exportTrainerPerformanceCsv(trainer)}
+            size="sm"
+            className="h-10 bg-[#0B1F3A] hover:bg-[#112D55] text-white text-xs font-semibold gap-1.5 shadow-sm px-3.5"
+            title={`Export ${trainer.name} Evaluation Report`}
+          >
+            <Download className="h-3.5 w-3.5 text-[#D4A017]" />
+            <span>Export Report (CSV)</span>
+          </Button>
         </div>
       </CardContent>
     </Card>

@@ -18,18 +18,20 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import {
-  LayoutDashboard,
-  UserPlus,
   Users,
+  Calendar,
+  LogOut,
   RefreshCw,
-  Sparkles,
+  LayoutDashboard,
   GraduationCap,
   ExternalLink,
-  LogOut,
-  Loader2,
-  Calendar,
   Tv,
+  UserPlus,
+  Layers,
+  Download,
+  Loader2,
 } from 'lucide-react';
+import { exportExecutiveDashboardCsv } from '@/lib/export-utils';
 import { useLanguage } from '@/lib/i18n';
 
 type TabId = 'dashboard' | 'schedules' | 'trainers' | 'registry';
@@ -269,6 +271,19 @@ function Header({
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {stats && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => exportExecutiveDashboardCsv(stats)}
+              className="h-8 border-[#D4A017]/40 bg-[#D4A017]/10 text-white hover:bg-[#D4A017]/20 text-xs gap-1.5 px-2 sm:px-2.5 font-semibold"
+              title="Export Executive Report CSV"
+            >
+              <Download className="h-3.5 w-3.5 text-[#D4A017]" />
+              <span className="hidden sm:inline">Export Report</span>
+            </Button>
+          )}
+
           <Button
             variant="outline"
             size="sm"
@@ -315,6 +330,26 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle: string })
 function DashboardView({ stats, refreshTick }: { stats: StatsResponse; refreshTick: number }) {
   return (
     <div className="space-y-6">
+      {/* Executive Report Header Bar with Export Button */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card border rounded-2xl p-4 sm:p-5 shadow-sm">
+        <div>
+          <h2 className="text-base sm:text-lg font-bold text-foreground">
+            Executive Operations Dashboard
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Real-time programme intelligence, attendance velocity, regional targets & sectoral insights.
+          </p>
+        </div>
+        <Button
+          onClick={() => exportExecutiveDashboardCsv(stats)}
+          size="sm"
+          className="h-9 bg-[#0B1F3A] hover:bg-[#112D55] text-white text-xs font-semibold gap-1.5 shadow-sm self-start sm:self-auto"
+        >
+          <Download className="h-3.5 w-3.5 text-[#D4A017]" />
+          <span>Export Executive Report (CSV)</span>
+        </Button>
+      </div>
+
       {/* 1. Top KPI Row: Global KPI (2 cols) + 4 Live KPI Cards */}
       <DashboardTopRow global={stats.global} refreshTick={refreshTick} />
 

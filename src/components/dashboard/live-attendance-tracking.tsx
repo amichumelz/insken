@@ -20,9 +20,11 @@ import {
   RefreshCw,
   Radio,
   Clock,
+  Download,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/i18n';
+import { downloadCsv } from '@/lib/export-utils';
 
 const REFRESH_INTERVAL_MS = 30000;
 
@@ -171,27 +173,54 @@ function CheckinVelocityChart({
 }) {
   const total24 = velocity.reduce((s, v) => s + v.total, 0);
 
+  const handleExportVelocity = () => {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    let csv = `ASEAN MSMEs AI Skills Training Programme — Hourly Attendance Velocity\n`;
+    csv += `Total 24h Check-ins:,${total24}\n\n`;
+    csv += `Hour,Physical Attendance,Online Attendance,Total Attendance\n`;
+    for (const v of velocity) {
+      csv += `"${v.hour}",${v.physical},${v.online},${v.total}\n`;
+    }
+    downloadCsv(`Attendance_Velocity_${timestamp}.csv`, csv);
+  };
+
   return (
     <Card className="border shadow-sm">
       <CardHeader className="pb-3 px-4 sm:px-6 pt-5">
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle className="flex items-center gap-2 text-base sm:text-lg font-bold">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
             <Activity className="h-5 w-5 text-emerald-600" />
-            <span>Participant Attendance Velocity</span>
-          </CardTitle>
-          <div className="text-right">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-              Peak Hour
-            </div>
-            <div className="text-sm font-bold tabular-nums text-foreground">
-              {peakHour} <span className="text-muted-foreground">·</span>{' '}
-              <span className="text-emerald-600">{peakCount.toLocaleString()}</span>
+            <div>
+              <CardTitle className="text-base sm:text-lg font-bold">
+                Participant Attendance Velocity
+              </CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Hourly attendance check-ins · last 24 hours ({total24.toLocaleString()} total check-ins)
+              </p>
             </div>
           </div>
+          <div className="flex items-center gap-3 self-end sm:self-auto">
+            <div className="text-right">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                Peak Hour
+              </div>
+              <div className="text-sm font-bold tabular-nums text-foreground">
+                {peakHour} <span className="text-muted-foreground">·</span>{' '}
+                <span className="text-emerald-600">{peakCount.toLocaleString()}</span>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportVelocity}
+              className="h-8 text-xs font-semibold gap-1.5 border-primary/20 hover:bg-primary/5"
+              title="Export Velocity CSV"
+            >
+              <Download className="h-3.5 w-3.5 text-primary" />
+              <span className="hidden sm:inline">Export CSV</span>
+            </Button>
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Hourly attendance check-ins · last 24 hours ({total24.toLocaleString()} total check-ins)
-        </p>
       </CardHeader>
       <CardContent className="px-2 sm:px-6 pb-5">
         <div className="h-[260px] sm:h-[300px]">

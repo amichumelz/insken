@@ -4,7 +4,9 @@ import { RegionStat } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RegionStateBadge } from './region-state-badge';
-import { MapPin, Users, Video } from 'lucide-react';
+import { MapPin, Users, Video, Download } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { exportRegionalProgressCsv } from '@/lib/export-utils';
 
 const REGION_FLAG_COLORS: Record<string, string> = {
   KL: 'from-blue-500 to-indigo-600',
@@ -25,9 +27,21 @@ export function RegionalProgressGrid({ regions }: { regions: RegionStat[] }) {
             <MapPin className="h-4 w-4 text-primary" />
             Regional Attendance Overview
           </CardTitle>
-          <div className="hidden flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground sm:flex">
-            <RegionStateBadge state="Normal" />
-            <RegionStateBadge state="Full" />
+          <div className="flex items-center gap-2">
+            <div className="hidden flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground sm:flex">
+              <RegionStateBadge state="Normal" />
+              <RegionStateBadge state="Full" />
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => exportRegionalProgressCsv(regions)}
+              className="h-7 text-xs font-semibold gap-1 px-2 border-primary/20 hover:bg-primary/5"
+              title="Export Regional Report CSV"
+            >
+              <Download className="h-3 w-3 text-primary" />
+              <span>Export CSV</span>
+            </Button>
           </div>
         </div>
       </CardHeader>
