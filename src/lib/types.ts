@@ -231,15 +231,22 @@ export interface MilestonePaymentRecord {
   milestoneNumber: string;
   title: string;
   deliverable: string;
+  activities?: string[];
+  deliverablesList?: string[];
   dueDate: string;
   invoiceNo: string;
-  claimAmount: number;
+  tranchePct?: number; // e.g. 30, 40, 30
+  claimAmountUsd?: number; // e.g. 10950
+  amountPaidUsd?: number;
+  outstandingUsd?: number;
+  claimAmount: number; // in MYR (or USD)
   amountPaid: number;
   outstanding: number;
   milestoneStatus: MilestoneProgressStatus;
   paymentStatus: MilestonePaymentStatus;
   paymentDate?: string;
-  recipient: string; // 'INSKEN'
+  grantor?: string; // 'ASEAN Foundation'
+  recipient: string; // 'Institut Keusahawanan Negara Berhad (INSKEN)'
   notes?: string;
 }
 

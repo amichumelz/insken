@@ -28,12 +28,6 @@ import {
   DialogFooter,
   DialogDescription,
 } from '@/components/ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import {
   Wallet,
@@ -46,7 +40,6 @@ import {
   Clock,
   AlertCircle,
   Search,
-  Filter,
   RefreshCw,
   ArrowUpRight,
   ShieldCheck,
@@ -54,15 +47,28 @@ import {
   Layers,
   Banknote,
   DollarSign,
-  HelpCircle,
-  MoreVertical,
   Calendar,
+  FileText,
+  ChevronDown,
+  ChevronUp,
+  Award,
+  Users,
+  CheckSquare,
+  Sparkles,
+  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const fmtRM = (val: number) => {
   return `RM ${Number(val || 0).toLocaleString('en-MY', {
     minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
+
+const fmtUSD = (val: number) => {
+  return `USD ${Number(val || 0).toLocaleString('en-US', {
+    minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   })}`;
 };
@@ -77,8 +83,11 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
   const [searchQuery, setSearchQuery] = useState('');
   const [paymentFilter, setPaymentFilter] = useState<'ALL' | 'PAID' | 'PENDING' | 'IN_REVIEW'>('ALL');
   const [milestoneFilter, setMilestoneFilter] = useState<'ALL' | 'COMPLETED' | 'IN_PROGRESS' | 'PENDING'>('ALL');
+  const [currencyMode, setCurrencyMode] = useState<'MYR' | 'USD' | 'BOTH'>('BOTH');
+  const [expandedMilestoneId, setExpandedMilestoneId] = useState<string | null>(null);
 
   // Modals state
+  const [selectedAnnexMilestone, setSelectedAnnexMilestone] = useState<MilestonePaymentRecord | null>(null);
   const [isMilestoneModalOpen, setIsMilestoneModalOpen] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState<MilestonePaymentRecord | null>(null);
   const [milestoneForm, setMilestoneForm] = useState<Partial<MilestonePaymentRecord>>({
@@ -87,12 +96,15 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
     deliverable: '',
     dueDate: '',
     invoiceNo: '',
+    tranchePct: 30,
+    claimAmountUsd: 0,
     claimAmount: 0,
     amountPaid: 0,
     milestoneStatus: 'PENDING',
     paymentStatus: 'PENDING',
     paymentDate: '',
-    recipient: 'INSKEN',
+    grantor: 'ASEAN Foundation',
+    recipient: 'Institut Keusahawanan Negara Berhad (INSKEN)',
     notes: '',
   });
 
@@ -163,14 +175,21 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
         deliverable: milestoneForm.deliverable || '',
         dueDate: milestoneForm.dueDate || '',
         invoiceNo: milestoneForm.invoiceNo || '',
+        tranchePct: Number(milestoneForm.tranchePct || 30),
+        claimAmountUsd: Number(milestoneForm.claimAmountUsd || 0),
+        amountPaidUsd: Number(milestoneForm.amountPaidUsd || 0),
+        outstandingUsd: Math.max(0, Number(milestoneForm.claimAmountUsd || 0) - Number(milestoneForm.amountPaidUsd || 0)),
         claimAmount: claim,
         amountPaid: paid,
         outstanding,
         milestoneStatus: (milestoneForm.milestoneStatus as MilestoneProgressStatus) || 'PENDING',
         paymentStatus,
         paymentDate: milestoneForm.paymentDate || '',
-        recipient: milestoneForm.recipient || 'INSKEN',
+        grantor: milestoneForm.grantor || 'ASEAN Foundation',
+        recipient: milestoneForm.recipient || 'Institut Keusahawanan Negara Berhad (INSKEN)',
         notes: milestoneForm.notes || '',
+        activities: editingMilestone?.activities,
+        deliverablesList: editingMilestone?.deliverablesList,
       };
 
       const res = await fetch('/api/finance/milestones', {
@@ -202,6 +221,8 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
       paymentStatus: isNowPaid ? 'PAID' : 'PENDING',
       amountPaid: isNowPaid ? ms.claimAmount : 0,
       outstanding: isNowPaid ? 0 : ms.claimAmount,
+      amountPaidUsd: isNowPaid ? (ms.claimAmountUsd || 0) : 0,
+      outstandingUsd: isNowPaid ? 0 : (ms.claimAmountUsd || 0),
       paymentDate: isNowPaid ? new Date().toLocaleDateString('en-MY', { day: '2-digit', month: 'short', year: 'numeric' }) : '',
     };
 
@@ -218,6 +239,25 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
       }
     } catch {
       toast.error('Failed to update status.');
+    }
+  };
+
+  // Reset to Annex IV Provisions
+  const handleResetToAnnexIV = async () => {
+    if (!confirm('Reset milestones to official ASEAN Foundation Annex IV schedule (30% / 40% / 30%)?')) return;
+    try {
+      const res = await fetch('/api/finance/milestones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'RESET_TO_ANNEX_IV' }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        toast.success('Reset to Annex IV schedule successfully!');
+        setData(json);
+      }
+    } catch {
+      toast.error('Failed to reset.');
     }
   };
 
@@ -366,6 +406,11 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
   const intUtilizedPct = intTotal > 0 ? (intUtilized / intTotal) * 100 : 0;
   const intRemainingPct = intTotal > 0 ? (intRemaining / intTotal) * 100 : 0;
 
+  // Total USD Grant Sum
+  const totalUsdGrant = data?.milestones?.reduce((s, m) => s + (m.claimAmountUsd || 0), 0) || 36500;
+  const totalUsdPaid = data?.milestones?.reduce((s, m) => s + (m.amountPaidUsd || (m.paymentStatus === 'PAID' ? m.claimAmountUsd || 0 : 0)), 0) || 10950;
+  const totalUsdOutstanding = Math.max(0, totalUsdGrant - totalUsdPaid);
+
   if (loading && !data) {
     return (
       <div className="flex h-64 items-center justify-center space-x-3 text-sm text-muted-foreground">
@@ -388,16 +433,19 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
             <Wallet className="h-5 w-5 text-[#D4A017]" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-base sm:text-lg font-bold text-foreground">
                 Finance &amp; Milestone Tracking
               </h2>
+              <span className="rounded-full bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                ANNEX IV PROVISIONS
+              </span>
               <span className="rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
                 INSKEN Live Audit
               </span>
             </div>
             <p className="text-xs text-muted-foreground">
-              Trace project deliverables, budget utilization, claims billed, and payment disbursement status to INSKEN.
+              Trace official deliverables, monthly reports, participant quotas, claims billed &amp; payment disbursement to INSKEN.
             </p>
           </div>
         </div>
@@ -412,13 +460,16 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
                 title: '',
                 deliverable: '',
                 dueDate: '',
-                invoiceNo: `INV-INSKEN-2026-00${(data?.milestones?.length || 0) + 1}`,
+                invoiceNo: `INV-AF-INSKEN-0${(data?.milestones?.length || 0) + 1}`,
+                tranchePct: 30,
+                claimAmountUsd: 0,
                 claimAmount: 0,
                 amountPaid: 0,
                 milestoneStatus: 'IN_PROGRESS',
                 paymentStatus: 'PENDING',
                 paymentDate: '',
-                recipient: 'INSKEN',
+                grantor: 'ASEAN Foundation',
+                recipient: 'Institut Keusahawanan Negara Berhad (INSKEN)',
                 notes: '',
               });
               setIsMilestoneModalOpen(true);
@@ -427,6 +478,17 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
           >
             <Plus className="h-3.5 w-3.5 text-[#D4A017]" />
             <span>+ Add Milestone</span>
+          </Button>
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleResetToAnnexIV}
+            className="h-8 text-xs font-semibold gap-1.5 border-primary/30 text-primary hover:bg-primary/5"
+            title="Reset to official ASEAN Foundation Annex IV schedule"
+          >
+            <Award className="h-3.5 w-3.5 text-primary" />
+            <span className="hidden md:inline">Reset Annex IV</span>
           </Button>
 
           <Button
@@ -527,18 +589,23 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
           </CardContent>
         </Card>
 
-        {/* Card 3: Total Allocation / Grant */}
-        <Card className="border-border shadow-sm bg-card relative overflow-hidden">
+        {/* Card 3: Total Grant / Annex IV FAG Agreement */}
+        <Card className="border-blue-200 bg-blue-50/30 dark:border-blue-900/50 dark:bg-blue-950/20 shadow-sm relative overflow-hidden">
           <CardContent className="p-4">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-              <Layers className="h-3.5 w-3.5 text-[#0B1F3A] dark:text-blue-400" />
-              <span>TOTAL GRANT ALLOCATION</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-blue-800 dark:text-blue-300">
+                <Award className="h-3.5 w-3.5 text-blue-600" />
+                <span>TOTAL FAG GRANT</span>
+              </div>
+              <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300">
+                100% (3 Tranches)
+              </span>
             </div>
-            <div className="mt-2 text-xl sm:text-2xl font-black tracking-tight text-foreground">
-              {fmtNoDecimals(overview.deAllocationTotal)}
+            <div className="mt-2 text-xl sm:text-2xl font-black tracking-tight text-blue-900 dark:text-blue-200">
+              {fmtUSD(totalUsdGrant)}
             </div>
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              Full Programme Allocation (DE)
+            <p className="mt-1 text-[11px] text-blue-700/80 dark:text-blue-300/80">
+              ≈ {fmtRM(overview.totalClaimAmount)}
             </p>
           </CardContent>
         </Card>
@@ -556,10 +623,10 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
               </span>
             </div>
             <div className="mt-2 text-xl sm:text-2xl font-black tracking-tight text-emerald-700 dark:text-emerald-300">
-              {fmtNoDecimals(overview.totalPaidAmount)}
+              {fmtUSD(totalUsdPaid)}
             </div>
             <p className="mt-1 text-[11px] text-emerald-600/80 dark:text-emerald-400/80">
-              Disbursed to INSKEN account
+              Disbursed ({fmtRM(overview.totalPaidAmount)})
             </p>
           </CardContent>
         </Card>
@@ -577,16 +644,340 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
               </span>
             </div>
             <div className="mt-2 text-xl sm:text-2xl font-black tracking-tight text-amber-700 dark:text-amber-400">
-              {fmtNoDecimals(overview.totalOutstandingAmount)}
+              {fmtUSD(totalUsdOutstanding)}
             </div>
             <p className="mt-1 text-[11px] text-amber-700/80 dark:text-amber-400/80">
-              Awaiting milestone milestones
+              Tranches 2 &amp; 3 ({fmtRM(overview.totalOutstandingAmount)})
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* 3. FINANCE TRACKING SECTION (DE Allocation & Progress Bar) */}
+      {/* 3. OFFICIAL ANNEX IV MILESTONE PROVISION & PAYMENT AUDIT (MAIN FOCUS) */}
+      <Card className="border-border shadow-sm overflow-hidden">
+        <CardHeader className="bg-card border-b py-4 px-4 sm:px-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-primary" />
+                  ANNEX IV — Milestone &amp; Disbursement Schedule (INSKEN)
+                </CardTitle>
+                <span className="rounded-md bg-primary/10 text-primary px-2 py-0.5 text-xs font-semibold">
+                  {overview.completedMilestonesCount} of {overview.totalMilestonesCount} Completed
+                </span>
+              </div>
+              <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                Agreement between <strong>ASEAN Foundation</strong> and <strong>Institut Keusahawanan Negara Berhad (INSKEN)</strong>. Tranche payment issued upon milestone completion.
+              </CardDescription>
+            </div>
+
+            {/* Quick Filters, Search & Currency Toggle */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative w-44 sm:w-52">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search milestone / invoice..."
+                  className="h-8 pl-8 text-xs"
+                />
+              </div>
+
+              {/* Payment Filter */}
+              <select
+                value={paymentFilter}
+                onChange={(e) => setPaymentFilter(e.target.value as any)}
+                className="h-8 rounded-md border border-input bg-background px-2.5 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary"
+              >
+                <option value="ALL">All Payments</option>
+                <option value="PAID">Sudah Dibayar (Paid)</option>
+                <option value="PENDING">Belum Dibayar (Pending)</option>
+                <option value="IN_REVIEW">Dalam Semakan (In Review)</option>
+              </select>
+
+              {/* Currency Mode */}
+              <div className="flex items-center rounded-md border bg-muted/50 p-0.5 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setCurrencyMode('BOTH')}
+                  className={cn(
+                    'px-2 py-1 rounded text-[11px] font-semibold transition-colors',
+                    currencyMode === 'BOTH' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  USD + RM
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrencyMode('USD')}
+                  className={cn(
+                    'px-2 py-1 rounded text-[11px] font-semibold transition-colors',
+                    currencyMode === 'USD' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  USD
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrencyMode('MYR')}
+                  className={cn(
+                    'px-2 py-1 rounded text-[11px] font-semibold transition-colors',
+                    currencyMode === 'MYR' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  RM
+                </button>
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-[#0B1F3A] text-white uppercase text-[10px] font-bold tracking-wider">
+                <tr>
+                  <th className="py-3 px-4">MILESTONE &amp; DELIVERABLES (ANNEX IV)</th>
+                  <th className="py-3 px-3">DUE DATE</th>
+                  <th className="py-3 px-3">TRANCHE / INVOICE</th>
+                  <th className="py-3 px-3 text-right">GRANT CLAIM</th>
+                  <th className="py-3 px-3 text-right">PAID TO INSKEN</th>
+                  <th className="py-3 px-3 text-right">OUTSTANDING</th>
+                  <th className="py-3 px-3 text-center">MILESTONE STATUS</th>
+                  <th className="py-3 px-3 text-center">PAYMENT STATUS</th>
+                  <th className="py-3 px-4 text-center">ACTION</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filteredMilestones.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="py-8 text-center text-muted-foreground text-xs">
+                      No milestones match the selected filter.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredMilestones.map((m) => {
+                    const isPaid = m.paymentStatus === 'PAID';
+                    const isCompleted = m.milestoneStatus === 'COMPLETED';
+                    const isExpanded = expandedMilestoneId === m.id;
+
+                    return (
+                      <tr
+                        key={m.id}
+                        className={cn(
+                          'hover:bg-muted/40 transition-colors',
+                          isPaid ? 'bg-emerald-50/10 dark:bg-emerald-950/5' : ''
+                        )}
+                      >
+                        {/* Milestone & Deliverable */}
+                        <td className="py-3.5 px-4 max-w-md">
+                          <div className="flex items-start gap-2">
+                            <span className="shrink-0 mt-0.5 rounded bg-primary/10 text-primary font-mono font-bold px-1.5 py-0.5 text-[10px]">
+                              {m.tranchePct || 30}%
+                            </span>
+                            <div>
+                              <div className="font-bold text-foreground text-xs flex items-center gap-1.5">
+                                <span>{m.milestoneNumber}:</span>
+                                <span>{m.title}</span>
+                              </div>
+                              <p className="text-[11px] text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
+                                {m.deliverable}
+                              </p>
+
+                              {/* Click to open full details */}
+                              <button
+                                type="button"
+                                onClick={() => setSelectedAnnexMilestone(m)}
+                                className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline mt-1.5"
+                              >
+                                <FileText className="h-3 w-3" />
+                                <span>View Full Activities &amp; Evidence Checklist ({m.deliverablesList?.length || 2} items)</span>
+                              </button>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Due Date */}
+                        <td className="py-3.5 px-3 font-semibold whitespace-nowrap text-foreground">
+                          <div className="flex items-center gap-1.5">
+                            <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span>{m.dueDate || '—'}</span>
+                          </div>
+                        </td>
+
+                        {/* Tranche / Invoice No */}
+                        <td className="py-3.5 px-3 whitespace-nowrap">
+                          <div className="font-mono font-bold text-foreground">{m.invoiceNo || '—'}</div>
+                          <div className="text-[10px] text-muted-foreground">{m.tranchePct || 30}% of total grant</div>
+                        </td>
+
+                        {/* Claim Amount */}
+                        <td className="py-3.5 px-3 text-right font-semibold tabular-nums text-foreground">
+                          {currencyMode === 'USD' && fmtUSD(m.claimAmountUsd || 0)}
+                          {currencyMode === 'MYR' && fmtRM(m.claimAmount)}
+                          {currencyMode === 'BOTH' && (
+                            <div>
+                              <div className="font-bold">{fmtUSD(m.claimAmountUsd || 0)}</div>
+                              <div className="text-[10px] text-muted-foreground">≈ {fmtRM(m.claimAmount)}</div>
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Paid Amount */}
+                        <td className="py-3.5 px-3 text-right font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                          {currencyMode === 'USD' && fmtUSD(m.amountPaidUsd || (isPaid ? m.claimAmountUsd || 0 : 0))}
+                          {currencyMode === 'MYR' && fmtRM(m.amountPaid)}
+                          {currencyMode === 'BOTH' && (
+                            <div>
+                              <div>{fmtUSD(m.amountPaidUsd || (isPaid ? m.claimAmountUsd || 0 : 0))}</div>
+                              <div className="text-[10px] text-emerald-600/80">≈ {fmtRM(m.amountPaid)}</div>
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Outstanding */}
+                        <td
+                          className={cn(
+                            'py-3.5 px-3 text-right font-bold tabular-nums',
+                            m.outstanding > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'
+                          )}
+                        >
+                          {currencyMode === 'USD' && fmtUSD(m.outstandingUsd !== undefined ? m.outstandingUsd : (isPaid ? 0 : m.claimAmountUsd || 0))}
+                          {currencyMode === 'MYR' && fmtRM(m.outstanding)}
+                          {currencyMode === 'BOTH' && (
+                            <div>
+                              <div>{fmtUSD(m.outstandingUsd !== undefined ? m.outstandingUsd : (isPaid ? 0 : m.claimAmountUsd || 0))}</div>
+                              <div className="text-[10px] text-muted-foreground">≈ {fmtRM(m.outstanding)}</div>
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Milestone Progress Status */}
+                        <td className="py-3.5 px-3 text-center">
+                          {m.milestoneStatus === 'COMPLETED' ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 px-2 py-0.5 text-[11px] font-bold">
+                              <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                              Completed
+                            </span>
+                          ) : m.milestoneStatus === 'IN_PROGRESS' ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 px-2 py-0.5 text-[11px] font-bold">
+                              <Clock className="h-3 w-3 text-blue-600" />
+                              In Progress
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 px-2 py-0.5 text-[11px] font-semibold">
+                              Pending
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Payment Status (Sudah Dibayar vs Belum Dibayar) */}
+                        <td className="py-3.5 px-3 text-center">
+                          {m.paymentStatus === 'PAID' ? (
+                            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500 text-white px-2 py-0.5 text-[11px] font-bold shadow-xs">
+                              <CheckCircle2 className="h-3 w-3" />
+                              Sudah Dibayar
+                            </span>
+                          ) : m.paymentStatus === 'PENDING' ? (
+                            <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 text-amber-900 dark:bg-amber-900/60 dark:text-amber-300 px-2 py-0.5 text-[11px] font-bold border border-amber-300 dark:border-amber-700">
+                              <Clock className="h-3 w-3 text-amber-600" />
+                              Belum Dibayar
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-md bg-purple-100 text-purple-800 dark:bg-purple-900/60 dark:text-purple-300 px-2 py-0.5 text-[11px] font-bold">
+                              Dalam Semakan
+                            </span>
+                          )}
+                          {m.paymentDate && isPaid && (
+                            <div className="text-[10px] text-muted-foreground mt-0.5">
+                              {m.paymentDate}
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Actions */}
+                        <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                          <div className="flex items-center justify-center gap-1.5">
+                            {/* Quick Toggle Paid Button */}
+                            <Button
+                              size="sm"
+                              variant={isPaid ? 'outline' : 'default'}
+                              onClick={() => handleQuickTogglePayment(m)}
+                              className={cn(
+                                'h-7 text-[11px] font-semibold px-2 gap-1 shadow-xs',
+                                !isPaid
+                                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                                  : 'border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/40'
+                              )}
+                              title={isPaid ? 'Mark as Belum Dibayar' : 'Mark as Sudah Dibayar'}
+                            >
+                              <CheckCircle2 className="h-3 w-3" />
+                              <span>{isPaid ? 'Paid' : 'Pay'}</span>
+                            </Button>
+
+                            {/* Edit Milestone */}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setEditingMilestone(m);
+                                setMilestoneForm(m);
+                                setIsMilestoneModalOpen(true);
+                              }}
+                              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                              title="Edit Details"
+                            >
+                              <Edit2 className="h-3 w-3" />
+                            </Button>
+
+                            {/* Delete */}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDeleteMilestone(m.id, m.milestoneNumber)}
+                              className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                              title="Delete"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+
+              {/* Milestone Totals */}
+              <tfoot className="bg-muted/80 font-bold border-t-2 border-border text-foreground text-xs">
+                <tr>
+                  <td colSpan={3} className="py-3 px-4 uppercase">
+                    Total FAG Grant &amp; Tranche Disbursement Audit
+                  </td>
+                  <td className="py-3 px-3 text-right tabular-nums">
+                    <div className="font-bold">{fmtUSD(totalUsdGrant)}</div>
+                    <div className="text-[10px] text-muted-foreground">≈ {fmtRM(overview.totalClaimAmount)}</div>
+                  </td>
+                  <td className="py-3 px-3 text-right tabular-nums text-emerald-600 dark:text-emerald-400">
+                    <div className="font-bold">{fmtUSD(totalUsdPaid)}</div>
+                    <div className="text-[10px] text-emerald-600/80">≈ {fmtRM(overview.totalPaidAmount)}</div>
+                  </td>
+                  <td className="py-3 px-3 text-right tabular-nums text-amber-600 dark:text-amber-400">
+                    <div className="font-bold">{fmtUSD(totalUsdOutstanding)}</div>
+                    <div className="text-[10px] text-amber-600/80">≈ {fmtRM(overview.totalOutstandingAmount)}</div>
+                  </td>
+                  <td colSpan={3} className="py-3 px-4 text-center text-[11px] text-muted-foreground font-normal">
+                    Payer: <strong>ASEAN Foundation</strong> ➔ Recipient: <strong>INSKEN</strong>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 4. FINANCE TRACKING SECTION (DE Allocation & Progress Bar) */}
       <Card className="border-border shadow-sm overflow-hidden">
         <CardHeader className="bg-[#0B1F3A] text-white py-3.5 px-4 sm:px-6">
           <div className="flex items-center justify-between">
@@ -841,266 +1232,87 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
         </CardContent>
       </Card>
 
-      {/* 4. MILESTONES & INSKEN PAYMENT SCHEDULE TRACKER */}
-      <Card className="border-border shadow-sm overflow-hidden">
-        <CardHeader className="bg-card border-b py-4 px-4 sm:px-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
-                  <ShieldCheck className="h-5 w-5 text-primary" />
-                  Milestone Deliverables &amp; Payment Audit (INSKEN)
-                </CardTitle>
-                <span className="rounded-md bg-primary/10 text-primary px-2 py-0.5 text-xs font-semibold">
-                  {overview.completedMilestonesCount} / {overview.totalMilestonesCount} Completed
-                </span>
+      {/* MODAL: VIEW ANNEX IV DELIVERABLES CHECKLIST */}
+      <Dialog open={!!selectedAnnexMilestone} onOpenChange={() => setSelectedAnnexMilestone(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          {selectedAnnexMilestone && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center gap-2">
+                  <span className="rounded bg-primary/10 text-primary font-mono font-bold px-2 py-0.5 text-xs">
+                    {selectedAnnexMilestone.milestoneNumber}
+                  </span>
+                  <span className="rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 font-bold px-2 py-0.5 text-xs">
+                    Tranche: {selectedAnnexMilestone.tranchePct || 30}% (USD {(selectedAnnexMilestone.claimAmountUsd || 0).toLocaleString()})
+                  </span>
+                </div>
+                <DialogTitle className="text-base sm:text-lg font-bold mt-1">
+                  {selectedAnnexMilestone.title}
+                </DialogTitle>
+                <DialogDescription className="text-xs">
+                  Due Date: <strong>{selectedAnnexMilestone.dueDate}</strong> · Grantor: <strong>{selectedAnnexMilestone.grantor || 'ASEAN Foundation'}</strong> · Recipient: <strong>{selectedAnnexMilestone.recipient || 'INSKEN'}</strong>
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4 py-3 text-xs">
+                {/* 1. Activities */}
+                <div className="rounded-xl border bg-muted/30 p-3.5 space-y-2">
+                  <h4 className="font-bold text-foreground flex items-center gap-1.5 uppercase text-[11px] tracking-wider text-primary">
+                    <CheckSquare className="h-4 w-4" />
+                    Activities to Implement:
+                  </h4>
+                  <ul className="space-y-1.5 pl-1 text-muted-foreground">
+                    {selectedAnnexMilestone.activities?.map((act, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0 mt-1.5" />
+                        <span className="text-foreground font-medium">{act}</span>
+                      </li>
+                    )) || (
+                      <li>1. Project implementation activities</li>
+                    )}
+                  </ul>
+                </div>
+
+                {/* 2. Evidence of Milestone Completion (Deliverables) */}
+                <div className="rounded-xl border bg-card p-3.5 space-y-2.5">
+                  <h4 className="font-bold text-foreground flex items-center gap-1.5 uppercase text-[11px] tracking-wider text-emerald-600 dark:text-emerald-400">
+                    <Award className="h-4 w-4" />
+                    Evidence of Milestone Completion (Deliverables):
+                  </h4>
+                  <div className="space-y-2">
+                    {selectedAnnexMilestone.deliverablesList?.map((del, i) => (
+                      <div key={i} className="rounded-lg border bg-muted/20 p-2.5 space-y-1">
+                        <div className="whitespace-pre-line text-foreground font-medium leading-relaxed">
+                          {del}
+                        </div>
+                      </div>
+                    )) || (
+                      <p className="text-muted-foreground">{selectedAnnexMilestone.deliverable}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* 3. Disbursement Clause */}
+                <div className="rounded-xl border border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20 p-3 text-blue-900 dark:text-blue-200">
+                  <p className="text-[11px] leading-relaxed">
+                    <strong>Payment Terms:</strong> Upon completion of the above milestone/deliverables and their acceptance by the ASEAN Foundation, a payment not to exceed <strong>USD {(selectedAnnexMilestone.claimAmountUsd || 0).toLocaleString()}</strong> / <strong>{selectedAnnexMilestone.tranchePct || 30}% of total grant</strong> (≈ {fmtRM(selectedAnnexMilestone.claimAmount)}) be made to <strong>Institut Keusahawanan Negara Berhad (INSKEN)</strong>.
+                  </p>
+                </div>
               </div>
-              <CardDescription className="text-xs text-muted-foreground mt-0.5">
-                Trace milestones completed, invoice submissions, and payments received (*Sudah Dibayar*) vs pending (*Belum Dibayar*) by INSKEN.
-              </CardDescription>
-            </div>
 
-            {/* Quick Filters & Search */}
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative w-48 sm:w-56">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                <Input
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search milestone / invoice..."
-                  className="h-8 pl-8 text-xs"
-                />
-              </div>
-
-              {/* Payment Filter */}
-              <select
-                value={paymentFilter}
-                onChange={(e) => setPaymentFilter(e.target.value as any)}
-                className="h-8 rounded-md border border-input bg-background px-2.5 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary"
-              >
-                <option value="ALL">All Payments</option>
-                <option value="PAID">Sudah Dibayar (Paid)</option>
-                <option value="PENDING">Belum Dibayar (Pending)</option>
-                <option value="IN_REVIEW">Dalam Semakan (In Review)</option>
-              </select>
-
-              {/* Milestone Progress Filter */}
-              <select
-                value={milestoneFilter}
-                onChange={(e) => setMilestoneFilter(e.target.value as any)}
-                className="h-8 rounded-md border border-input bg-background px-2.5 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary"
-              >
-                <option value="ALL">All Progress</option>
-                <option value="COMPLETED">Completed</option>
-                <option value="IN_PROGRESS">In Progress</option>
-                <option value="PENDING">Pending</option>
-              </select>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left">
-              <thead className="bg-muted/70 text-muted-foreground uppercase text-[10px] font-bold tracking-wider border-b">
-                <tr>
-                  <th className="py-3 px-4">MILESTONE &amp; DELIVERABLE</th>
-                  <th className="py-3 px-3">DUE DATE</th>
-                  <th className="py-3 px-3">INVOICE NO.</th>
-                  <th className="py-3 px-3 text-right">CLAIM (RM)</th>
-                  <th className="py-3 px-3 text-right">PAID (RM)</th>
-                  <th className="py-3 px-3 text-right">OUTSTANDING (RM)</th>
-                  <th className="py-3 px-3 text-center">MILESTONE STATUS</th>
-                  <th className="py-3 px-3 text-center">PAYMENT STATUS</th>
-                  <th className="py-3 px-4 text-center">ACTION</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filteredMilestones.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="py-8 text-center text-muted-foreground text-xs">
-                      No milestones match the selected filter.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredMilestones.map((m) => {
-                    const isPaid = m.paymentStatus === 'PAID';
-                    const isCompleted = m.milestoneStatus === 'COMPLETED';
-
-                    return (
-                      <tr
-                        key={m.id}
-                        className={cn(
-                          'hover:bg-muted/40 transition-colors',
-                          isPaid ? 'bg-emerald-50/10 dark:bg-emerald-950/5' : ''
-                        )}
-                      >
-                        {/* Milestone & Deliverable */}
-                        <td className="py-3.5 px-4 max-w-xs">
-                          <div className="font-bold text-foreground text-xs flex items-center gap-1.5">
-                            <span>{m.milestoneNumber}:</span>
-                            <span>{m.title}</span>
-                          </div>
-                          <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">
-                            {m.deliverable}
-                          </p>
-                          {m.notes && (
-                            <p className="text-[10px] text-primary/80 italic mt-1">
-                              Note: {m.notes}
-                            </p>
-                          )}
-                        </td>
-
-                        {/* Due Date */}
-                        <td className="py-3.5 px-3 font-medium whitespace-nowrap text-muted-foreground">
-                          {m.dueDate || '—'}
-                        </td>
-
-                        {/* Invoice No */}
-                        <td className="py-3.5 px-3 font-mono font-semibold whitespace-nowrap text-foreground">
-                          {m.invoiceNo || '—'}
-                        </td>
-
-                        {/* Claim Amount */}
-                        <td className="py-3.5 px-3 text-right font-semibold tabular-nums text-foreground">
-                          {fmtRM(m.claimAmount)}
-                        </td>
-
-                        {/* Paid Amount */}
-                        <td className="py-3.5 px-3 text-right font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
-                          {fmtRM(m.amountPaid)}
-                        </td>
-
-                        {/* Outstanding */}
-                        <td
-                          className={cn(
-                            'py-3.5 px-3 text-right font-bold tabular-nums',
-                            m.outstanding > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'
-                          )}
-                        >
-                          {fmtRM(m.outstanding)}
-                        </td>
-
-                        {/* Milestone Progress Status */}
-                        <td className="py-3.5 px-3 text-center">
-                          {m.milestoneStatus === 'COMPLETED' ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 px-2 py-0.5 text-[11px] font-bold">
-                              <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                              Completed
-                            </span>
-                          ) : m.milestoneStatus === 'IN_PROGRESS' ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 px-2 py-0.5 text-[11px] font-bold">
-                              <Clock className="h-3 w-3 text-blue-600" />
-                              In Progress
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 px-2 py-0.5 text-[11px] font-semibold">
-                              Pending
-                            </span>
-                          )}
-                        </td>
-
-                        {/* Payment Status (Sudah Dibayar vs Belum Dibayar) */}
-                        <td className="py-3.5 px-3 text-center">
-                          {m.paymentStatus === 'PAID' ? (
-                            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500 text-white px-2 py-0.5 text-[11px] font-bold shadow-xs">
-                              <CheckCircle2 className="h-3 w-3" />
-                              Sudah Dibayar
-                            </span>
-                          ) : m.paymentStatus === 'PENDING' ? (
-                            <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 text-amber-900 dark:bg-amber-900/60 dark:text-amber-300 px-2 py-0.5 text-[11px] font-bold border border-amber-300 dark:border-amber-700">
-                              <Clock className="h-3 w-3 text-amber-600" />
-                              Belum Dibayar
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 rounded-md bg-purple-100 text-purple-800 dark:bg-purple-900/60 dark:text-purple-300 px-2 py-0.5 text-[11px] font-bold">
-                              Dalam Semakan
-                            </span>
-                          )}
-                          {m.paymentDate && isPaid && (
-                            <div className="text-[10px] text-muted-foreground mt-0.5">
-                              {m.paymentDate}
-                            </div>
-                          )}
-                        </td>
-
-                        {/* Actions */}
-                        <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                          <div className="flex items-center justify-center gap-1.5">
-                            {/* Quick Toggle Paid Button */}
-                            <Button
-                              size="sm"
-                              variant={isPaid ? 'outline' : 'default'}
-                              onClick={() => handleQuickTogglePayment(m)}
-                              className={cn(
-                                'h-7 text-[11px] font-semibold px-2 gap-1 shadow-xs',
-                                !isPaid
-                                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                                  : 'border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/40'
-                              )}
-                              title={isPaid ? 'Mark as Belum Dibayar' : 'Mark as Sudah Dibayar'}
-                            >
-                              <CheckCircle2 className="h-3 w-3" />
-                              <span>{isPaid ? 'Paid' : 'Pay'}</span>
-                            </Button>
-
-                            {/* Edit Milestone */}
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                setEditingMilestone(m);
-                                setMilestoneForm(m);
-                                setIsMilestoneModalOpen(true);
-                              }}
-                              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                              title="Edit Details"
-                            >
-                              <Edit2 className="h-3 w-3" />
-                            </Button>
-
-                            {/* Delete */}
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleDeleteMilestone(m.id, m.milestoneNumber)}
-                              className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                              title="Delete"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-
-              {/* Milestone Totals */}
-              <tfoot className="bg-muted/80 font-bold border-t-2 border-border text-foreground text-xs">
-                <tr>
-                  <td colSpan={3} className="py-3 px-4 uppercase">
-                    Total Milestones Claim &amp; Payment Audit
-                  </td>
-                  <td className="py-3 px-3 text-right tabular-nums">
-                    {fmtRM(overview.totalClaimAmount)}
-                  </td>
-                  <td className="py-3 px-3 text-right tabular-nums text-emerald-600 dark:text-emerald-400">
-                    {fmtRM(overview.totalPaidAmount)}
-                  </td>
-                  <td className="py-3 px-3 text-right tabular-nums text-amber-600 dark:text-amber-400">
-                    {fmtRM(overview.totalOutstandingAmount)}
-                  </td>
-                  <td colSpan={3} className="py-3 px-4 text-center text-[11px] text-muted-foreground font-normal">
-                    Recipient: INSKEN Account · Bank Transfer
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+              <DialogFooter>
+                <Button
+                  size="sm"
+                  onClick={() => setSelectedAnnexMilestone(null)}
+                  className="h-8 bg-[#0B1F3A] hover:bg-[#112D55] text-white text-xs font-semibold"
+                >
+                  Close Checklist
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* MODAL 1: ADD / EDIT MILESTONE */}
       <Dialog open={isMilestoneModalOpen} onOpenChange={setIsMilestoneModalOpen}>
@@ -1111,7 +1323,7 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
               {editingMilestone ? 'Edit Project Milestone & Payment' : 'Add New Project Milestone'}
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Configure deliverable scope, invoice claim amount, and payment status to INSKEN.
+              Configure deliverable scope, tranche percentage, USD/MYR claim amount, and payment status to INSKEN.
             </DialogDescription>
           </DialogHeader>
 
@@ -1132,7 +1344,7 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
                 <Input
                   value={milestoneForm.invoiceNo}
                   onChange={(e) => setMilestoneForm({ ...milestoneForm, invoiceNo: e.target.value })}
-                  placeholder="e.g. INV-INSKEN-2026-001"
+                  placeholder="e.g. INV-AF-INSKEN-01"
                   className="h-8 text-xs"
                 />
               </div>
@@ -1143,18 +1355,18 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
               <Input
                 value={milestoneForm.title}
                 onChange={(e) => setMilestoneForm({ ...milestoneForm, title: e.target.value })}
-                placeholder="e.g. Inception Report & Participant Mobilisation"
+                placeholder="e.g. 50% MSME Target, Localisation & 6-Month Progress Report"
                 required
                 className="h-8 text-xs"
               />
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs">Deliverable Scope &amp; Details</Label>
+              <Label className="text-xs">Deliverables Summary</Label>
               <textarea
                 value={milestoneForm.deliverable}
                 onChange={(e) => setMilestoneForm({ ...milestoneForm, deliverable: e.target.value })}
-                placeholder="Describe key deliverables, regions involved, or participant milestones..."
+                placeholder="Describe key deliverables, reports, and participant targets..."
                 rows={2}
                 className="w-full rounded-md border border-input bg-background p-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
               />
@@ -1166,16 +1378,17 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
                 <Input
                   value={milestoneForm.dueDate}
                   onChange={(e) => setMilestoneForm({ ...milestoneForm, dueDate: e.target.value })}
-                  placeholder="e.g. 15 Aug 2026"
+                  placeholder="e.g. 31 January 2027"
                   className="h-8 text-xs"
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Payment Date (If Paid)</Label>
+                <Label className="text-xs">Tranche % of Grant</Label>
                 <Input
-                  value={milestoneForm.paymentDate}
-                  onChange={(e) => setMilestoneForm({ ...milestoneForm, paymentDate: e.target.value })}
-                  placeholder="e.g. 20 Aug 2026"
+                  type="number"
+                  value={milestoneForm.tranchePct}
+                  onChange={(e) => setMilestoneForm({ ...milestoneForm, tranchePct: Number(e.target.value) })}
+                  placeholder="e.g. 40"
                   className="h-8 text-xs"
                 />
               </div>
@@ -1183,7 +1396,24 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs">Claim Amount (RM)</Label>
+                <Label className="text-xs">Claim Amount (USD)</Label>
+                <Input
+                  type="number"
+                  step="1"
+                  value={milestoneForm.claimAmountUsd}
+                  onChange={(e) => {
+                    const usd = Number(e.target.value);
+                    setMilestoneForm({
+                      ...milestoneForm,
+                      claimAmountUsd: usd,
+                      claimAmount: Number((usd * 4.45).toFixed(2)),
+                    });
+                  }}
+                  className="h-8 text-xs font-semibold text-blue-600"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Claim Amount (RM Equiv)</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -1192,6 +1422,9 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
                   className="h-8 text-xs font-semibold"
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label className="text-xs">Amount Paid (RM)</Label>
                 <Input
@@ -1200,6 +1433,15 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
                   value={milestoneForm.amountPaid}
                   onChange={(e) => setMilestoneForm({ ...milestoneForm, amountPaid: Number(e.target.value) })}
                   className="h-8 text-xs font-semibold text-emerald-600"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Payment Date (If Paid)</Label>
+                <Input
+                  value={milestoneForm.paymentDate}
+                  onChange={(e) => setMilestoneForm({ ...milestoneForm, paymentDate: e.target.value })}
+                  placeholder="e.g. 18 Aug 2026"
+                  className="h-8 text-xs"
                 />
               </div>
             </div>
@@ -1237,7 +1479,7 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
               <Input
                 value={milestoneForm.notes}
                 onChange={(e) => setMilestoneForm({ ...milestoneForm, notes: e.target.value })}
-                placeholder="e.g. Paid via EFT transaction #..."
+                placeholder="e.g. Tranche 1 disbursed via direct credit..."
                 className="h-8 text-xs"
               />
             </div>
