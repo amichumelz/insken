@@ -399,13 +399,6 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
   const deUtilizedPct = deTotal > 0 ? (deUtilized / deTotal) * 100 : 0;
   const deRemainingPct = deTotal > 0 ? (deRemaining / deTotal) * 100 : 0;
 
-  // Calculations for Internal Allocation Bar
-  const intTotal = data?.overview?.internalAllocationTotal || 1956500;
-  const intUtilized = data?.overview?.internalUtilizedTotal || 804262.71;
-  const intRemaining = Math.max(0, intTotal - intUtilized);
-  const intUtilizedPct = intTotal > 0 ? (intUtilized / intTotal) * 100 : 0;
-  const intRemainingPct = intTotal > 0 ? (intRemaining / intTotal) * 100 : 0;
-
   // Total USD Grant Sum
   const totalUsdGrant = data?.milestones?.reduce((s, m) => s + (m.claimAmountUsd || 0), 0) || 36500;
   const totalUsdPaid = data?.milestones?.reduce((s, m) => s + (m.amountPaidUsd || (m.paymentStatus === 'PAID' ? m.claimAmountUsd || 0 : 0)), 0) || 10950;
@@ -1107,122 +1100,6 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
                   </td>
                   <td className="py-2.5 px-3 text-right tabular-nums">
                     {deRemaining.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </td>
-                  <td className="py-2.5 px-2"></td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-
-          {/* Internal Allocation Visual Progress Bar */}
-          <div className="space-y-2 pt-4 border-t">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <div className="text-sm sm:text-base font-bold text-foreground">
-                INTERNAL ALLOCATION: <span className="text-primary">{fmtRM(intTotal)}</span>
-              </div>
-              <div className="flex items-center gap-4 text-xs font-semibold">
-                <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  Utilized: {fmtRM(intUtilized)} ({intUtilizedPct.toFixed(1)}%)
-                </span>
-                <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
-                  <span className="h-2 w-2 rounded-full bg-amber-400" />
-                  Remaining Allocation: {fmtRM(intRemaining)} ({intRemainingPct.toFixed(1)}%)
-                </span>
-              </div>
-            </div>
-
-            {/* Dual color progress bar (Green & Yellow) */}
-            <div className="h-6 w-full rounded-md overflow-hidden bg-muted flex shadow-inner border">
-              <div
-                style={{ width: `${intUtilizedPct}%` }}
-                className="h-full bg-[#16A34A] transition-all duration-500 flex items-center justify-center text-[10px] font-bold text-white shadow-sm"
-                title={`Utilized: ${fmtRM(intUtilized)}`}
-              >
-                {intUtilizedPct > 10 && `${intUtilizedPct.toFixed(1)}%`}
-              </div>
-              <div
-                style={{ width: `${intRemainingPct}%` }}
-                className="h-full bg-[#EAB308] transition-all duration-500 flex items-center justify-center text-[10px] font-bold text-amber-950 shadow-sm"
-                title={`Remaining: ${fmtRM(intRemaining)}`}
-              >
-                {intRemainingPct > 10 && `${intRemainingPct.toFixed(1)}%`}
-              </div>
-            </div>
-          </div>
-
-          {/* Table 2: Internal Department Allocation Table */}
-          <div className="overflow-x-auto rounded-lg border">
-            <table className="w-full text-xs text-left">
-              <thead className="bg-[#1E3A8A] text-white uppercase text-[11px] font-bold tracking-wider">
-                <tr>
-                  <th className="py-2.5 px-3">DEPARTMENT</th>
-                  <th className="py-2.5 px-3 text-right">ALLOCATION (RM)</th>
-                  <th className="py-2.5 px-3 text-right">UTILIZED (RM)</th>
-                  <th className="py-2.5 px-3 text-right">VARIANCE (RM)</th>
-                  <th className="py-2.5 px-2 text-center w-16">ACTION</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border font-medium">
-                {internalDepartments.map((d) => {
-                  const varVal = d.allocation - d.utilized;
-                  return (
-                    <tr key={d.id} className="hover:bg-muted/40 transition-colors">
-                      <td className="py-2 px-3 font-semibold text-foreground">
-                        {d.name}
-                      </td>
-                      <td className="py-2 px-3 text-right tabular-nums text-foreground">
-                        {d.allocation.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </td>
-                      <td className="py-2 px-3 text-right tabular-nums text-emerald-600 dark:text-emerald-400 font-semibold">
-                        {d.utilized.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </td>
-                      <td
-                        className={cn(
-                          'py-2 px-3 text-right tabular-nums font-bold',
-                          varVal < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-foreground'
-                        )}
-                      >
-                        {varVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </td>
-                      <td className="py-2 px-2 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <button
-                            onClick={() => {
-                              setEditingProg(d);
-                              setProgForm(d);
-                              setIsProgModalOpen(true);
-                            }}
-                            className="p-1 hover:text-primary text-muted-foreground rounded"
-                            title="Edit"
-                          >
-                            <Edit2 className="h-3 w-3" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteProgramme(d.id, 'INTERNAL', d.name)}
-                            className="p-1 hover:text-destructive text-muted-foreground rounded"
-                            title="Delete"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-              {/* Total Row */}
-              <tfoot className="bg-muted/60 font-bold border-t-2 border-border text-foreground">
-                <tr>
-                  <td className="py-2.5 px-3 uppercase">Total Internal</td>
-                  <td className="py-2.5 px-3 text-right tabular-nums">
-                    {intTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </td>
-                  <td className="py-2.5 px-3 text-right tabular-nums text-emerald-600 dark:text-emerald-400">
-                    {intUtilized.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </td>
-                  <td className="py-2.5 px-3 text-right tabular-nums">
-                    {intRemaining.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
                   <td className="py-2.5 px-2"></td>
                 </tr>
