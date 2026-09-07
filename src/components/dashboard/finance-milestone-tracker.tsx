@@ -31,31 +31,21 @@ import {
 import { toast } from 'sonner';
 import {
   Wallet,
-  TrendingUp,
   Download,
   Plus,
   Edit2,
   Trash2,
   CheckCircle2,
   Clock,
-  AlertCircle,
   Search,
   RefreshCw,
-  ArrowUpRight,
   ShieldCheck,
-  FileSpreadsheet,
-  Layers,
   Banknote,
   DollarSign,
   Calendar,
   FileText,
-  ChevronDown,
-  ChevronUp,
   Award,
-  Users,
   CheckSquare,
-  Sparkles,
-  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -82,9 +72,7 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [paymentFilter, setPaymentFilter] = useState<'ALL' | 'PAID' | 'PENDING' | 'IN_REVIEW'>('ALL');
-  const [milestoneFilter, setMilestoneFilter] = useState<'ALL' | 'COMPLETED' | 'IN_PROGRESS' | 'PENDING'>('ALL');
   const [currencyMode, setCurrencyMode] = useState<'MYR' | 'USD' | 'BOTH'>('BOTH');
-  const [expandedMilestoneId, setExpandedMilestoneId] = useState<string | null>(null);
 
   // Modals state
   const [selectedAnnexMilestone, setSelectedAnnexMilestone] = useState<MilestonePaymentRecord | null>(null);
@@ -106,16 +94,6 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
     grantor: 'ASEAN Foundation',
     recipient: 'Institut Keusahawanan Negara Berhad (INSKEN)',
     notes: '',
-  });
-
-  const [isProgModalOpen, setIsProgModalOpen] = useState(false);
-  const [editingProg, setEditingProg] = useState<FinanceProgrammeItem | null>(null);
-  const [progForm, setProgForm] = useState<Partial<FinanceProgrammeItem>>({
-    category: 'DE',
-    name: '',
-    allocation: 0,
-    utilized: 0,
-    committed: 0,
   });
 
   const [isOverviewModalOpen, setIsOverviewModalOpen] = useState(false);
@@ -280,71 +258,6 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
     }
   };
 
-  // Programme Save
-  const handleSaveProgramme = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!progForm.name) {
-      toast.error('Please enter name.');
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const allocation = Number(progForm.allocation || 0);
-      const utilized = Number(progForm.utilized || 0);
-      const committed = Number(progForm.committed || 0);
-      const variance = allocation - utilized;
-
-      const payload: FinanceProgrammeItem = {
-        id: editingProg?.id || `prog-${Date.now()}`,
-        category: (progForm.category as 'DE' | 'INTERNAL') || 'DE',
-        name: progForm.name || '',
-        allocation,
-        utilized,
-        committed,
-        variance,
-      };
-
-      const res = await fetch('/api/finance/milestones', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'SAVE_PROGRAMME', payload }),
-      });
-      const json = await res.json();
-      if (json.ok) {
-        toast.success('Budget item saved successfully.');
-        setData(json);
-        setIsProgModalOpen(false);
-        setEditingProg(null);
-      } else {
-        toast.error(json.error || 'Failed to save budget item.');
-      }
-    } catch {
-      toast.error('An error occurred.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Delete Programme
-  const handleDeleteProgramme = async (id: string, category: 'DE' | 'INTERNAL', name: string) => {
-    if (!confirm(`Are you sure you want to delete ${name}?`)) return;
-    try {
-      const res = await fetch('/api/finance/milestones', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'DELETE_PROGRAMME', payload: { id, category } }),
-      });
-      const json = await res.json();
-      if (json.ok) {
-        toast.success('Item deleted.');
-        setData(json);
-      }
-    } catch {
-      toast.error('Failed to delete item.');
-    }
-  };
-
   // Save Overview (Costs & Profit)
   const handleSaveOverview = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -386,23 +299,18 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
         m.deliverable.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesPayment = paymentFilter === 'ALL' || m.paymentStatus === paymentFilter;
-      const matchesProgress = milestoneFilter === 'ALL' || m.milestoneStatus === milestoneFilter;
 
-      return matchesSearch && matchesPayment && matchesProgress;
+      return matchesSearch && matchesPayment;
     });
-  }, [data?.milestones, searchQuery, paymentFilter, milestoneFilter]);
-
-  // Calculations for DE Allocation Bar
-  const deTotal = data?.overview?.deAllocationTotal || 9400000;
-  const deUtilized = data?.overview?.deUtilizedTotal || 4905652.55;
-  const deRemaining = Math.max(0, deTotal - deUtilized);
-  const deUtilizedPct = deTotal > 0 ? (deUtilized / deTotal) * 100 : 0;
-  const deRemainingPct = deTotal > 0 ? (deRemaining / deTotal) * 100 : 0;
+  }, [data?.milestones, searchQuery, paymentFilter]);
 
   // Total USD Grant Sum
   const totalUsdGrant = data?.milestones?.reduce((s, m) => s + (m.claimAmountUsd || 0), 0) || 36500;
   const totalUsdPaid = data?.milestones?.reduce((s, m) => s + (m.amountPaidUsd || (m.paymentStatus === 'PAID' ? m.claimAmountUsd || 0 : 0)), 0) || 10950;
   const totalUsdOutstanding = Math.max(0, totalUsdGrant - totalUsdPaid);
+
+  const grantPctPaid = totalUsdGrant > 0 ? (totalUsdPaid / totalUsdGrant) * 100 : 30;
+  const grantPctRemaining = Math.max(0, 100 - grantPctPaid);
 
   if (loading && !data) {
     return (
@@ -414,8 +322,6 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
   }
 
   const overview = data?.overview || ({} as FinanceOverview);
-  const programmes = data?.programmes || [];
-  const internalDepartments = data?.internalDepartments || [];
 
   return (
     <div className="space-y-6">
@@ -485,33 +391,13 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
           </Button>
 
           <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              setEditingProg(null);
-              setProgForm({
-                category: 'DE',
-                name: '',
-                allocation: 0,
-                utilized: 0,
-                committed: 0,
-              });
-              setIsProgModalOpen(true);
-            }}
-            className="h-8 text-xs font-semibold gap-1.5 border-border"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            <span>+ Add Budget Line</span>
-          </Button>
-
-          <Button
             variant="outline"
             size="sm"
             onClick={() =>
               exportFinanceMilestonesCsv(
                 overview,
-                programmes,
-                internalDepartments,
+                [],
+                [],
                 data?.milestones || []
               )
             }
@@ -534,7 +420,7 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
         </div>
       </div>
 
-      {/* 2. Top Metric Cards Row (Costs, Net Profit, Total Allocation, Paid to INSKEN, Outstanding) */}
+      {/* 2. Top Metric Cards Row (Costs, Net Profit, Total Grant, Paid to INSKEN, Outstanding) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
         {/* Card 1: Costs */}
         <Card className="border-border shadow-sm bg-gradient-to-br from-card to-muted/20 relative overflow-hidden">
@@ -556,7 +442,7 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
               {fmtNoDecimals(overview.totalCosts)}
             </div>
             <p className="mt-1 text-[11px] text-muted-foreground">
-              Operational &amp; venue expenditure
+              Operational expenditure
             </p>
           </CardContent>
         </Card>
@@ -612,7 +498,7 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
                 <span>SUDAH DIBAYAR (INSKEN)</span>
               </div>
               <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
-                {((overview.totalPaidAmount / (overview.totalClaimAmount || 1)) * 100).toFixed(0)}%
+                {grantPctPaid.toFixed(0)}%
               </span>
             </div>
             <div className="mt-2 text-xl sm:text-2xl font-black tracking-tight text-emerald-700 dark:text-emerald-300">
@@ -648,32 +534,34 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
 
       {/* 3. OFFICIAL ANNEX IV MILESTONE PROVISION & PAYMENT AUDIT (MAIN FOCUS) */}
       <Card className="border-border shadow-sm overflow-hidden">
-        <CardHeader className="bg-card border-b py-4 px-4 sm:px-6">
+        <CardHeader className="bg-[#0B1F3A] text-white py-3.5 px-4 sm:px-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <CardTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
-                  <ShieldCheck className="h-5 w-5 text-primary" />
-                  ANNEX IV — Milestone &amp; Disbursement Schedule (INSKEN)
+                <span className="flex h-6 w-6 items-center justify-center rounded bg-white/10 text-xs font-mono font-bold text-[#D4A017]">
+                  ★
+                </span>
+                <CardTitle className="text-sm sm:text-base font-bold tracking-wide uppercase">
+                  ANNEX IV — Milestone &amp; Disbursement Tracking (INSKEN)
                 </CardTitle>
-                <span className="rounded-md bg-primary/10 text-primary px-2 py-0.5 text-xs font-semibold">
+                <span className="rounded-md bg-white/10 text-[#D4A017] px-2 py-0.5 text-xs font-semibold">
                   {overview.completedMilestonesCount} of {overview.totalMilestonesCount} Completed
                 </span>
               </div>
-              <CardDescription className="text-xs text-muted-foreground mt-0.5">
-                Agreement between <strong>ASEAN Foundation</strong> and <strong>Institut Keusahawanan Negara Berhad (INSKEN)</strong>. Tranche payment issued upon milestone completion.
+              <CardDescription className="text-xs text-white/80 mt-0.5">
+                Agreement between <strong>ASEAN Foundation</strong> and <strong>Institut Keusahawanan Negara Berhad (INSKEN)</strong>.
               </CardDescription>
             </div>
 
             {/* Quick Filters, Search & Currency Toggle */}
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative w-44 sm:w-52">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/60" />
                 <Input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search milestone / invoice..."
-                  className="h-8 pl-8 text-xs"
+                  className="h-8 pl-8 text-xs bg-white/10 border-white/20 text-white placeholder:text-white/50 focus-visible:ring-white/30"
                 />
               </div>
 
@@ -681,22 +569,22 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
               <select
                 value={paymentFilter}
                 onChange={(e) => setPaymentFilter(e.target.value as any)}
-                className="h-8 rounded-md border border-input bg-background px-2.5 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary"
+                className="h-8 rounded-md border border-white/20 bg-white/10 text-white px-2.5 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-white/30"
               >
-                <option value="ALL">All Payments</option>
-                <option value="PAID">Sudah Dibayar (Paid)</option>
-                <option value="PENDING">Belum Dibayar (Pending)</option>
-                <option value="IN_REVIEW">Dalam Semakan (In Review)</option>
+                <option value="ALL" className="text-foreground bg-background">All Payments</option>
+                <option value="PAID" className="text-foreground bg-background">Sudah Dibayar (Paid)</option>
+                <option value="PENDING" className="text-foreground bg-background">Belum Dibayar (Pending)</option>
+                <option value="IN_REVIEW" className="text-foreground bg-background">Dalam Semakan (In Review)</option>
               </select>
 
               {/* Currency Mode */}
-              <div className="flex items-center rounded-md border bg-muted/50 p-0.5 text-xs">
+              <div className="flex items-center rounded-md border border-white/20 bg-white/10 p-0.5 text-xs">
                 <button
                   type="button"
                   onClick={() => setCurrencyMode('BOTH')}
                   className={cn(
                     'px-2 py-1 rounded text-[11px] font-semibold transition-colors',
-                    currencyMode === 'BOTH' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'
+                    currencyMode === 'BOTH' ? 'bg-white text-[#0B1F3A] shadow-xs' : 'text-white/80 hover:text-white'
                   )}
                 >
                   USD + RM
@@ -706,7 +594,7 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
                   onClick={() => setCurrencyMode('USD')}
                   className={cn(
                     'px-2 py-1 rounded text-[11px] font-semibold transition-colors',
-                    currencyMode === 'USD' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'
+                    currencyMode === 'USD' ? 'bg-white text-[#0B1F3A] shadow-xs' : 'text-white/80 hover:text-white'
                   )}
                 >
                   USD
@@ -716,7 +604,7 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
                   onClick={() => setCurrencyMode('MYR')}
                   className={cn(
                     'px-2 py-1 rounded text-[11px] font-semibold transition-colors',
-                    currencyMode === 'MYR' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'
+                    currencyMode === 'MYR' ? 'bg-white text-[#0B1F3A] shadow-xs' : 'text-white/80 hover:text-white'
                   )}
                 >
                   RM
@@ -727,9 +615,50 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
         </CardHeader>
 
         <CardContent className="p-0">
+          {/* Dual-Color Milestone Grant Progress Bar (Exact screenshot style) */}
+          <div className="p-4 sm:p-6 pb-4 space-y-2 border-b bg-card">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <div className="text-sm sm:text-base font-bold text-foreground">
+                GRANT ALLOCATION: <span className="text-primary">{fmtUSD(totalUsdGrant)}</span>
+                <span className="text-xs text-muted-foreground ml-1.5 font-normal">
+                  (≈ {fmtRM(overview.totalClaimAmount)})
+                </span>
+              </div>
+              <div className="flex items-center gap-4 text-xs font-semibold">
+                <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  Sudah Dibayar (Disbursed): {fmtUSD(totalUsdPaid)} ({grantPctPaid.toFixed(1)}%)
+                </span>
+                <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                  <span className="h-2 w-2 rounded-full bg-amber-400" />
+                  Belum Dibayar (Remaining): {fmtUSD(totalUsdOutstanding)} ({grantPctRemaining.toFixed(1)}%)
+                </span>
+              </div>
+            </div>
+
+            {/* Dual color progress bar (Green & Yellow) */}
+            <div className="h-6 w-full rounded-md overflow-hidden bg-muted flex shadow-inner border">
+              <div
+                style={{ width: `${grantPctPaid}%` }}
+                className="h-full bg-[#16A34A] transition-all duration-500 flex items-center justify-center text-[10px] font-bold text-white shadow-sm"
+                title={`Disbursed: ${fmtUSD(totalUsdPaid)}`}
+              >
+                {grantPctPaid > 10 && `${grantPctPaid.toFixed(1)}%`}
+              </div>
+              <div
+                style={{ width: `${grantPctRemaining}%` }}
+                className="h-full bg-[#EAB308] transition-all duration-500 flex items-center justify-center text-[10px] font-bold text-amber-950 shadow-sm"
+                title={`Remaining: ${fmtUSD(totalUsdOutstanding)}`}
+              >
+                {grantPctRemaining > 10 && `${grantPctRemaining.toFixed(1)}%`}
+              </div>
+            </div>
+          </div>
+
+          {/* Table: Milestone Deliverables & Disbursement Schedule */}
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left">
-              <thead className="bg-[#0B1F3A] text-white uppercase text-[10px] font-bold tracking-wider">
+              <thead className="bg-[#1E3A8A] text-white uppercase text-[10px] font-bold tracking-wider">
                 <tr>
                   <th className="py-3 px-4">MILESTONE &amp; DELIVERABLES (ANNEX IV)</th>
                   <th className="py-3 px-3">DUE DATE</th>
@@ -752,8 +681,6 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
                 ) : (
                   filteredMilestones.map((m) => {
                     const isPaid = m.paymentStatus === 'PAID';
-                    const isCompleted = m.milestoneStatus === 'COMPLETED';
-                    const isExpanded = expandedMilestoneId === m.id;
 
                     return (
                       <tr
@@ -963,145 +890,6 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
                   <td colSpan={3} className="py-3 px-4 text-center text-[11px] text-muted-foreground font-normal">
                     Payer: <strong>ASEAN Foundation</strong> ➔ Recipient: <strong>INSKEN</strong>
                   </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 4. FINANCE TRACKING SECTION (DE Allocation & Progress Bar) */}
-      <Card className="border-border shadow-sm overflow-hidden">
-        <CardHeader className="bg-[#0B1F3A] text-white py-3.5 px-4 sm:px-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded bg-white/10 text-xs font-mono font-bold text-[#D4A017]">
-                7
-              </span>
-              <CardTitle className="text-sm sm:text-base font-bold tracking-wide uppercase">
-                FINANCE TRACKING
-              </CardTitle>
-            </div>
-            <div className="text-xs text-white/80 font-medium">
-              National Development Allocation
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className="p-4 sm:p-6 space-y-6">
-          {/* DE Allocation Visual Progress Bar (Exact look of screenshot) */}
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <div className="text-sm sm:text-base font-bold text-foreground">
-                DE ALLOCATION: <span className="text-primary">{fmtRM(deTotal)}</span>
-              </div>
-              <div className="flex items-center gap-4 text-xs font-semibold">
-                <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  Utilized: {fmtRM(deUtilized)} ({deUtilizedPct.toFixed(1)}%)
-                </span>
-                <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
-                  <span className="h-2 w-2 rounded-full bg-amber-400" />
-                  Remaining Allocation: {fmtRM(deRemaining)} ({deRemainingPct.toFixed(1)}%)
-                </span>
-              </div>
-            </div>
-
-            {/* Dual color progress bar (Green & Yellow) */}
-            <div className="h-6 w-full rounded-md overflow-hidden bg-muted flex shadow-inner border">
-              <div
-                style={{ width: `${deUtilizedPct}%` }}
-                className="h-full bg-[#16A34A] transition-all duration-500 flex items-center justify-center text-[10px] font-bold text-white shadow-sm"
-                title={`Utilized: ${fmtRM(deUtilized)}`}
-              >
-                {deUtilizedPct > 10 && `${deUtilizedPct.toFixed(1)}%`}
-              </div>
-              <div
-                style={{ width: `${deRemainingPct}%` }}
-                className="h-full bg-[#EAB308] transition-all duration-500 flex items-center justify-center text-[10px] font-bold text-amber-950 shadow-sm"
-                title={`Remaining: ${fmtRM(deRemaining)}`}
-              >
-                {deRemainingPct > 10 && `${deRemainingPct.toFixed(1)}%`}
-              </div>
-            </div>
-          </div>
-
-          {/* Table 1: Programme Allocation Table (Header in Dark Blue #1E3A8A) */}
-          <div className="overflow-x-auto rounded-lg border">
-            <table className="w-full text-xs text-left">
-              <thead className="bg-[#1E3A8A] text-white uppercase text-[11px] font-bold tracking-wider">
-                <tr>
-                  <th className="py-2.5 px-3">PROGRAMME</th>
-                  <th className="py-2.5 px-3 text-right">ALLOCATION (RM)</th>
-                  <th className="py-2.5 px-3 text-right">UTILIZED (RM)</th>
-                  <th className="py-2.5 px-3 text-right">COMMITTED (RM)</th>
-                  <th className="py-2.5 px-3 text-right">VARIANCE (RM)</th>
-                  <th className="py-2.5 px-2 text-center w-16">ACTION</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border font-medium">
-                {programmes.map((p) => {
-                  const varVal = p.allocation - p.utilized;
-                  return (
-                    <tr key={p.id} className="hover:bg-muted/40 transition-colors">
-                      <td className="py-2 px-3 font-semibold text-foreground uppercase">
-                        {p.name}
-                      </td>
-                      <td className="py-2 px-3 text-right tabular-nums text-foreground">
-                        {p.allocation.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </td>
-                      <td className="py-2 px-3 text-right tabular-nums text-emerald-600 dark:text-emerald-400 font-semibold">
-                        {p.utilized.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </td>
-                      <td className="py-2 px-3 text-right tabular-nums text-muted-foreground">
-                        {p.committed.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </td>
-                      <td className="py-2 px-3 text-right tabular-nums font-bold text-foreground">
-                        {varVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </td>
-                      <td className="py-2 px-2 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <button
-                            onClick={() => {
-                              setEditingProg(p);
-                              setProgForm(p);
-                              setIsProgModalOpen(true);
-                            }}
-                            className="p-1 hover:text-primary text-muted-foreground rounded"
-                            title="Edit"
-                          >
-                            <Edit2 className="h-3 w-3" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteProgramme(p.id, 'DE', p.name)}
-                            className="p-1 hover:text-destructive text-muted-foreground rounded"
-                            title="Delete"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-              {/* Total Row */}
-              <tfoot className="bg-muted/60 font-bold border-t-2 border-border text-foreground">
-                <tr>
-                  <td className="py-2.5 px-3 uppercase">Total</td>
-                  <td className="py-2.5 px-3 text-right tabular-nums">
-                    {deTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </td>
-                  <td className="py-2.5 px-3 text-right tabular-nums text-emerald-600 dark:text-emerald-400">
-                    {deUtilized.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </td>
-                  <td className="py-2.5 px-3 text-right tabular-nums text-muted-foreground">
-                    {overview.deCommittedTotal?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </td>
-                  <td className="py-2.5 px-3 text-right tabular-nums">
-                    {deRemaining.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </td>
-                  <td className="py-2.5 px-2"></td>
                 </tr>
               </tfoot>
             </table>
@@ -1378,100 +1166,6 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
                 className="h-8 bg-[#0B1F3A] hover:bg-[#112D55] text-white text-xs font-semibold"
               >
                 {saving ? 'Saving...' : 'Save Milestone'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* MODAL 2: ADD / EDIT PROGRAMME / INTERNAL BUDGET LINE */}
-      <Dialog open={isProgModalOpen} onOpenChange={setIsProgModalOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Layers className="h-5 w-5 text-primary" />
-              {editingProg ? 'Edit Budget Line' : 'Add New Budget Line'}
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              Add or adjust programme allocations (DE Allocation or Internal Department).
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleSaveProgramme} className="space-y-3.5 py-2 text-xs">
-            <div className="space-y-1">
-              <Label className="text-xs">Category</Label>
-              <select
-                value={progForm.category}
-                onChange={(e) => setProgForm({ ...progForm, category: e.target.value as any })}
-                className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs font-semibold"
-              >
-                <option value="DE">DE Allocation (Programme)</option>
-                <option value="INTERNAL">Internal Department Allocation</option>
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs">Programme / Department Name</Label>
-              <Input
-                value={progForm.name}
-                onChange={(e) => setProgForm({ ...progForm, name: e.target.value })}
-                placeholder="e.g. BANGKIT, BANGKIT SE, Social Entrepreneurship..."
-                required
-                className="h-8 text-xs"
-              />
-            </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              <div className="space-y-1">
-                <Label className="text-xs">Allocation (RM)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={progForm.allocation}
-                  onChange={(e) => setProgForm({ ...progForm, allocation: Number(e.target.value) })}
-                  className="h-8 text-xs"
-                  required
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Utilized (RM)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={progForm.utilized}
-                  onChange={(e) => setProgForm({ ...progForm, utilized: Number(e.target.value) })}
-                  className="h-8 text-xs text-emerald-600 font-semibold"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Committed (RM)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={progForm.committed}
-                  onChange={(e) => setProgForm({ ...progForm, committed: Number(e.target.value) })}
-                  className="h-8 text-xs"
-                />
-              </div>
-            </div>
-
-            <DialogFooter className="pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setIsProgModalOpen(false)}
-                className="h-8 text-xs"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                size="sm"
-                disabled={saving}
-                className="h-8 bg-[#0B1F3A] hover:bg-[#112D55] text-white text-xs font-semibold"
-              >
-                {saving ? 'Saving...' : 'Save Budget Line'}
               </Button>
             </DialogFooter>
           </form>
