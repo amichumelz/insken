@@ -3,17 +3,26 @@
 import { useEffect, useState } from 'react';
 import { Trainer, TrainerFeedback } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   BarChart,
   Bar,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
   Legend,
-  Line,
-  LineChart,
   ComposedChart,
 } from 'recharts';
 import {
@@ -21,7 +30,6 @@ import {
   Users,
   CheckCircle2,
   Star,
-  Clock,
   TrendingUp,
   Award,
   MessageSquare,
@@ -68,9 +76,10 @@ export function TrainerPerformance({ refreshTick = 0 }: { refreshTick?: number }
   }
 
   const active = trainers.find((t) => t.id === activeId) ?? trainers[0];
+  const allTestimonies = [...(active.postFeedback || []), ...(active.preFeedback || [])];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Coach Toggle */}
       <CoachToggle
         trainers={trainers}
@@ -78,36 +87,23 @@ export function TrainerPerformance({ refreshTick = 0 }: { refreshTick?: number }
         onSelect={setActiveId}
       />
 
-      {/* Coach Profile Header */}
+      {/* Coach Profile Header with Export Report Button */}
       <CoachProfileHeader trainer={active} />
 
-      {/* KPI Cards */}
+      {/* KPI Cards (4 Cards: Sessions, Participants, Attendance, Completion) */}
       <TrainerKpiCards kpi={active.kpi} />
 
       {/* Performance Trend */}
       <TrainerPerformanceChart performance={active.performance} />
 
-      {/* Pre / Post Feedback — side-by-side */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <FeedbackPanel
-          title="Pre-Session Feedback"
-          subtitle="Participant expectations & onboarding experience"
-          feedback={active.preFeedback}
-          tone="pre"
-        />
-        <FeedbackPanel
-          title="Post-Session Feedback"
-          subtitle="Outcomes, learnings & satisfaction after sessions"
-          feedback={active.postFeedback}
-          tone="post"
-        />
-      </div>
+      {/* Unified Single Section: Participant Testimony */}
+      <ParticipantTestimonyPanel testimonies={allTestimonies} trainerName={active.name} />
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// Coach Toggle — two buttons with active highlighted
+// Coach Toggle — buttons with active highlighted
 // ─────────────────────────────────────────────────────────────────────
 
 function CoachToggle({
@@ -121,8 +117,8 @@ function CoachToggle({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-2 shadow-sm">
-      <span className="ml-1 mr-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-        Select Coach
+      <span className="ml-1 mr-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        Select Coach:
       </span>
       {trainers.map((t) => {
         const isActive = t.id === activeId;
@@ -131,7 +127,7 @@ function CoachToggle({
             key={t.id}
             onClick={() => onSelect(t.id)}
             className={cn(
-              'group flex flex-1 items-center gap-2.5 rounded-lg border px-3 py-2 text-left transition-all sm:flex-none',
+              'group flex flex-1 items-center gap-2.5 rounded-lg border px-3.5 py-2 text-left transition-all sm:flex-none',
               isActive
                 ? 'border-primary bg-primary text-primary-foreground shadow-md'
                 : 'border-border bg-background hover:border-primary/40 hover:bg-muted/40',
@@ -148,19 +144,19 @@ function CoachToggle({
             <div className="min-w-0">
               <div
                 className={cn(
-                  'truncate text-sm font-semibold',
+                  'truncate text-xs font-bold',
                   isActive ? 'text-primary-foreground' : 'text-foreground',
                 )}
               >
-                {t.id === 'coach-a' ? 'Coach A' : 'Coach B'}
+                {t.name}
               </div>
               <div
                 className={cn(
-                  'truncate text-[11px]',
+                  'truncate text-[10px]',
                   isActive ? 'text-primary-foreground/80' : 'text-muted-foreground',
                 )}
               >
-                {t.name}
+                {t.role}
               </div>
             </div>
           </button>
@@ -171,12 +167,12 @@ function CoachToggle({
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// Coach Profile Header — name, role, specialty
+// Coach Profile Header — name, role, specialty, Avg Rating & Export
 // ─────────────────────────────────────────────────────────────────────
 
 function CoachProfileHeader({ trainer }: { trainer: Trainer }) {
   return (
-    <Card className="relative overflow-hidden">
+    <Card className="relative overflow-hidden border shadow-sm">
       <div className="absolute inset-0 bg-navy-gradient pointer-events-none" />
       <CardContent className="relative flex flex-col items-start gap-4 p-4 sm:flex-row sm:items-center sm:gap-4">
         <div
@@ -189,20 +185,16 @@ function CoachProfileHeader({ trainer }: { trainer: Trainer }) {
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-semibold tracking-tight">{trainer.name}</h2>
+            <h2 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">{trainer.name}</h2>
             <span className="rounded bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
-              {trainer.id === 'coach-a' ? 'Coach A' : 'Coach B'}
+              Lead Coach
             </span>
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {trainer.role} · {trainer.specialty}
           </p>
           <p className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <Calendar className="h-3 w-3" /> Joined{' '}
-            {new Date(trainer.joinedAt).toLocaleDateString('en-MY', {
-              month: 'short',
-              year: 'numeric',
-            })}
+            <Calendar className="h-3 w-3" /> Assigned Programme: ASEAN MSMEs AI Skills Training Programme
           </p>
         </div>
 
@@ -233,104 +225,71 @@ function CoachProfileHeader({ trainer }: { trainer: Trainer }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// Trainer KPI Cards
+// Trainer KPI Cards (4 Balanced Cards)
 // ─────────────────────────────────────────────────────────────────────
 
 function TrainerKpiCards({ kpi }: { kpi: Trainer['kpi'] }) {
   return (
-    <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-3 xl:grid-cols-6">
-      <Card className="relative overflow-hidden p-4 md:col-span-2 lg:col-span-1 xl:col-span-2">
-        <div className="absolute inset-0 bg-navy-gradient pointer-events-none" />
-        <div className="relative flex items-start justify-between gap-3">
+    <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
+      <Card className="relative overflow-hidden p-4 border shadow-sm">
+        <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              <Presentation className="h-3.5 w-3.5" />
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <Presentation className="h-3.5 w-3.5 text-indigo-600" />
               Sessions Conducted
             </div>
-            <div className="mt-2 text-3xl font-bold tabular-nums">{kpi.sessionsConducted}</div>
-            <div className="mt-1 text-[11px] text-muted-foreground">across 12-month period</div>
+            <div className="mt-2 text-2xl sm:text-3xl font-bold tabular-nums text-foreground">
+              {kpi.sessionsConducted}
+            </div>
+            <div className="mt-1 text-[11px] text-muted-foreground">across regional training halls</div>
           </div>
-          <div className="shrink-0 rounded-lg bg-primary/10 p-2">
-            <Presentation className="h-5 w-5 text-primary" />
+          <div className="shrink-0 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 p-2">
+            <Presentation className="h-5 w-5 text-indigo-600" />
           </div>
         </div>
       </Card>
 
-      <Card className="p-4">
+      <Card className="p-4 border shadow-sm">
         <div className="flex items-center justify-between">
-          <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Participants
+          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Participants Trained
           </div>
           <div className="rounded-lg bg-sky-500/10 p-1.5">
             <Users className="h-4 w-4 text-sky-600" />
           </div>
         </div>
-        <div className="mt-2 text-2xl font-bold tabular-nums">{fmt(kpi.totalParticipants)}</div>
-        <div className="mt-1 text-[11px] text-muted-foreground">total trained</div>
+        <div className="mt-2 text-2xl sm:text-3xl font-bold tabular-nums text-foreground">{fmt(kpi.totalParticipants)}</div>
+        <div className="mt-1 text-[11px] text-muted-foreground">MSME business owners</div>
       </Card>
 
-      <Card className="p-4">
+      <Card className="p-4 border shadow-sm">
         <div className="flex items-center justify-between">
-          <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Attendance
+          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Attendance Rate
           </div>
           <div className="rounded-lg bg-emerald-500/10 p-1.5">
             <CheckCircle2 className="h-4 w-4 text-emerald-600" />
           </div>
         </div>
-        <div className="mt-2 text-2xl font-bold tabular-nums text-emerald-600">
+        <div className="mt-2 text-2xl sm:text-3xl font-bold tabular-nums text-emerald-600">
           {kpi.attendanceRate}%
         </div>
-        <div className="mt-1 text-[11px] text-muted-foreground">avg session turnout</div>
+        <div className="mt-1 text-[11px] text-muted-foreground">average session turnout</div>
       </Card>
 
-      <Card className="p-4">
+      <Card className="p-4 border shadow-sm">
         <div className="flex items-center justify-between">
-          <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Completion
+          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Completion Rate
           </div>
           <div className="rounded-lg bg-amber-500/10 p-1.5">
             <Award className="h-4 w-4 text-amber-600" />
           </div>
         </div>
-        <div className="mt-2 text-2xl font-bold tabular-nums text-amber-600">
+        <div className="mt-2 text-2xl sm:text-3xl font-bold tabular-nums text-amber-600">
           {kpi.completionRate}%
         </div>
-        <div className="mt-1 text-[11px] text-muted-foreground">finished all modules</div>
-      </Card>
-
-      <Card className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Avg Rating
-          </div>
-          <div className="rounded-lg bg-rose-500/10 p-1.5">
-            <Star className="h-4 w-4 fill-rose-500 text-rose-500" />
-          </div>
-        </div>
-        <div className="mt-2 flex items-baseline gap-1">
-          <span className="text-2xl font-bold tabular-nums">
-            {kpi.avgRating > 0 ? kpi.avgRating.toFixed(1) : '—'}
-          </span>
-          <span className="text-xs text-muted-foreground">/ 5.0</span>
-        </div>
-        <div className="mt-1 text-[11px] text-muted-foreground">participant satisfaction</div>
-      </Card>
-
-      <Card className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Response Time
-          </div>
-          <div className="rounded-lg bg-violet-500/10 p-1.5">
-            <Clock className="h-4 w-4 text-violet-600" />
-          </div>
-        </div>
-        <div className="mt-2 flex items-baseline gap-1">
-          <span className="text-2xl font-bold tabular-nums">{kpi.responseTimeMins}</span>
-          <span className="text-xs text-muted-foreground">min</span>
-        </div>
-        <div className="mt-1 text-[11px] text-muted-foreground">avg reply to queries</div>
+        <div className="mt-1 text-[11px] text-muted-foreground">finished full 4-module syllabus</div>
       </Card>
     </div>
   );
@@ -342,81 +301,43 @@ function TrainerKpiCards({ kpi }: { kpi: Trainer['kpi'] }) {
 
 function TrainerPerformanceChart({ performance }: { performance: Trainer['performance'] }) {
   const totalSessions = performance.reduce((s, p) => s + p.sessions, 0);
-  // Only average over months that actually have data (sessions > 0); otherwise
-  // empty months drag the average down and the chart header shows misleading
-  // numbers like "Avg Attendance: 8%" when really only one month is at 92%.
   const activeMonths = performance.filter((p) => p.sessions > 0);
   const avgAttendance = activeMonths.length > 0
     ? Math.round(activeMonths.reduce((s, p) => s + p.attendance, 0) / activeMonths.length)
     : 0;
-  const ratingSum = activeMonths.reduce((s, p) => s + p.rating, 0);
-  const avgRating = ratingSum > 0
-    ? (ratingSum / activeMonths.length).toFixed(2)
-    : '—';
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <TrendingUp className="h-4 w-4 text-primary" />
-            Performance Over Time
-          </CardTitle>
-          <div className="flex flex-wrap items-center gap-3 text-xs">
-            <div>
-              <span className="text-muted-foreground">Sessions:</span>{' '}
-              <span className="font-semibold tabular-nums">{totalSessions}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Avg Attendance:</span>{' '}
-              <span className="font-semibold tabular-nums text-emerald-600">{avgAttendance}%</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Avg Rating:</span>{' '}
-              <span className="font-semibold tabular-nums text-amber-600">{avgRating}/5</span>
-            </div>
+    <Card className="border shadow-sm">
+      <CardHeader className="pb-3 px-4 sm:px-6 pt-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg font-bold">
+              <TrendingUp className="h-5 w-5 text-indigo-600" />
+              12-Month Performance Trend
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Monthly tracking of sessions conducted, attendance percentage & evaluation rating.
+            </p>
+          </div>
+          <div className="flex items-center gap-4 self-end sm:self-auto text-xs">
+            <span className="text-muted-foreground">
+              Total Sessions: <strong className="text-foreground">{totalSessions}</strong>
+            </span>
+            <span className="text-muted-foreground">
+              Avg Attendance: <strong className="text-emerald-600">{avgAttendance}%</strong>
+            </span>
           </div>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Monthly sessions conducted, attendance %, and participant rating
-        </p>
       </CardHeader>
-      <CardContent>
-        <div className="h-[280px]">
+      <CardContent className="px-2 sm:px-6 pb-5">
+        <div className="h-[260px] sm:h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={performance} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="sessionsBar" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#1E3A8A" stopOpacity={0.95} />
-                  <stop offset="100%" stopColor="#1E3A8A" stopOpacity={0.55} />
-                </linearGradient>
-              </defs>
+            <ComposedChart data={performance} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(120,120,120,0.12)" vertical={false} />
-              <XAxis
-                dataKey="month"
-                tick={{ fontSize: 10, fill: '#6b7280' }}
-                tickLine={false}
-                axisLine={false}
-                interval={0}
-              />
-              <YAxis
-                yAxisId="left"
-                tick={{ fontSize: 10, fill: '#6b7280' }}
-                tickLine={false}
-                axisLine={false}
-                width={28}
-              />
-              <YAxis
-                yAxisId="right"
-                orientation="right"
-                domain={[0, 100]}
-                tick={{ fontSize: 10, fill: '#6b7280' }}
-                tickLine={false}
-                axisLine={false}
-                width={36}
-              />
+              <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#6b7280' }} tickLine={false} axisLine={false} />
+              <YAxis yAxisId="left" orientation="left" tick={{ fontSize: 10, fill: '#6b7280' }} tickLine={false} axisLine={false} />
+              <YAxis yAxisId="right" orientation="right" domain={[0, 5]} tick={{ fontSize: 10, fill: '#6b7280' }} tickLine={false} axisLine={false} />
               <Tooltip
-                cursor={{ fill: 'rgba(120,120,120,0.06)' }}
                 contentStyle={{
                   background: 'rgba(11, 31, 58, 0.96)',
                   border: 'none',
@@ -425,43 +346,11 @@ function TrainerPerformanceChart({ performance }: { performance: Trainer['perfor
                   fontSize: 12,
                   padding: '8px 12px',
                 }}
-                labelStyle={{ color: '#D4A017', fontWeight: 600 }}
-                formatter={(value: number, name: string) => {
-                  if (name === 'sessions') return [`${value} sessions`, 'Sessions'];
-                  if (name === 'attendance')
-                    return [`${value}%`, 'Attendance'];
-                  return [`${value}/5`, 'Rating'];
-                }}
               />
-              <Legend
-                iconType="circle"
-                wrapperStyle={{ fontSize: 11, paddingTop: 6 }}
-                formatter={(value) => {
-                  if (value === 'sessions') return 'Sessions';
-                  if (value === 'attendance') return 'Attendance %';
-                  return 'Rating';
-                }}
-              />
-              <Bar yAxisId="left" dataKey="sessions" fill="url(#sessionsBar)" radius={[4, 4, 0, 0]} />
-              <Line
-                yAxisId="right"
-                type="monotone"
-                dataKey="attendance"
-                stroke="#10B981"
-                strokeWidth={2}
-                dot={{ r: 3, fill: '#10B981' }}
-                activeDot={{ r: 5 }}
-              />
-              <Line
-                yAxisId="right"
-                type="monotone"
-                dataKey="rating"
-                stroke="#D4A017"
-                strokeWidth={2}
-                strokeDasharray="4 2"
-                dot={{ r: 3, fill: '#D4A017' }}
-                activeDot={{ r: 5 }}
-              />
+              <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+              <Bar yAxisId="left" dataKey="sessions" name="Sessions" fill="#1E3A8A" radius={[4, 4, 0, 0]} maxBarSize={36} />
+              <Line yAxisId="left" type="monotone" dataKey="attendance" name="Attendance %" stroke="#10B981" strokeWidth={2} dot={{ r: 3, fill: '#10B981' }} activeDot={{ r: 5 }} />
+              <Line yAxisId="right" type="monotone" dataKey="rating" name="Rating (out of 5)" stroke="#D4A017" strokeWidth={2} strokeDasharray="4 2" dot={{ r: 3, fill: '#D4A017' }} activeDot={{ r: 5 }} />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
@@ -471,71 +360,96 @@ function TrainerPerformanceChart({ performance }: { performance: Trainer['perfor
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// Feedback Panel — Pre or Post
+// Single Unified Section: Participant Testimony Panel
 // ─────────────────────────────────────────────────────────────────────
 
-function FeedbackPanel({
-  title,
-  subtitle,
-  feedback,
-  tone,
+function ParticipantTestimonyPanel({
+  testimonies,
+  trainerName,
 }: {
-  title: string;
-  subtitle: string;
-  feedback: TrainerFeedback[];
-  tone: 'pre' | 'post';
+  testimonies: TrainerFeedback[];
+  trainerName: string;
 }) {
+  const [search, setSearch] = useState('');
+  const [filterRating, setFilterRating] = useState('all');
+
+  const filtered = testimonies.filter((t) => {
+    const matchesSearch =
+      t.participantName.toLowerCase().includes(search.toLowerCase()) ||
+      t.participantId.toLowerCase().includes(search.toLowerCase()) ||
+      t.comment.toLowerCase().includes(search.toLowerCase()) ||
+      t.session.toLowerCase().includes(search.toLowerCase());
+
+    const matchesRating = filterRating === 'all' || t.rating === parseInt(filterRating, 10);
+    return matchesSearch && matchesRating;
+  });
+
   const avgRating =
-    feedback.length > 0
-      ? (feedback.reduce((s, f) => s + f.rating, 0) / feedback.length).toFixed(1)
-      : '—';
-
-  const toneMeta =
-    tone === 'pre'
-      ? {
-          icon: MessageSquare,
-          iconTone: 'text-sky-600',
-          headerTone: 'bg-sky-50 dark:bg-sky-950/20',
-          badge: 'bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300',
-          barTone: 'bg-sky-500',
-        }
-      : {
-          icon: Quote,
-          iconTone: 'text-emerald-600',
-          headerTone: 'bg-emerald-50 dark:bg-emerald-950/20',
-          badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300',
-          barTone: 'bg-emerald-500',
-        };
-
-  const Icon = toneMeta.icon;
+    testimonies.length > 0
+      ? (testimonies.reduce((s, f) => s + f.rating, 0) / testimonies.length).toFixed(1)
+      : '5.0';
 
   return (
-    <Card className="h-full">
-      <CardHeader className={cn('pb-3', toneMeta.headerTone)}>
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Icon className={cn('h-4 w-4', toneMeta.iconTone)} />
-            {title}
-          </CardTitle>
-          <span
-            className={cn(
-              'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
-              toneMeta.badge,
-            )}
-          >
-            <Star className="h-2.5 w-2.5 fill-current" />
-            {avgRating} / 5
-          </span>
+    <Card className="border shadow-sm">
+      <CardHeader className="pb-3 px-4 sm:px-6 pt-5 bg-muted/20 border-b">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <Quote className="h-5 w-5 text-[#D4A017]" />
+              <CardTitle className="text-base sm:text-lg font-bold">
+                Participant Testimony
+              </CardTitle>
+              <Badge variant="outline" className="text-[11px] font-semibold bg-background">
+                {testimonies.length} Testimonials
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Direct participant reviews, ratings & feedback from the ASEAN MSMEs AI Skills Training Programme for {trainerName}.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+              <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
+              <span>Avg Rating: {avgRating} / 5.0</span>
+            </span>
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground">{subtitle}</p>
       </CardHeader>
-      <CardContent>
-        {feedback.length === 0 ? (
-          <div className="py-6 text-center text-xs text-muted-foreground">No feedback collected yet.</div>
+      <CardContent className="p-4 sm:p-6 space-y-4">
+        {/* Search & Filter Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2">
+          <div className="flex items-center gap-2 flex-1 sm:max-w-xs">
+            <Input
+              placeholder="Search testimony or participant..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-8 text-xs"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Select value={filterRating} onValueChange={setFilterRating}>
+              <SelectTrigger className="h-8 w-[130px] text-xs">
+                <SelectValue placeholder="All Ratings" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Ratings</SelectItem>
+                <SelectItem value="5">⭐⭐⭐⭐⭐ (5 Star)</SelectItem>
+                <SelectItem value="4">⭐⭐⭐⭐ (4 Star)</SelectItem>
+                <SelectItem value="3">⭐⭐⭐ (3 Star)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {filtered.length === 0 ? (
+          <div className="py-12 text-center text-xs text-muted-foreground">
+            No participant testimonies match your search.
+          </div>
         ) : (
-          <div className="max-h-[460px] space-y-3 overflow-y-auto scroll-styled pr-1">
-            {feedback.map((f) => (
-              <FeedbackItem key={f.id} feedback={f} barTone={toneMeta.barTone} />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            {filtered.map((f) => (
+              <TestimonyCard key={f.id} testimony={f} />
             ))}
           </div>
         )}
@@ -544,53 +458,50 @@ function FeedbackPanel({
   );
 }
 
-function FeedbackItem({
-  feedback,
-  barTone,
-}: {
-  feedback: TrainerFeedback;
-  barTone: string;
-}) {
+function TestimonyCard({ testimony }: { testimony: TrainerFeedback }) {
   return (
-    <div className={cn('rounded-lg border border-border/60 border-l-4 bg-muted/30 p-3')}>
-      <div
-        className={cn('mb-2 h-0.5 w-full rounded-full', barTone)}
-        style={{ display: 'none' }}
-      />
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="truncate text-sm font-semibold">{feedback.participantName}</div>
-          <div className="truncate font-mono text-[10px] text-muted-foreground">
-            {feedback.participantId}
+    <div className="rounded-xl border bg-card p-4 transition-all hover:shadow-md flex flex-col justify-between space-y-3 relative overflow-hidden group border-border hover:border-amber-300">
+      <div className="space-y-2.5">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-0.5">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star
+                key={i}
+                className={cn(
+                  'h-3.5 w-3.5',
+                  i < testimony.rating
+                    ? 'fill-amber-400 text-amber-400'
+                    : 'fill-muted text-muted',
+                )}
+              />
+            ))}
           </div>
+          <span className="font-mono text-[10px] text-muted-foreground">
+            {new Date(testimony.submittedAt).toLocaleDateString('en-GB', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+            })}
+          </span>
         </div>
-        <div className="flex shrink-0 items-center gap-0.5">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Star
-              key={i}
-              className={cn(
-                'h-3 w-3',
-                i < feedback.rating
-                  ? 'fill-amber-400 text-amber-400'
-                  : 'fill-muted text-muted',
-              )}
-            />
-          ))}
+
+        <p className="text-xs text-foreground/90 leading-relaxed italic">
+          "{testimony.comment}"
+        </p>
+      </div>
+
+      <div className="pt-2.5 border-t border-border/60 space-y-1">
+        <div className="flex items-center justify-between gap-2">
+          <div className="font-semibold text-xs text-foreground truncate">
+            {testimony.participantName}
+          </div>
+          <Badge variant="outline" className="font-mono text-[10px] shrink-0 text-primary">
+            {testimony.participantId}
+          </Badge>
         </div>
-      </div>
-      <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-        <Presentation className="h-3 w-3" />
-        {feedback.session}
-      </div>
-      <p className="mt-2 text-xs leading-relaxed text-foreground/80">{feedback.comment}</p>
-      <div className="mt-2 font-mono text-[10px] text-muted-foreground">
-        {new Date(feedback.submittedAt).toLocaleString('en-MY', {
-          day: '2-digit',
-          month: 'short',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-        })}
+        <div className="text-[10px] text-muted-foreground truncate">
+          {testimony.session}
+        </div>
       </div>
     </div>
   );

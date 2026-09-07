@@ -114,8 +114,7 @@ export function exportTrainerPerformanceCsv(trainer: Trainer) {
   csv += `Total Participants Trained,${trainer.kpi.totalParticipants}\n`;
   csv += `Attendance Rate (%),${trainer.kpi.attendanceRate}%\n`;
   csv += `Completion Rate (%),${trainer.kpi.completionRate}%\n`;
-  csv += `Average Rating (out of 5),${trainer.kpi.avgRating}\n`;
-  csv += `Response Time (Mins),${trainer.kpi.responseTimeMins} mins\n\n`;
+  csv += `Average Rating (out of 5),${trainer.kpi.avgRating}\n\n`;
 
   // SECTION 2: 12-MONTH PERFORMANCE TREND
   csv += `=== 12-MONTH PERFORMANCE TREND ===\n`;
@@ -130,25 +129,11 @@ export function exportTrainerPerformanceCsv(trainer: Trainer) {
   }
   csv += '\n';
 
-  // SECTION 3: PRE-SESSION FEEDBACK
-  csv += `=== PRE-SESSION PARTICIPANT FEEDBACK ===\n`;
+  // SECTION 3: PARTICIPANT TESTIMONIES
+  const allTestimonies = [...trainer.postFeedback, ...trainer.preFeedback];
+  csv += `=== PARTICIPANT TESTIMONIALS ===\n`;
   csv += `Participant ID,Participant Name,Session,Rating (out of 5),Comment,Submitted At\n`;
-  for (const f of trainer.preFeedback) {
-    csv += [
-      escapeCsvCell(f.participantId),
-      escapeCsvCell(f.participantName),
-      escapeCsvCell(f.session),
-      f.rating,
-      escapeCsvCell(f.comment),
-      escapeCsvCell(f.submittedAt),
-    ].join(',') + '\n';
-  }
-  csv += '\n';
-
-  // SECTION 4: POST-SESSION EVALUATIONS & TESTIMONIALS
-  csv += `=== POST-SESSION EVALUATIONS & TESTIMONIALS ===\n`;
-  csv += `Participant ID,Participant Name,Session,Rating (out of 5),Comment,Submitted At\n`;
-  for (const f of trainer.postFeedback) {
+  for (const f of allTestimonies) {
     csv += [
       escapeCsvCell(f.participantId),
       escapeCsvCell(f.participantName),
