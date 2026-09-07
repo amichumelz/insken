@@ -7,15 +7,10 @@ import { PieChart as PieIcon, TrendingUp, Download } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { exportSectoralBreakdownCsv } from '@/lib/export-utils';
+import { SECTOR_COLORS } from '@/lib/sectors';
 
-const SECTOR_COLORS = [
-  '#1E3A8A', // navy
-  '#D4A017', // gold
-  '#0891B2', // cyan
-  '#7C3AED', // violet
-  '#DC2626', // red
-  '#16A34A', // green
-  '#6B7280', // gray
+const DEFAULT_COLOR_PALETTE = [
+  '#0891B2', '#16A34A', '#2563EB', '#EC4899', '#EA580C', '#F59E0B', '#6366F1', '#D97706', '#9333EA', '#78716C', '#64748B'
 ];
 
 export function SectoralBreakdown({ sectors }: { sectors: SectorStat[] }) {
@@ -68,8 +63,8 @@ export function SectoralBreakdown({ sectors }: { sectors: SectorStat[] }) {
                   paddingAngle={2}
                   strokeWidth={0}
                 >
-                  {chartData.map((_, i) => (
-                    <Cell key={i} fill={SECTOR_COLORS[i % SECTOR_COLORS.length]} />
+                  {chartData.map((entry, i) => (
+                    <Cell key={i} fill={SECTOR_COLORS[entry.name] || DEFAULT_COLOR_PALETTE[i % DEFAULT_COLOR_PALETTE.length]} />
                   ))}
                 </Pie>
                 <Tooltip
@@ -100,7 +95,7 @@ export function SectoralBreakdown({ sectors }: { sectors: SectorStat[] }) {
                 <div className="flex min-w-0 items-center gap-2.5">
                   <span
                     className="h-3 w-3 shrink-0 rounded-full"
-                    style={{ background: SECTOR_COLORS[i % SECTOR_COLORS.length] }}
+                    style={{ background: SECTOR_COLORS[s.sector] || DEFAULT_COLOR_PALETTE[i % DEFAULT_COLOR_PALETTE.length] }}
                   />
                   <span className="truncate font-medium text-foreground">{s.sector}</span>
                 </div>

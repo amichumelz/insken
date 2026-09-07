@@ -179,12 +179,13 @@ export async function GET() {
           pct: Math.round((s._count._all / (totalParticipants || 1)) * 100),
         }))
       : [
-          { sector: 'Retail', count: 2, pct: 20 },
-          { sector: 'Food & Beverage', count: 2, pct: 20 },
+          { sector: 'Services (Tourism, Transport, Education, Healthcare, Retail, etc.)', count: 2, pct: 20 },
+          { sector: 'Food, Agriculture and Forestry', count: 2, pct: 20 },
+          { sector: 'Digital sector', count: 2, pct: 20 },
           { sector: 'Manufacturing', count: 1, pct: 10 },
-          { sector: 'Professional Services', count: 2, pct: 20 },
-          { sector: 'Agriculture', count: 2, pct: 20 },
-          { sector: 'Tech & Digital', count: 1, pct: 10 },
+          { sector: 'E-commerce', count: 1, pct: 10 },
+          { sector: 'Energy', count: 1, pct: 10 },
+          { sector: 'Construction', count: 1, pct: 10 },
         ];
 
     const milestonePcts = [0.25, 0.5, 0.75, 1];
@@ -289,12 +290,13 @@ export async function GET() {
         };
       }),
       sectors: [
-        { sector: 'Retail', count: 2, pct: 20 },
-        { sector: 'Food & Beverage', count: 2, pct: 20 },
+        { sector: 'Services (Tourism, Transport, Education, Healthcare, Retail, etc.)', count: 2, pct: 20 },
+        { sector: 'Food, Agriculture and Forestry', count: 2, pct: 20 },
+        { sector: 'Digital sector', count: 2, pct: 20 },
         { sector: 'Manufacturing', count: 1, pct: 10 },
-        { sector: 'Professional Services', count: 2, pct: 20 },
-        { sector: 'Agriculture', count: 2, pct: 20 },
-        { sector: 'Tech & Digital', count: 1, pct: 10 },
+        { sector: 'E-commerce', count: 1, pct: 10 },
+        { sector: 'Energy', count: 1, pct: 10 },
+        { sector: 'Construction', count: 1, pct: 10 },
       ],
       trend: exactDailyTrend,
       recentLogs: [],

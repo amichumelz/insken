@@ -1,25 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { REGION_CONFIG, RegionCode } from '@/lib/regions';
-
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-
-const FIRST_NAMES = [
-  'Ahmad', 'Siti', 'Lim', 'Tan', 'Wong', 'Raj', 'Priya', 'Muhammad', 'Nurul', 'Wei',
-  'Hafiz', 'Mei', 'Kumar', 'Aishah', 'Daniel', 'Fatimah', 'Chong', 'Anu', 'Suria', 'Koh',
-  'Azlan', 'Lina', 'Ravi', 'Nadia', 'Chin', 'Arun', 'Farah', 'Bala', 'Hasan', 'Yee',
-  'Syafiq', 'Nabilah', 'Jia', 'Liang', 'Suresh', 'Devi', 'Imran', 'Kavitha', 'Faiz', 'Melati',
-];
-const LAST_NAMES = [
-  'bin Abdullah', 'binti Hassan', 'Wei Ming', 'Hock Lee', 'Kumar', 'a/l Subramaniam',
-  'binti Omar', 'bin Rahman', 'Sze Ling', 'Chen Hui', 'binti Yusof', 'bin Ibrahim',
-  'Kaur', 'Pillai', 'binti Aziz', 'bin Ismail', 'Yong', 'Tan', 'Lee', 'Wong',
-];
-const SECTORS = [
-  'Retail', 'Food & Beverage', 'Professional Services',
-  'Tech & Digital', 'Manufacturing', 'Agriculture', 'Others',
-];
+import { SECTORS } from '@/lib/sectors';
 const SESSION_NAMES = [
   'AI for Retail Marketing',
   'ChatGPT for MSME Operations',

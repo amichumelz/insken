@@ -18,23 +18,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useLanguage } from '@/lib/i18n';
 import { exportParticipantRegistryCsv } from '@/lib/export-utils';
-
-// Same SECTORS list as the Registration form — single source of truth would be nicer,
-// but duplicating keeps both forms decoupled.
-const SECTORS = [
-  'Retail',
-  'Food & Beverage',
-  'Manufacturing',
-  'Healthcare',
-  'Education',
-  'Finance & Banking',
-  'Technology',
-  'Tourism & Hospitality',
-  'Government / Public Sector',
-  'Professional Services',
-  'Agriculture',
-  'Others',
-];
+import { SECTORS } from '@/lib/sectors';
 
 const STATUS_TONE: Record<string, string> = {
   DUPLICATE_ENTRY: 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300',

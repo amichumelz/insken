@@ -29,20 +29,7 @@ import {
 import { cn } from '@/lib/utils';
 import { RegisterResponse, WorkflowStep } from '@/lib/types';
 import { useLanguage } from '@/lib/i18n';
-
-const SECTORS = [
-  'Retail',
-  'Food & Beverage',
-  'Manufacturing',
-  'Healthcare',
-  'Education',
-  'Professional Services',
-  'Agriculture',
-  'Tech & Digital',
-  'Construction',
-  'Tourism & Hospitality',
-  'Others',
-];
+import { SECTORS } from '@/lib/sectors';
 
 const REGIONS = [
   { code: 'KL', name: 'Kuala Lumpur (KL)' },
