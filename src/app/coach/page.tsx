@@ -360,7 +360,7 @@ export default function CoachPortalPage() {
                         }`}
                       >
                         <MessageSquareHeart className="h-3.5 w-3.5 text-[#D4A017]" />
-                        <span>Feedback QR</span>
+                        <span>Testimony QR</span>
                       </Button>
                     </div>
                   </div>
@@ -391,7 +391,7 @@ export default function CoachPortalPage() {
                     className="h-9 text-xs sm:text-sm font-semibold gap-2"
                   >
                     <MessageSquareHeart className="h-4 w-4 text-[#D4A017]" />
-                    <span>2. Feedback Form Screen</span>
+                    <span>2. Testimony QR Screen</span>
                   </Button>
                 </div>
 
@@ -544,13 +544,13 @@ export default function CoachPortalPage() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-8 p-6 sm:p-10 items-center bg-gradient-to-r from-[#0B1F3A] via-[#1E1B4B] to-[#0B1F3A]">
-                    {/* Left: Giant Feedback QR */}
+                    {/* Left: Giant Testimony QR */}
                     <div className="md:col-span-5 flex flex-col items-center justify-center text-center">
                       <div className="rounded-3xl bg-white p-4 sm:p-6 shadow-2xl border-4 border-indigo-400">
                         {feedbackQrUrl ? (
                           <img
                             src={feedbackQrUrl}
-                            alt={`Feedback QR for ${selectedClass.coachName}`}
+                            alt={`Testimony QR for ${selectedClass.coachName}`}
                             className="h-56 w-56 sm:h-72 sm:w-72 object-contain"
                           />
                         ) : (
@@ -564,30 +564,30 @@ export default function CoachPortalPage() {
                         <Sparkles className="h-3.5 w-3.5" />
                         <span>
                           {feedbackPhase === 'pre'
-                            ? `Pre-Session Questionnaire (${selectedClass.coachName})`
-                            : `Post-Session Evaluation (${selectedClass.coachName})`}
+                            ? `Pre-Session Testimony (${selectedClass.coachName})`
+                            : `Participant Testimony (${selectedClass.coachName})`}
                         </span>
                       </div>
                     </div>
 
-                    {/* Right: Feedback Prompt */}
+                    {/* Right: Testimony Prompt */}
                     <div className="md:col-span-7 space-y-4">
                       <div>
                         <Badge className="bg-indigo-600 text-white font-bold text-xs uppercase mb-2">
-                          {feedbackPhase === 'pre' ? 'Pre-Session Survey' : 'Post-Session Evaluation'}
+                          {feedbackPhase === 'pre' ? 'Pre-Session Survey' : 'Participant Testimony'}
                         </Badge>
                         <h3 className="text-xl sm:text-3xl font-black text-white">
-                          Please Complete Your Training Feedback
+                          Scan to Share Your Training Testimony
                         </h3>
                         <p className="text-xs sm:text-sm text-white/75 mt-1 leading-relaxed">
-                          Your honest feedback regarding <strong>{selectedClass.coachName}</strong> at <strong>{selectedClass.venue}</strong> ensures high-quality training delivery.
+                          Your honest testimony and evaluation regarding <strong>{selectedClass.coachName}</strong> at <strong>{selectedClass.venue}</strong> helps INSKEN continually elevate training standards.
                         </p>
                       </div>
 
                       <div className="space-y-2.5">
                         <div className="flex items-center gap-3 rounded-xl bg-white/10 p-3 border border-white/15 text-xs">
                           <CheckCircle2 className="h-4 w-4 text-indigo-400 shrink-0" />
-                          <span>Trainer Mastery &amp; Content Clarity Evaluation</span>
+                          <span>Coach Mastery &amp; Content Clarity Evaluation</span>
                         </div>
                         <div className="flex items-center gap-3 rounded-xl bg-white/10 p-3 border border-white/15 text-xs">
                           <CheckCircle2 className="h-4 w-4 text-indigo-400 shrink-0" />
@@ -598,7 +598,7 @@ export default function CoachPortalPage() {
                       <div className="rounded-xl bg-amber-500/10 border border-amber-400/30 p-3.5 text-xs text-amber-200 flex items-start gap-2.5">
                         <Lock className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
                         <div className="text-[11px] leading-relaxed">
-                          <strong className="text-amber-300 block">Feedback Confidentiality:</strong>
+                          <strong className="text-amber-300 block">Testimony &amp; Rating Confidentiality:</strong>
                           All scores and comments submitted are strictly <strong>CONFIDENTIAL</strong> and reviewed exclusively by the <strong>Executive Admin Dashboard</strong>.
                         </div>
                       </div>

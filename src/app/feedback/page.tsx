@@ -93,11 +93,11 @@ function FeedbackFormContent() {
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="font-semibold text-xs sm:text-base truncate">INSKEN</span>
                 <span className="shrink-0 rounded bg-[#D4A017]/20 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold text-[#F59E0B]">
-                  {phase === 'pre' ? 'Pre-Session Survey' : 'Feedback Form'}
+                  {phase === 'pre' ? 'Pre-Session Survey' : 'Participant Testimony'}
                 </span>
               </div>
               <p className="text-[10px] sm:text-[11px] text-white/70 truncate hidden xs:block sm:block">
-                Training Quality &amp; Experience Evaluation
+                Participant Testimony &amp; Experience Evaluation
               </p>
             </div>
           </div>
@@ -113,10 +113,10 @@ function FeedbackFormContent() {
             </div>
             <div className="space-y-1">
               <h2 className="text-xl font-bold text-foreground">
-                Thank You for Your Feedback!
+                Thank You for Your Testimony!
               </h2>
               <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
-                Your evaluation has been securely recorded. Your feedback helps INSKEN continually elevate entrepreneurship training quality.
+                Your testimony and ratings have been securely recorded. Your feedback helps INSKEN continually elevate entrepreneurship training quality.
               </p>
             </div>
 
@@ -135,7 +135,7 @@ function FeedbackFormContent() {
             <div className="bg-gradient-to-r from-[#0B1F3A] via-[#112D55] to-[#0B1F3A] text-white p-5 sm:p-6 text-center space-y-2">
               <div className="inline-flex items-center gap-1.5 rounded-full bg-[#D4A017]/20 border border-[#D4A017]/40 px-3 py-0.5 text-xs font-bold text-[#F59E0B]">
                 <Sparkles className="h-3.5 w-3.5" />
-                <span>{phase === 'pre' ? 'PRE-SESSION SURVEY' : 'POST-SESSION EVALUATION'}</span>
+                <span>{phase === 'pre' ? 'PRE-SESSION SURVEY' : 'PARTICIPANT TESTIMONY'}</span>
               </div>
               <h1 className="text-lg sm:text-xl font-bold text-white">
                 {sessionParam}
@@ -289,12 +289,12 @@ function FeedbackFormContent() {
                   {submitting ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Submitting Feedback...</span>
+                      <span>Submitting Testimony...</span>
                     </>
                   ) : (
                     <>
                       <HeartHandshake className="h-4 w-4 text-[#D4A017]" />
-                      <span>Submit Official Feedback</span>
+                      <span>Submit Participant Testimony</span>
                     </>
                   )}
                 </Button>
