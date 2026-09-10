@@ -219,7 +219,7 @@ export function ParticipantsTable() {
               <tr className="text-left text-muted-foreground">
                 <th className="px-3 sm:px-4 py-2.5 font-medium">{t.regParticipantId}</th>
                 <th className="px-3 sm:px-4 py-2.5 font-medium">{t.dashName}</th>
-                <th className="hidden px-3 sm:px-4 py-2.5 font-medium sm:table-cell">{t.dashEmail}</th>
+                <th className="px-3 sm:px-4 py-2.5 font-medium">{t.dashEmail || 'Email'}</th>
                 <th className="hidden px-3 sm:px-4 py-2.5 font-medium md:table-cell">{t.regIcNumber}</th>
                 <th className="hidden px-3 sm:px-4 py-2.5 font-medium lg:table-cell">
                   {t.regSector} <span className="ml-1 text-[9px] font-normal text-muted-foreground">(click to edit)</span>
@@ -252,15 +252,8 @@ export function ParticipantsTable() {
                     <td className="whitespace-nowrap px-3 py-2 font-mono text-[11px] font-semibold text-primary">
                       {p.participantId}
                     </td>
-                    <td className="px-3 py-2 font-medium">
-                      <div>{p.name}</div>
-                      {p.email && (
-                        <div className="text-[10px] text-muted-foreground sm:hidden font-normal truncate max-w-[140px]">
-                          {p.email}
-                        </div>
-                      )}
-                    </td>
-                    <td className="hidden whitespace-nowrap px-3 py-2 text-[11px] text-muted-foreground sm:table-cell">
+                    <td className="px-3 py-2 font-medium">{p.name}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-[11px] text-muted-foreground">
                       {p.email ? (
                         <a
                           href={`mailto:${p.email}`}
