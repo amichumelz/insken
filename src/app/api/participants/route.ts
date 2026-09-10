@@ -90,7 +90,8 @@ export async function GET(req: NextRequest) {
       allMem = allMem.filter((p) =>
         p.name.toLowerCase().includes(q) ||
         p.icNumber.includes(q) ||
-        p.participantId.toLowerCase().includes(q)
+        p.participantId.toLowerCase().includes(q) ||
+        (p.email && p.email.toLowerCase().includes(q))
       );
     }
     if (region) allMem = allMem.filter((p) => p.region === region);

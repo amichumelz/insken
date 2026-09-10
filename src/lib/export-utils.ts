@@ -159,7 +159,7 @@ export function exportParticipantRegistryCsv(participants: Participant[]) {
   csv += `Generated On:,"${nowFormatted}"\n`;
   csv += `Total Records Exported:,${participants.length}\n\n`;
 
-  csv += `Participant ID,Full Name,National IC / Passport,Business Sector,Training Region,Preferred Mode,Final Mode,Status,Registered Date,Check-in Date\n`;
+  csv += `Participant ID,Full Name,Email,National IC / Passport,Business Sector,Training Region,Preferred Mode,Final Mode,Status,Registered Date,Check-in Date\n`;
 
   for (const p of participants) {
     const regDate = p.createdAt
@@ -172,6 +172,7 @@ export function exportParticipantRegistryCsv(participants: Participant[]) {
     csv += [
       escapeCsvCell(p.participantId),
       escapeCsvCell(p.name),
+      escapeCsvCell(p.email || ''),
       escapeCsvCell(p.icNumber),
       escapeCsvCell(p.sector),
       escapeCsvCell(p.region),
