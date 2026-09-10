@@ -17,7 +17,8 @@
     "d1:schema": "wrangler d1 execute insken-db --file=prisma/d1-schema.sql",
     "d1:seed": "wrangler d1 execute insken-db --file=prisma/d1-seed.sql",
     "d1:empty": "wrangler d1 execute insken-db --remote --file=prisma/d1-empty.sql",
-    "d1:clean": "wrangler d1 execute insken-db --remote --file=prisma/d1-clean-10.sql"
+    "d1:clean": "wrangler d1 execute insken-db --remote --file=prisma/d1-clean-10.sql",
+    "zip": "COPYFILE_DISABLE=1 zip -r -X insken-clean.zip . -x 'node_modules/*' -x '.next/*' -x '.open-next/*' -x '.git/*' -x '*.DS_Store' -x '__MACOSX*' -x '*.log' -x 'insken-clean.zip'"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
