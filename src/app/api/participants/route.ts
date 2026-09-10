@@ -5,43 +5,16 @@ import { inMemoryParticipants } from '@/lib/memory-store';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const BLOCKED_IDS = ['ASEAN-00011', 'ASEAN-00012', 'ASEAN-02063', 'ASEAN-02064', 'ASEAN-02065'];
-const BLOCKED_ICS = ['020608101087', '040221140768', '040222140768'];
-
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const q = (searchParams.get('q') ?? '').toLowerCase();
+    const q = (searchParams.get('q') ?? '').toLowerCase().trim();
     const region = searchParams.get('region') ?? '';
     const status = searchParams.get('status') ?? '';
     const limit = Math.min(Number(searchParams.get('limit') ?? '50'), 200);
     const offset = Number(searchParams.get('offset') ?? '0');
 
-    // Proactively clean up blocked test records from DB & memory
-    for (const bId of BLOCKED_IDS) {
-      inMemoryParticipants.delete(bId);
-    }
-
-    try {
-      await db.participant.deleteMany({
-        where: {
-          OR: [
-            { participantId: { in: BLOCKED_IDS } },
-            { icNumber: { in: BLOCKED_ICS } },
-            { name: { contains: 'Azlan' } },
-            { name: { contains: 'Fatin' } },
-            { name: { contains: 'Umar' } },
-          ],
-        },
-      });
-    } catch {
-      // Ignore
-    }
-
-    const where: any = {
-      participantId: { notIn: BLOCKED_IDS },
-      icNumber: { notIn: BLOCKED_ICS },
-    };
+    const where: any = {};
 
     if (q) {
       where.OR = [
@@ -51,79 +24,124 @@ export async function GET(req: NextRequest) {
         { email: { contains: q } },
       ];
     }
-    if (region) where.region = region;
-    if (status) where.status = status;
+    if (region && region !== 'all') where.region = region;
+    if (status && status !== 'all') where.status = status;
 
-    const [items, total] = await Promise.all([
-      db.participant.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        take: limit,
-        skip: offset,
-      }).catch(() => []),
-      db.participant.count({ where }).catch(() => 0),
-    ]);
+    let items: any[] = [];
+    let total = 0;
 
-    if (items.length > 0) {
-      const filtered = items.filter(
-        (p) =>
-          !BLOCKED_IDS.includes(p.participantId) &&
-          !BLOCKED_ICS.includes(p.icNumber) &&
-          !p.name.toLowerCase().includes('azlan') &&
-          !p.name.toLowerCase().includes('fatin') &&
-          !p.name.toLowerCase().includes('umar')
-      );
-      return NextResponse.json({ items: filtered, total: Math.min(total, filtered.length) });
+    try {
+      [items, total] = await Promise.all([
+        db.participant.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          take: limit,
+          skip: offset,
+        }),
+        db.participant.count({ where }),
+      ]);
+    } catch {
+      // DB error or offline, will fallback to memory
+      items = [];
+      total = 0;
+    }
+
+    if (items && items.length > 0) {
+      // Sync into inMemoryParticipants for resilient caching
+      for (const item of items) {
+        if (item.participantId) {
+          inMemoryParticipants.set(item.participantId, {
+            id: item.id,
+            participantId: item.participantId,
+            icNumber: item.icNumber,
+            name: item.name,
+            email: item.email,
+            phone: item.phone,
+            sector: item.sector,
+            region: item.region,
+            preferredMode: item.preferredMode,
+            finalMode: item.finalMode,
+            status: item.status,
+            checkInAt: item.checkInAt ? new Date(item.checkInAt).toISOString() : null,
+            createdAt: item.createdAt ? new Date(item.createdAt).toISOString() : new Date().toISOString(),
+          });
+        }
+      }
+      return NextResponse.json({ items, total });
     }
 
     // In-memory fallback
-    let allMem = Array.from(inMemoryParticipants.values()).filter(
-      (p) =>
-        !BLOCKED_IDS.includes(p.participantId) &&
-        !BLOCKED_ICS.includes(p.icNumber) &&
-        !p.name.toLowerCase().includes('azlan') &&
-        !p.name.toLowerCase().includes('fatin') &&
-        !p.name.toLowerCase().includes('umar')
-    );
+    let allMem = Array.from(inMemoryParticipants.values());
 
     if (q) {
       allMem = allMem.filter((p) =>
         p.name.toLowerCase().includes(q) ||
-        p.icNumber.includes(q) ||
+        p.icNumber.toLowerCase().includes(q) ||
         p.participantId.toLowerCase().includes(q) ||
         (p.email && p.email.toLowerCase().includes(q))
       );
     }
-    if (region) allMem = allMem.filter((p) => p.region === region);
-    if (status) allMem = allMem.filter((p) => p.status === status);
+    if (region && region !== 'all') allMem = allMem.filter((p) => p.region === region);
+    if (status && status !== 'all') allMem = allMem.filter((p) => p.status === status);
+
+    // Sort by createdAt descending
+    allMem.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     const memSlice = allMem.slice(offset, offset + limit);
     return NextResponse.json({ items: memSlice, total: allMem.length });
   } catch (error: any) {
-    const allMem = Array.from(inMemoryParticipants.values()).filter(
-      (p) => !BLOCKED_IDS.includes(p.participantId) && !BLOCKED_ICS.includes(p.icNumber)
-    );
+    const allMem = Array.from(inMemoryParticipants.values());
+    allMem.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     return NextResponse.json({ items: allMem.slice(0, 50), total: allMem.length });
   }
 }
 
 export async function PATCH(req: NextRequest) {
   try {
-    const body = (await req.json()) as { id?: string; sector?: string };
-    const { id, sector } = body;
+    const body = (await req.json()) as { id?: string; participantId?: string; sector?: string };
+    const { id, participantId, sector } = body;
 
-    if (!id || !sector || !sector.trim()) {
+    if ((!id && !participantId) || !sector || !sector.trim()) {
       return NextResponse.json(
-        { ok: false, error: 'Both id and sector are required.' },
+        { ok: false, error: 'Participant identification and sector are required.' },
         { status: 400 },
       );
     }
 
     const trimmedSector = sector.trim();
-    const updated = await db.participant.update({
-      where: { id },
-      data: { sector: trimmedSector },
-    }).catch(() => null);
+
+    // Update in DB
+    let updated: any = null;
+    try {
+      if (id) {
+        updated = await db.participant.update({
+          where: { id },
+          data: { sector: trimmedSector },
+        });
+      } else if (participantId) {
+        updated = await db.participant.update({
+          where: { participantId },
+          data: { sector: trimmedSector },
+        });
+      }
+    } catch {
+      // Ignore DB error
+    }
+
+    // Update in memory
+    const targetKey = participantId || updated?.participantId;
+    if (targetKey && inMemoryParticipants.has(targetKey)) {
+      const existing = inMemoryParticipants.get(targetKey)!;
+      inMemoryParticipants.set(targetKey, { ...existing, sector: trimmedSector });
+    } else {
+      // Look up by id in memory
+      for (const [key, val] of inMemoryParticipants.entries()) {
+        if (val.id === id) {
+          inMemoryParticipants.set(key, { ...val, sector: trimmedSector });
+          break;
+        }
+      }
+    }
 
     return NextResponse.json({ ok: true, participant: updated });
   } catch {
@@ -139,13 +157,27 @@ export async function DELETE(req: NextRequest) {
 
     if (participantId) {
       inMemoryParticipants.delete(participantId);
-      await db.participant.deleteMany({
-        where: { participantId },
-      }).catch(() => null);
+      try {
+        await db.participant.deleteMany({
+          where: { participantId },
+        });
+      } catch {
+        // Ignore
+      }
     } else if (id) {
-      await db.participant.delete({
-        where: { id },
-      }).catch(() => null);
+      for (const [key, val] of inMemoryParticipants.entries()) {
+        if (val.id === id) {
+          inMemoryParticipants.delete(key);
+          break;
+        }
+      }
+      try {
+        await db.participant.delete({
+          where: { id },
+        });
+      } catch {
+        // Ignore
+      }
     }
 
     return NextResponse.json({ ok: true, message: 'Participant deleted.' });

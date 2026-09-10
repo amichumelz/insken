@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import QRCode from 'qrcode';
 import { db } from '@/lib/db';
 import { REGION_CONFIG, RegionCode } from '@/lib/regions';
+import { inMemoryParticipants, inMemoryAuditLogs, CachedParticipant } from '@/lib/memory-store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -82,8 +83,17 @@ export async function POST(req: NextRequest) {
   const regionCode = (region in REGION_CONFIG ? region : 'KL') as RegionCode;
   const cfg = REGION_CONFIG[regionCode];
 
-  // Phase 1: Duplicate Check
-  const existing = await db.participant.findUnique({ where: { icNumber } });
+  // Phase 1: Duplicate Check in DB and Memory
+  let existing: any = null;
+  try {
+    existing = await db.participant.findUnique({ where: { icNumber } });
+  } catch {
+    // Ignore DB error
+  }
+  if (!existing) {
+    existing = Array.from(inMemoryParticipants.values()).find((p) => p.icNumber === icNumber);
+  }
+
   if (existing) {
     workflow.push({
       phase: 'Phase 1: Validation',
@@ -92,14 +102,24 @@ export async function POST(req: NextRequest) {
       detail: `IC ${icNumber} already registered as ${existing.participantId}. Triggering DUPLICATE_ENTRY rejection.`,
       timestamp: new Date().toISOString(),
     });
-    await db.auditLog.create({
-      data: {
+    try {
+      await db.auditLog.create({
+        data: {
+          action: 'DUPLICATE_BLOCKED',
+          participant: name,
+          icNumber,
+          detail: `Duplicate registration attempt blocked — IC ${icNumber} already exists for ${existing.participantId}.`,
+        },
+      });
+    } catch {
+      inMemoryAuditLogs.unshift({
+        id: `audit-${Date.now()}`,
         action: 'DUPLICATE_BLOCKED',
         participant: name,
-        icNumber,
         detail: `Duplicate registration attempt blocked — IC ${icNumber} already exists for ${existing.participantId}.`,
-      },
-    });
+        createdAt: new Date().toISOString(),
+      });
+    }
     return NextResponse.json({
       ok: false,
       status: 'DUPLICATE_ENTRY',
@@ -118,9 +138,16 @@ export async function POST(req: NextRequest) {
   });
 
   // Phase 2: Capacity Check
-  const physicalCount = await db.participant.count({
-    where: { region: regionCode, finalMode: 'Registered_Physical' },
-  });
+  let physicalCount = 0;
+  try {
+    physicalCount = await db.participant.count({
+      where: { region: regionCode, finalMode: 'Registered_Physical' },
+    });
+  } catch {
+    physicalCount = Array.from(inMemoryParticipants.values()).filter(
+      (p) => p.region === regionCode && p.finalMode === 'Registered_Physical'
+    ).length;
+  }
 
   let finalMode: 'Registered_Physical' | 'Registered_Online';
   let capacityRouted = false;
@@ -146,15 +173,19 @@ export async function POST(req: NextRequest) {
       detail: `Physical seats ${physicalCount}/${cfg.physicalCap} full. Auto-fallback to Registered_Online (priority session).`,
       timestamp: new Date().toISOString(),
     });
-    await db.alert.create({
-      data: {
-        type: 'CAPACITY_FULL',
-        region: regionCode,
-        message: `${cfg.name} physical seats full (${physicalCount}/${cfg.physicalCap}). Auto-fallback to Online active for incoming registrations.`,
-        severity: 'critical',
-        metadata: JSON.stringify({ region: regionCode, physicalCount, cap: cfg.physicalCap }),
-      },
-    });
+    try {
+      await db.alert.create({
+        data: {
+          type: 'CAPACITY_FULL',
+          region: regionCode,
+          message: `${cfg.name} physical seats full (${physicalCount}/${cfg.physicalCap}). Auto-fallback to Online active for incoming registrations.`,
+          severity: 'critical',
+          metadata: JSON.stringify({ region: regionCode, physicalCount, cap: cfg.physicalCap }),
+        },
+      });
+    } catch {
+      // Ignore
+    }
   } else {
     finalMode = 'Registered_Online';
     workflow.push({
@@ -167,7 +198,14 @@ export async function POST(req: NextRequest) {
   }
 
   // Asset generation: unique participant ID + real QR code (PNG data URL)
-  const totalSoFar = await db.participant.count();
+  let totalSoFar = inMemoryParticipants.size;
+  try {
+    const dbTotal = await db.participant.count();
+    totalSoFar = Math.max(dbTotal, inMemoryParticipants.size);
+  } catch {
+    totalSoFar = inMemoryParticipants.size;
+  }
+
   const participantId = `ASEAN-${String(totalSoFar + 1).padStart(5, '0')}`;
   const qrSeed = `${participantId}|${icNumber}`;
 
@@ -215,29 +253,62 @@ export async function POST(req: NextRequest) {
     timestamp: new Date().toISOString(),
   });
 
-  const created = await db.participant.create({
-    data: {
-      participantId,
-      icNumber,
-      name,
-      email,
-      phone,
-      sector,
-      region: regionCode,
-      preferredMode,
-      finalMode,
-      status: finalMode,
-    },
-  });
+  let created: any = null;
+  try {
+    created = await db.participant.create({
+      data: {
+        participantId,
+        icNumber,
+        name,
+        email,
+        phone,
+        sector,
+        region: regionCode,
+        preferredMode,
+        finalMode,
+        status: finalMode,
+      },
+    });
+  } catch (err) {
+    console.warn('DB participant create fallback to memory:', err);
+  }
 
-  await db.auditLog.create({
-    data: {
+  // Always sync to memory store
+  const record: CachedParticipant = {
+    id: created?.id || `p-${Date.now()}`,
+    participantId,
+    icNumber,
+    name,
+    email,
+    phone,
+    sector,
+    region: regionCode,
+    preferredMode,
+    finalMode,
+    status: finalMode,
+    checkInAt: null,
+    createdAt: created?.createdAt ? new Date(created.createdAt).toISOString() : new Date().toISOString(),
+  };
+  inMemoryParticipants.set(participantId, record);
+
+  try {
+    await db.auditLog.create({
+      data: {
+        action: 'REGISTER',
+        participant: name,
+        icNumber,
+        detail: `Registered as ${participantId} via ${finalMode}. Region: ${cfg.name}.`,
+      },
+    });
+  } catch {
+    inMemoryAuditLogs.unshift({
+      id: `audit-${Date.now()}`,
       action: 'REGISTER',
       participant: name,
-      icNumber,
       detail: `Registered as ${participantId} via ${finalMode}. Region: ${cfg.name}.`,
-    },
-  });
+      createdAt: new Date().toISOString(),
+    });
+  }
 
   // Check 80% warning threshold post-registration
   const newPhysical = await db.participant.count({

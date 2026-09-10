@@ -80,7 +80,15 @@ export async function POST(req: NextRequest) {
         status: finalStatus,
         checkInAt: new Date().toISOString(),
       };
-      inMemoryParticipants.set(participant.participantId, participant);
+    }
+
+    if (participant.participantId) {
+      const memCopy = inMemoryParticipants.get(participant.participantId) || participant;
+      inMemoryParticipants.set(participant.participantId, {
+        ...memCopy,
+        status: finalStatus,
+        checkInAt: new Date().toISOString(),
+      });
     }
 
     // 3. Log to audit

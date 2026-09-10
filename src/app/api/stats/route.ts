@@ -6,9 +6,6 @@ import { REGION_CONFIG, REGIONS, GLOBAL_TARGET } from '@/lib/regions';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const BLOCKED_IDS = ['ASEAN-00011', 'ASEAN-00012', 'ASEAN-02063', 'ASEAN-02064', 'ASEAN-02065'];
-const BLOCKED_ICS = ['020608101087', '040221140768', '040222140768'];
-
 // In-memory 5-second cache
 let cachedStats: any = null;
 let lastCacheTime = 0;
@@ -21,9 +18,6 @@ function computeExactRegistrationTrend(
 
   for (const p of participants) {
     if (!p.createdAt) continue;
-    if (p.participantId && BLOCKED_IDS.includes(p.participantId)) continue;
-    if (p.icNumber && BLOCKED_ICS.includes(p.icNumber)) continue;
-    if (p.name && (p.name.toLowerCase().includes('azlan') || p.name.toLowerCase().includes('fatin') || p.name.toLowerCase().includes('umar'))) continue;
 
     const dateObj = new Date(p.createdAt);
     if (isNaN(dateObj.getTime())) continue;
@@ -75,16 +69,8 @@ export async function GET() {
     return NextResponse.json(cachedStats);
   }
 
-  // Cleanup from in-memory store
-  for (const bId of BLOCKED_IDS) {
-    inMemoryParticipants.delete(bId);
-  }
-
   try {
-    const baseWhere = {
-      participantId: { notIn: BLOCKED_IDS },
-      icNumber: { notIn: BLOCKED_ICS },
-    };
+    const baseWhere = {};
 
     const [
       totalParticipants,
@@ -235,9 +221,7 @@ export async function GET() {
     return NextResponse.json(responsePayload);
   } catch (error: any) {
     console.warn('D1 limit fallback activated for /api/stats');
-    const participantList = Array.from(inMemoryParticipants.values()).filter(
-      (p) => !BLOCKED_IDS.includes(p.participantId) && !BLOCKED_ICS.includes(p.icNumber)
-    );
+    const participantList = Array.from(inMemoryParticipants.values());
     const exactDailyTrend = computeExactRegistrationTrend(participantList);
 
     const totalParticipants = participantList.length;
