@@ -81,6 +81,8 @@ export interface Participant {
   name: string;
   email: string;
   phone: string;
+  age?: number | null;
+  gender?: string | null;
   sector: string;
   region: string;
   preferredMode: string;

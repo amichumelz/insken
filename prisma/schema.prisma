@@ -19,6 +19,8 @@ model Participant {
   name           String
   email          String
   phone          String
+  age            Int?
+  gender         String?  // Male | Female
   sector         String   // Retail, F&B, Professional Services, Tech, Manufacturing, Agriculture
   region         String   // KL, JHR, PNG, SBH, SWK
   preferredMode  String   // Physical | Online
@@ -31,6 +33,7 @@ model Participant {
   @@index([region, status])
   @@index([status])
   @@index([sector])
+  @@index([gender])
 }
 
 model Alert {

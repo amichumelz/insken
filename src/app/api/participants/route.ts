@@ -57,6 +57,8 @@ export async function GET(req: NextRequest) {
             name: item.name,
             email: item.email,
             phone: item.phone,
+            age: item.age ?? null,
+            gender: item.gender ?? null,
             sector: item.sector,
             region: item.region,
             preferredMode: item.preferredMode,

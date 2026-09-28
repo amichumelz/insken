@@ -12,6 +12,8 @@ interface RegisterPayload {
   name: string;
   email: string;
   phone: string;
+  age?: number | string;
+  gender?: string;
   sector: string;
   region: string;
   preferredMode: string;
@@ -60,7 +62,10 @@ function buildWhatsAppPayload(opts: {
  */
 export async function POST(req: NextRequest) {
   const body = (await req.json()) as RegisterPayload;
-  const { icNumber, name, email, phone, sector, region, preferredMode } = body;
+  const { icNumber, name, email, phone, age, gender, sector, region, preferredMode } = body;
+
+  const parsedAge = age ? parseInt(String(age), 10) : null;
+  const cleanGender = gender ? String(gender).trim() : null;
 
   const workflow: Array<{ phase: string; step: string; status: 'success' | 'rejected' | 'routed'; detail: string; timestamp: string }> = [];
   const t0 = new Date().toISOString();
@@ -68,9 +73,10 @@ export async function POST(req: NextRequest) {
     phase: 'Phase 1: Ingestion',
     step: 'Payload Extraction',
     status: 'success',
-    detail: `Extracted IC=${icNumber}, Name=${name}, Region=${region}, Mode=${preferredMode}, Sector=${sector}`,
+    detail: `Extracted IC=${icNumber}, Name=${name}, Age=${parsedAge ?? 'N/A'}, Gender=${cleanGender ?? 'N/A'}, Region=${region}, Mode=${preferredMode}, Sector=${sector}`,
     timestamp: t0,
   });
+
 
   // Validate required fields
   if (!icNumber || !name || !email || !region || !sector) {
@@ -262,6 +268,8 @@ export async function POST(req: NextRequest) {
         name,
         email,
         phone,
+        age: parsedAge,
+        gender: cleanGender,
         sector,
         region: regionCode,
         preferredMode,
@@ -281,6 +289,8 @@ export async function POST(req: NextRequest) {
     name,
     email,
     phone,
+    age: parsedAge,
+    gender: cleanGender,
     sector,
     region: regionCode,
     preferredMode,

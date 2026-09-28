@@ -212,11 +212,13 @@ export function ParticipantsTable() {
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto scroll-styled">
-          <table className="w-full text-xs min-w-[720px]">
+          <table className="w-full text-xs min-w-[840px]">
             <thead className="border-y bg-muted/40">
               <tr className="text-left text-muted-foreground">
                 <th className="px-3 sm:px-4 py-2.5 font-medium">{t.regParticipantId}</th>
                 <th className="px-3 sm:px-4 py-2.5 font-medium">{t.dashName}</th>
+                <th className="px-3 sm:px-4 py-2.5 font-medium">{lang === 'ms' ? 'Jantina' : 'Gender'}</th>
+                <th className="px-3 sm:px-4 py-2.5 font-medium">{lang === 'ms' ? 'Umur' : 'Age'}</th>
                 <th className="px-3 sm:px-4 py-2.5 font-medium">{t.dashEmail || 'Email'}</th>
                 <th className="hidden px-3 sm:px-4 py-2.5 font-medium md:table-cell">{t.regIcNumber}</th>
                 <th className="hidden px-3 sm:px-4 py-2.5 font-medium lg:table-cell">
@@ -231,13 +233,13 @@ export function ParticipantsTable() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
+                  <td colSpan={11} className="px-3 py-8 text-center text-muted-foreground">
                     Loading registry...
                   </td>
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
+                  <td colSpan={11} className="px-3 py-8 text-center text-muted-foreground">
                     No participants found.
                   </td>
                 </tr>
@@ -251,6 +253,26 @@ export function ParticipantsTable() {
                       {p.participantId}
                     </td>
                     <td className="px-3 py-2 font-medium">{p.name}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-[11px]">
+                      {p.gender ? (
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            'text-[10px] font-medium px-1.5 py-0.5 border shadow-2xs',
+                            p.gender.toLowerCase() === 'female' || p.gender.toLowerCase() === 'perempuan'
+                              ? 'bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-950/40 dark:text-pink-300 dark:border-pink-900/50'
+                              : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900/50'
+                          )}
+                        >
+                          {p.gender === 'Female' ? 'Perempuan' : p.gender === 'Male' ? 'Lelaki' : p.gender}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-2 text-[11px] font-mono text-muted-foreground">
+                      {p.age ? `${p.age} thn` : '—'}
+                    </td>
                     <td className="whitespace-nowrap px-3 py-2 text-[11px] text-muted-foreground">
                       {p.email ? (
                         <a

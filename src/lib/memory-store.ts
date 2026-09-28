@@ -8,6 +8,8 @@ export interface CachedParticipant {
   name: string;
   email: string;
   phone: string;
+  age?: number | null;
+  gender?: string | null;
   sector: string;
   region: string;
   preferredMode: string;
@@ -28,6 +30,8 @@ const SAMPLE_10: CachedParticipant[] = [
     name: 'Ahmad Farhan bin Rosli',
     email: 'farhan.rosli@msme.my',
     phone: '+60123456701',
+    age: 38,
+    gender: 'Male',
     sector: 'Services (Tourism, Transport, Education, Healthcare, Retail, etc.)',
     region: 'KL',
     preferredMode: 'Physical',
@@ -43,6 +47,8 @@ const SAMPLE_10: CachedParticipant[] = [
     name: 'Nur Aisyah binti Zakaria',
     email: 'aisyah.z@msme.my',
     phone: '+60123456702',
+    age: 35,
+    gender: 'Female',
     sector: 'Food, Agriculture and Forestry',
     region: 'JHR',
     preferredMode: 'Online',
@@ -58,6 +64,8 @@ const SAMPLE_10: CachedParticipant[] = [
     name: 'Tan Wei Loon',
     email: 'weiloon.tan@msme.my',
     phone: '+60123456703',
+    age: 41,
+    gender: 'Male',
     sector: 'Manufacturing',
     region: 'PNG',
     preferredMode: 'Physical',
@@ -73,6 +81,8 @@ const SAMPLE_10: CachedParticipant[] = [
     name: 'Mohd Danial bin Yusof',
     email: 'danial.y@msme.my',
     phone: '+60123456704',
+    age: 33,
+    gender: 'Male',
     sector: 'Digital sector',
     region: 'SBH',
     preferredMode: 'Physical',
@@ -88,6 +98,8 @@ const SAMPLE_10: CachedParticipant[] = [
     name: 'Grace Ting Sie Ping',
     email: 'grace.ting@msme.my',
     phone: '+60123456705',
+    age: 37,
+    gender: 'Female',
     sector: 'Food, Agriculture and Forestry',
     region: 'SWK',
     preferredMode: 'Online',
@@ -103,6 +115,8 @@ const SAMPLE_10: CachedParticipant[] = [
     name: 'Priya a/p Subramaniam',
     email: 'priya.s@msme.my',
     phone: '+60123456706',
+    age: 32,
+    gender: 'Female',
     sector: 'Services (Tourism, Transport, Education, Healthcare, Retail, etc.)',
     region: 'KL',
     preferredMode: 'Physical',
@@ -118,6 +132,8 @@ const SAMPLE_10: CachedParticipant[] = [
     name: 'Hafiz bin Mansor',
     email: 'hafiz.m@msme.my',
     phone: '+60123456707',
+    age: 36,
+    gender: 'Male',
     sector: 'E-commerce',
     region: 'JHR',
     preferredMode: 'Physical',
@@ -133,6 +149,8 @@ const SAMPLE_10: CachedParticipant[] = [
     name: 'Lim Chee Keong',
     email: 'cheekeong.lim@msme.my',
     phone: '+60123456708',
+    age: 39,
+    gender: 'Male',
     sector: 'Digital sector',
     region: 'PNG',
     preferredMode: 'Online',
@@ -148,6 +166,8 @@ const SAMPLE_10: CachedParticipant[] = [
     name: 'Siti Hajar binti Ibrahim',
     email: 'hajar.i@msme.my',
     phone: '+60123456709',
+    age: 31,
+    gender: 'Female',
     sector: 'Energy',
     region: 'SBH',
     preferredMode: 'Online',
@@ -163,6 +183,8 @@ const SAMPLE_10: CachedParticipant[] = [
     name: 'Brandon Anak Walter',
     email: 'brandon.w@msme.my',
     phone: '+60123456710',
+    age: 34,
+    gender: 'Male',
     sector: 'Construction',
     region: 'SWK',
     preferredMode: 'Physical',
@@ -176,3 +198,4 @@ const SAMPLE_10: CachedParticipant[] = [
 for (const p of SAMPLE_10) {
   inMemoryParticipants.set(p.participantId, p);
 }
+

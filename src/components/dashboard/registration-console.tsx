@@ -46,6 +46,8 @@ export function RegistrationConsole() {
     name: '',
     email: '',
     phone: '',
+    age: '',
+    gender: '',
     sector: '',
     otherSector: '',
     region: 'KL',
@@ -55,16 +57,56 @@ export function RegistrationConsole() {
   const [submitting, setSubmitting] = useState(false);
   const [response, setResponse] = useState<RegisterResponse | null>(null);
 
+  const handleIcChange = (icVal: string) => {
+    const clean = icVal.replace(/[^0-9]/g, '');
+    let autoAge = form.age;
+    let autoGender = form.gender;
+
+    if (clean.length >= 6 && !form.age) {
+      const yy = parseInt(clean.slice(0, 2), 10);
+      const currentYear = new Date().getFullYear();
+      const fullYear = yy > (currentYear % 100) ? 1900 + yy : 2000 + yy;
+      const calculatedAge = currentYear - fullYear;
+      if (calculatedAge >= 15 && calculatedAge <= 100) {
+        autoAge = String(calculatedAge);
+      }
+    }
+    if (clean.length === 12 && !form.gender) {
+      const lastDigit = parseInt(clean.slice(-1), 10);
+      autoGender = lastDigit % 2 === 0 ? 'Female' : 'Male';
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      icNumber: icVal,
+      age: autoAge,
+      gender: autoGender,
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.icNumber.trim() || !form.name.trim() || !form.email.trim() || !form.phone.trim() || !form.sector) {
-      toast.error(lang === 'ms' ? 'Sila lengkapkan semua ruangan wajib termasuk No. Telefon WhatsApp.' : 'Please fill in all required fields including WhatsApp Phone Number.');
+    if (
+      !form.icNumber.trim() ||
+      !form.name.trim() ||
+      !form.email.trim() ||
+      !form.phone.trim() ||
+      !form.sector ||
+      !form.age ||
+      !form.gender
+    ) {
+      toast.error(
+        lang === 'ms'
+          ? 'Sila lengkapkan semua ruangan wajib termasuk Umur dan Jantina.'
+          : 'Please fill in all required fields including Age and Gender.'
+      );
       return;
     }
 
     const payload = {
       ...form,
+      age: parseInt(form.age, 10),
       sector: form.sector === 'Others' && form.otherSector ? form.otherSector : form.sector,
     };
 
@@ -98,6 +140,8 @@ export function RegistrationConsole() {
       name: '',
       email: '',
       phone: '',
+      age: '',
+      gender: '',
       sector: '',
       otherSector: '',
       region: 'KL',
@@ -164,7 +208,7 @@ export function RegistrationConsole() {
               <Input
                 id="ic"
                 value={form.icNumber}
-                onChange={(e) => setForm({ ...form, icNumber: e.target.value })}
+                onChange={(e) => handleIcChange(e.target.value)}
                 placeholder={t.regIcPlaceholder}
                 className="font-mono text-sm h-10"
                 required
@@ -215,6 +259,47 @@ export function RegistrationConsole() {
                 className="h-10 text-sm"
                 required
               />
+            </div>
+
+            {/* Age & Gender */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="age" className="text-xs font-semibold">
+                  {lang === 'ms' ? 'Umur' : 'Age'} <span className="text-rose-500">*</span>
+                </Label>
+                <Input
+                  id="age"
+                  type="number"
+                  min="16"
+                  max="99"
+                  value={form.age}
+                  onChange={(e) => setForm({ ...form, age: e.target.value })}
+                  placeholder={lang === 'ms' ? 'Cth: 32' : 'e.g. 32'}
+                  className="h-10 text-sm"
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="gender" className="text-xs font-semibold">
+                  {lang === 'ms' ? 'Jantina' : 'Gender'} <span className="text-rose-500">*</span>
+                </Label>
+                <Select
+                  value={form.gender}
+                  onValueChange={(v) => setForm({ ...form, gender: v })}
+                >
+                  <SelectTrigger className="h-10 text-sm" id="gender">
+                    <SelectValue placeholder={lang === 'ms' ? 'Pilih Jantina' : 'Select Gender'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Male" className="text-sm">
+                      {lang === 'ms' ? 'Lelaki (Male)' : 'Male'}
+                    </SelectItem>
+                    <SelectItem value="Female" className="text-sm">
+                      {lang === 'ms' ? 'Perempuan (Female)' : 'Female'}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Sector */}
