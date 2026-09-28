@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useLanguage } from '@/lib/i18n';
 import { exportParticipantRegistryCsv } from '@/lib/export-utils';
-import { SECTORS } from '@/lib/sectors';
+import { SECTORS, normalizeSectorName } from '@/lib/sectors';
 
 const STATUS_TONE: Record<string, string> = {
   DUPLICATE_ENTRY: 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300',
@@ -97,9 +97,7 @@ export function ParticipantsTable() {
   // Begin inline-editing the sector for a participant
   const startEditSector = (p: Participant) => {
     setEditingId(p.id);
-    // If the existing sector is one of the dropdown options, pre-select it;
-    // otherwise default to "Others" so the user can re-pick or fix the value.
-    setTempSector(SECTORS.includes(p.sector) ? p.sector : 'Others');
+    setTempSector(normalizeSectorName(p.sector));
   };
 
   const cancelEditSector = () => {

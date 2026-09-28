@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { inMemoryParticipants } from '@/lib/memory-store';
 import { REGION_CONFIG, REGIONS, GLOBAL_TARGET } from '@/lib/regions';
+import { SECTORS, normalizeSectorName } from '@/lib/sectors';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -158,21 +159,36 @@ export async function GET() {
       };
     });
 
-    const sectorStats = sectorRows.length > 0
-      ? sectorRows.map((s) => ({
-          sector: s.sector,
-          count: s._count._all,
-          pct: Math.round((s._count._all / (totalParticipants || 1)) * 100),
-        }))
-      : [
-          { sector: 'Services (Tourism, Transport, Education, Healthcare, Retail, etc.)', count: 2, pct: 20 },
-          { sector: 'Food, Agriculture and Forestry', count: 2, pct: 20 },
-          { sector: 'Digital sector', count: 2, pct: 20 },
-          { sector: 'Manufacturing', count: 1, pct: 10 },
-          { sector: 'E-commerce', count: 1, pct: 10 },
-          { sector: 'Energy', count: 1, pct: 10 },
-          { sector: 'Construction', count: 1, pct: 10 },
-        ];
+    const sectorCountMap: Map<string, number> = new Map();
+    for (const sec of SECTORS) {
+      sectorCountMap.set(sec, 0);
+    }
+
+    if (sectorRows.length > 0) {
+      for (const row of sectorRows) {
+        const norm = normalizeSectorName(row.sector);
+        sectorCountMap.set(norm, (sectorCountMap.get(norm) || 0) + row._count._all);
+      }
+    } else {
+      const sourceList = (allParticipants && allParticipants.length > 0)
+        ? allParticipants
+        : Array.from(inMemoryParticipants.values());
+      for (const p of sourceList) {
+        const norm = normalizeSectorName((p as any).sector);
+        sectorCountMap.set(norm, (sectorCountMap.get(norm) || 0) + 1);
+      }
+    }
+
+    const totalSectorCounts = Array.from(sectorCountMap.values()).reduce((a, b) => a + b, 0) || totalParticipants || 1;
+
+    const sectorStats = Array.from(sectorCountMap.entries())
+      .map(([sector, count]) => ({
+        sector,
+        count,
+        pct: totalSectorCounts > 0 ? Math.round((count / totalSectorCounts) * 100) : 0,
+      }))
+      .sort((a, b) => b.count - a.count || a.sector.localeCompare(b.sector));
+
 
     const milestonePcts = [0.25, 0.5, 0.75, 1];
     const milestones = milestonePcts.map((p) => ({
@@ -273,15 +289,22 @@ export async function GET() {
           state: 'Normal',
         };
       }),
-      sectors: [
-        { sector: 'Services (Tourism, Transport, Education, Healthcare, Retail, etc.)', count: 2, pct: 20 },
-        { sector: 'Food, Agriculture and Forestry', count: 2, pct: 20 },
-        { sector: 'Digital sector', count: 2, pct: 20 },
-        { sector: 'Manufacturing', count: 1, pct: 10 },
-        { sector: 'E-commerce', count: 1, pct: 10 },
-        { sector: 'Energy', count: 1, pct: 10 },
-        { sector: 'Construction', count: 1, pct: 10 },
-      ],
+      sectors: (() => {
+        const map: Map<string, number> = new Map();
+        for (const sec of SECTORS) map.set(sec, 0);
+        for (const p of participantList) {
+          const norm = normalizeSectorName((p as any).sector);
+          map.set(norm, (map.get(norm) || 0) + 1);
+        }
+        const total = participantList.length || 1;
+        return Array.from(map.entries())
+          .map(([sector, count]) => ({
+            sector,
+            count,
+            pct: Math.round((count / total) * 100),
+          }))
+          .sort((a, b) => b.count - a.count || a.sector.localeCompare(b.sector));
+      })(),
       trend: exactDailyTrend,
       recentLogs: [],
     };
