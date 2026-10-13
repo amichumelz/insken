@@ -899,7 +899,7 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
 
       {/* MODAL: VIEW ANNEX IV DELIVERABLES CHECKLIST */}
       <Dialog open={!!selectedAnnexMilestone} onOpenChange={() => setSelectedAnnexMilestone(null)}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto scroll-styled">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto overscroll-contain scroll-styled">
           {selectedAnnexMilestone && (
             <>
               <DialogHeader>
@@ -965,7 +965,7 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
                 </div>
               </div>
 
-              <DialogFooter>
+              <DialogFooter className="pt-3 border-t">
                 <Button
                   size="sm"
                   onClick={() => setSelectedAnnexMilestone(null)}
@@ -981,8 +981,8 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
 
       {/* MODAL 1: ADD / EDIT MILESTONE */}
       <Dialog open={isMilestoneModalOpen} onOpenChange={setIsMilestoneModalOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col p-0 overflow-hidden border shadow-2xl">
-          <DialogHeader className="p-5 pb-3 border-b shrink-0 bg-background">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto overscroll-contain p-0 border shadow-2xl scroll-styled">
+          <DialogHeader className="p-5 pb-3 border-b bg-background sticky top-0 z-10">
             <DialogTitle className="flex items-center gap-2">
               <ShieldCheck className="h-5 w-5 text-primary" />
               {editingMilestone ? 'Edit Project Milestone & Payment' : 'Add New Project Milestone'}
@@ -992,8 +992,8 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSaveMilestone} className="flex flex-col flex-1 overflow-hidden min-h-0">
-            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3.5 text-xs scroll-styled">
+          <form onSubmit={handleSaveMilestone} className="flex flex-col">
+            <div className="max-h-[65vh] overflow-y-auto overscroll-contain px-5 py-4 space-y-3.5 text-xs scroll-styled">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label className="text-xs">Milestone #</Label>
@@ -1033,7 +1033,7 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
                   value={milestoneForm.deliverable}
                   onChange={(e) => setMilestoneForm({ ...milestoneForm, deliverable: e.target.value })}
                   placeholder="Describe key deliverables, reports, and participant targets..."
-                  rows={2}
+                  rows={3}
                   className="w-full rounded-md border border-input bg-background p-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>
@@ -1151,7 +1151,7 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
               </div>
             </div>
 
-            <DialogFooter className="p-4 border-t bg-muted/20 shrink-0 flex items-center justify-end gap-2">
+            <DialogFooter className="p-4 border-t bg-background sticky bottom-0 z-10 flex items-center justify-end gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -1176,7 +1176,7 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
 
       {/* MODAL 3: EDIT COSTS & NET PROFIT OVERVIEW */}
       <Dialog open={isOverviewModalOpen} onOpenChange={setIsOverviewModalOpen}>
-        <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto scroll-styled">
+        <DialogContent className="max-w-sm max-h-[85vh] overflow-y-auto overscroll-contain scroll-styled">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Banknote className="h-5 w-5 text-amber-500" />
@@ -1224,7 +1224,7 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
               />
             </div>
 
-            <DialogFooter className="pt-2">
+            <DialogFooter className="pt-3 border-t">
               <Button
                 type="button"
                 variant="outline"
