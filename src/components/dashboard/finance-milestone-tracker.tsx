@@ -899,7 +899,7 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
 
       {/* MODAL: VIEW ANNEX IV DELIVERABLES CHECKLIST */}
       <Dialog open={!!selectedAnnexMilestone} onOpenChange={() => setSelectedAnnexMilestone(null)}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto scroll-styled">
           {selectedAnnexMilestone && (
             <>
               <DialogHeader>
@@ -981,8 +981,8 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
 
       {/* MODAL 1: ADD / EDIT MILESTONE */}
       <Dialog open={isMilestoneModalOpen} onOpenChange={setIsMilestoneModalOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
+        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col p-0 overflow-hidden border shadow-2xl">
+          <DialogHeader className="p-5 pb-3 border-b shrink-0 bg-background">
             <DialogTitle className="flex items-center gap-2">
               <ShieldCheck className="h-5 w-5 text-primary" />
               {editingMilestone ? 'Edit Project Milestone & Payment' : 'Add New Project Milestone'}
@@ -992,164 +992,166 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSaveMilestone} className="space-y-3.5 py-2 text-xs">
-            <div className="grid grid-cols-2 gap-3">
+          <form onSubmit={handleSaveMilestone} className="flex flex-col flex-1 overflow-hidden min-h-0">
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3.5 text-xs scroll-styled">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Milestone #</Label>
+                  <Input
+                    value={milestoneForm.milestoneNumber}
+                    onChange={(e) => setMilestoneForm({ ...milestoneForm, milestoneNumber: e.target.value })}
+                    placeholder="e.g. Milestone 1"
+                    required
+                    className="h-8 text-xs"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Invoice No.</Label>
+                  <Input
+                    value={milestoneForm.invoiceNo}
+                    onChange={(e) => setMilestoneForm({ ...milestoneForm, invoiceNo: e.target.value })}
+                    placeholder="e.g. INV-AF-INSKEN-01"
+                    className="h-8 text-xs"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-1">
-                <Label className="text-xs">Milestone #</Label>
+                <Label className="text-xs">Milestone Title</Label>
                 <Input
-                  value={milestoneForm.milestoneNumber}
-                  onChange={(e) => setMilestoneForm({ ...milestoneForm, milestoneNumber: e.target.value })}
-                  placeholder="e.g. Milestone 1"
+                  value={milestoneForm.title}
+                  onChange={(e) => setMilestoneForm({ ...milestoneForm, title: e.target.value })}
+                  placeholder="e.g. 50% MSME Target, Localisation & 6-Month Progress Report"
                   required
                   className="h-8 text-xs"
                 />
               </div>
+
               <div className="space-y-1">
-                <Label className="text-xs">Invoice No.</Label>
+                <Label className="text-xs">Deliverables Summary</Label>
+                <textarea
+                  value={milestoneForm.deliverable}
+                  onChange={(e) => setMilestoneForm({ ...milestoneForm, deliverable: e.target.value })}
+                  placeholder="Describe key deliverables, reports, and participant targets..."
+                  rows={2}
+                  className="w-full rounded-md border border-input bg-background p-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Target Due Date</Label>
+                  <Input
+                    value={milestoneForm.dueDate}
+                    onChange={(e) => setMilestoneForm({ ...milestoneForm, dueDate: e.target.value })}
+                    placeholder="e.g. 31 January 2027"
+                    className="h-8 text-xs"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Tranche % of Grant</Label>
+                  <Input
+                    type="number"
+                    value={milestoneForm.tranchePct}
+                    onChange={(e) => setMilestoneForm({ ...milestoneForm, tranchePct: Number(e.target.value) })}
+                    placeholder="e.g. 40"
+                    className="h-8 text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Claim Amount (USD)</Label>
+                  <Input
+                    type="number"
+                    step="1"
+                    value={milestoneForm.claimAmountUsd}
+                    onChange={(e) => {
+                      const usd = Number(e.target.value);
+                      setMilestoneForm({
+                        ...milestoneForm,
+                        claimAmountUsd: usd,
+                        claimAmount: Number((usd * 4.45).toFixed(2)),
+                      });
+                    }}
+                    className="h-8 text-xs font-semibold text-blue-600"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Claim Amount (RM Equiv)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={milestoneForm.claimAmount}
+                    onChange={(e) => setMilestoneForm({ ...milestoneForm, claimAmount: Number(e.target.value) })}
+                    className="h-8 text-xs font-semibold"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Amount Paid (RM)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={milestoneForm.amountPaid}
+                    onChange={(e) => setMilestoneForm({ ...milestoneForm, amountPaid: Number(e.target.value) })}
+                    className="h-8 text-xs font-semibold text-emerald-600"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Payment Date (If Paid)</Label>
+                  <Input
+                    value={milestoneForm.paymentDate}
+                    onChange={(e) => setMilestoneForm({ ...milestoneForm, paymentDate: e.target.value })}
+                    placeholder="e.g. 18 Aug 2026"
+                    className="h-8 text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Milestone Progress</Label>
+                  <select
+                    value={milestoneForm.milestoneStatus}
+                    onChange={(e) => setMilestoneForm({ ...milestoneForm, milestoneStatus: e.target.value as any })}
+                    className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs"
+                  >
+                    <option value="COMPLETED">Completed</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="PENDING">Pending</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs">Payment Status (INSKEN)</Label>
+                  <select
+                    value={milestoneForm.paymentStatus}
+                    onChange={(e) => setMilestoneForm({ ...milestoneForm, paymentStatus: e.target.value as any })}
+                    className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs font-bold"
+                  >
+                    <option value="PAID">Sudah Dibayar (Paid)</option>
+                    <option value="PENDING">Belum Dibayar (Pending)</option>
+                    <option value="IN_REVIEW">Dalam Semakan (In Review)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs">Notes / Audit Remarks</Label>
                 <Input
-                  value={milestoneForm.invoiceNo}
-                  onChange={(e) => setMilestoneForm({ ...milestoneForm, invoiceNo: e.target.value })}
-                  placeholder="e.g. INV-AF-INSKEN-01"
+                  value={milestoneForm.notes}
+                  onChange={(e) => setMilestoneForm({ ...milestoneForm, notes: e.target.value })}
+                  placeholder="e.g. Tranche 1 disbursed via direct credit..."
                   className="h-8 text-xs"
                 />
               </div>
             </div>
 
-            <div className="space-y-1">
-              <Label className="text-xs">Milestone Title</Label>
-              <Input
-                value={milestoneForm.title}
-                onChange={(e) => setMilestoneForm({ ...milestoneForm, title: e.target.value })}
-                placeholder="e.g. 50% MSME Target, Localisation & 6-Month Progress Report"
-                required
-                className="h-8 text-xs"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs">Deliverables Summary</Label>
-              <textarea
-                value={milestoneForm.deliverable}
-                onChange={(e) => setMilestoneForm({ ...milestoneForm, deliverable: e.target.value })}
-                placeholder="Describe key deliverables, reports, and participant targets..."
-                rows={2}
-                className="w-full rounded-md border border-input bg-background p-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs">Target Due Date</Label>
-                <Input
-                  value={milestoneForm.dueDate}
-                  onChange={(e) => setMilestoneForm({ ...milestoneForm, dueDate: e.target.value })}
-                  placeholder="e.g. 31 January 2027"
-                  className="h-8 text-xs"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Tranche % of Grant</Label>
-                <Input
-                  type="number"
-                  value={milestoneForm.tranchePct}
-                  onChange={(e) => setMilestoneForm({ ...milestoneForm, tranchePct: Number(e.target.value) })}
-                  placeholder="e.g. 40"
-                  className="h-8 text-xs"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs">Claim Amount (USD)</Label>
-                <Input
-                  type="number"
-                  step="1"
-                  value={milestoneForm.claimAmountUsd}
-                  onChange={(e) => {
-                    const usd = Number(e.target.value);
-                    setMilestoneForm({
-                      ...milestoneForm,
-                      claimAmountUsd: usd,
-                      claimAmount: Number((usd * 4.45).toFixed(2)),
-                    });
-                  }}
-                  className="h-8 text-xs font-semibold text-blue-600"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Claim Amount (RM Equiv)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={milestoneForm.claimAmount}
-                  onChange={(e) => setMilestoneForm({ ...milestoneForm, claimAmount: Number(e.target.value) })}
-                  className="h-8 text-xs font-semibold"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs">Amount Paid (RM)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={milestoneForm.amountPaid}
-                  onChange={(e) => setMilestoneForm({ ...milestoneForm, amountPaid: Number(e.target.value) })}
-                  className="h-8 text-xs font-semibold text-emerald-600"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Payment Date (If Paid)</Label>
-                <Input
-                  value={milestoneForm.paymentDate}
-                  onChange={(e) => setMilestoneForm({ ...milestoneForm, paymentDate: e.target.value })}
-                  placeholder="e.g. 18 Aug 2026"
-                  className="h-8 text-xs"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs">Milestone Progress</Label>
-                <select
-                  value={milestoneForm.milestoneStatus}
-                  onChange={(e) => setMilestoneForm({ ...milestoneForm, milestoneStatus: e.target.value as any })}
-                  className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs"
-                >
-                  <option value="COMPLETED">Completed</option>
-                  <option value="IN_PROGRESS">In Progress</option>
-                  <option value="PENDING">Pending</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs">Payment Status (INSKEN)</Label>
-                <select
-                  value={milestoneForm.paymentStatus}
-                  onChange={(e) => setMilestoneForm({ ...milestoneForm, paymentStatus: e.target.value as any })}
-                  className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs font-bold"
-                >
-                  <option value="PAID">Sudah Dibayar (Paid)</option>
-                  <option value="PENDING">Belum Dibayar (Pending)</option>
-                  <option value="IN_REVIEW">Dalam Semakan (In Review)</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs">Notes / Audit Remarks</Label>
-              <Input
-                value={milestoneForm.notes}
-                onChange={(e) => setMilestoneForm({ ...milestoneForm, notes: e.target.value })}
-                placeholder="e.g. Tranche 1 disbursed via direct credit..."
-                className="h-8 text-xs"
-              />
-            </div>
-
-            <DialogFooter className="pt-2">
+            <DialogFooter className="p-4 border-t bg-muted/20 shrink-0 flex items-center justify-end gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -1174,7 +1176,7 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
 
       {/* MODAL 3: EDIT COSTS & NET PROFIT OVERVIEW */}
       <Dialog open={isOverviewModalOpen} onOpenChange={setIsOverviewModalOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto scroll-styled">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Banknote className="h-5 w-5 text-amber-500" />

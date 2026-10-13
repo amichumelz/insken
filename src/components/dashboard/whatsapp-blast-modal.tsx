@@ -93,7 +93,7 @@ export function WhatsAppBlastModal({ onBlastComplete }: { onBlastComplete?: () =
           </p>
         </DialogHeader>
 
-        <div className="p-6 space-y-5">
+        <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto scroll-styled">
           {/* Region Selection */}
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold text-foreground">
