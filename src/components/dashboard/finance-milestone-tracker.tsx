@@ -105,14 +105,61 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
 
   const [saving, setSaving] = useState(false);
 
+  const CACHE_KEY = 'insken_finance_milestones_cache_v1';
+
+  const saveLocalCache = (resp: FinanceDataResponse) => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(CACHE_KEY, JSON.stringify(resp));
+      }
+    } catch {
+      // ignore storage errors
+    }
+  };
+
   // Fetch Finance & Milestone Data
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/finance/milestones', { cache: 'no-store' });
-      const json = (await res.json()) as FinanceDataResponse;
+      const json = (await res.json()) as FinanceDataResponse & { fromDb?: boolean };
       if (json.ok) {
+        if (!json.fromDb && typeof window !== 'undefined') {
+          const cachedStr = localStorage.getItem(CACHE_KEY);
+          if (cachedStr) {
+            try {
+              const cached = JSON.parse(cachedStr) as FinanceDataResponse;
+              if (cached && cached.milestones && cached.overview) {
+                setData(cached);
+                setOverviewForm({
+                  costs: cached.overview.totalCosts,
+                  netProfit: cached.overview.netProfit,
+                  profitMarginPct: cached.overview.profitMarginPct,
+                });
+                // Sync cached state back to server memory/DB
+                fetch('/api/finance/milestones', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    action: 'UPDATE_ALL',
+                    payload: {
+                      milestones: cached.milestones,
+                      costs: cached.overview.totalCosts,
+                      netProfit: cached.overview.netProfit,
+                      profitMarginPct: cached.overview.profitMarginPct,
+                    },
+                  }),
+                }).catch(() => {});
+                return;
+              }
+            } catch {
+              // ignore invalid cache
+            }
+          }
+        }
+
         setData(json);
+        saveLocalCache(json);
         setOverviewForm({
           costs: json.overview.totalCosts,
           netProfit: json.overview.netProfit,
@@ -140,11 +187,22 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
 
     setSaving(true);
     try {
-      const claim = Number(milestoneForm.claimAmount || 0);
-      const paid = Number(milestoneForm.amountPaid || 0);
-      const outstanding = Math.max(0, claim - paid);
       const paymentStatus: MilestonePaymentStatus =
-        paid >= claim && claim > 0 ? 'PAID' : (milestoneForm.paymentStatus as MilestonePaymentStatus) || 'PENDING';
+        (milestoneForm.paymentStatus as MilestonePaymentStatus) || 'PENDING';
+      const isPaid = paymentStatus === 'PAID';
+      const claim = Number(milestoneForm.claimAmount || 0);
+      const claimUsd = Number(milestoneForm.claimAmountUsd || 0);
+
+      const paid = isPaid
+        ? (Number(milestoneForm.amountPaid) > 0 ? Number(milestoneForm.amountPaid) : claim)
+        : (Number(milestoneForm.amountPaid) < claim ? Number(milestoneForm.amountPaid || 0) : 0);
+
+      const paidUsd = isPaid
+        ? (Number(milestoneForm.amountPaidUsd) > 0 ? Number(milestoneForm.amountPaidUsd) : claimUsd)
+        : (Number(milestoneForm.amountPaidUsd) < claimUsd ? Number(milestoneForm.amountPaidUsd || 0) : 0);
+
+      const outstanding = Math.max(0, claim - paid);
+      const outstandingUsd = Math.max(0, claimUsd - paidUsd);
 
       const payload: MilestonePaymentRecord = {
         id: editingMilestone?.id || `ms-${Date.now()}`,
@@ -154,15 +212,15 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
         dueDate: milestoneForm.dueDate || '',
         invoiceNo: milestoneForm.invoiceNo || '',
         tranchePct: Number(milestoneForm.tranchePct || 30),
-        claimAmountUsd: Number(milestoneForm.claimAmountUsd || 0),
-        amountPaidUsd: Number(milestoneForm.amountPaidUsd || 0),
-        outstandingUsd: Math.max(0, Number(milestoneForm.claimAmountUsd || 0) - Number(milestoneForm.amountPaidUsd || 0)),
+        claimAmountUsd: claimUsd,
+        amountPaidUsd: paidUsd,
+        outstandingUsd,
         claimAmount: claim,
         amountPaid: paid,
         outstanding,
         milestoneStatus: (milestoneForm.milestoneStatus as MilestoneProgressStatus) || 'PENDING',
         paymentStatus,
-        paymentDate: milestoneForm.paymentDate || '',
+        paymentDate: isPaid ? (milestoneForm.paymentDate || new Date().toLocaleDateString('en-MY', { day: '2-digit', month: 'short', year: 'numeric' })) : '',
         grantor: milestoneForm.grantor || 'ASEAN Foundation',
         recipient: milestoneForm.recipient || 'Institut Keusahawanan Negara Berhad (INSKEN)',
         notes: milestoneForm.notes || '',
@@ -179,6 +237,7 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
       if (json.ok) {
         toast.success(editingMilestone ? 'Milestone updated!' : 'New milestone added!');
         setData(json);
+        saveLocalCache(json);
         setIsMilestoneModalOpen(false);
         setEditingMilestone(null);
       } else {
@@ -214,6 +273,7 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
       if (json.ok) {
         toast.success(isNowPaid ? `Marked ${ms.milestoneNumber} as Paid to INSKEN.` : `Marked ${ms.milestoneNumber} as Pending.`);
         setData(json);
+        saveLocalCache(json);
       }
     } catch {
       toast.error('Failed to update status.');
@@ -233,6 +293,7 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
       if (json.ok) {
         toast.success('Reset to Annex IV schedule successfully!');
         setData(json);
+        saveLocalCache(json);
       }
     } catch {
       toast.error('Failed to reset.');
@@ -252,6 +313,7 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
       if (json.ok) {
         toast.success('Milestone deleted.');
         setData(json);
+        saveLocalCache(json);
       }
     } catch {
       toast.error('Failed to delete milestone.');
@@ -279,6 +341,7 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
       if (json.ok) {
         toast.success('Financial overview updated!');
         setData(json);
+        saveLocalCache(json);
         setIsOverviewModalOpen(false);
       }
     } catch {
@@ -1097,7 +1160,18 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
                     type="number"
                     step="0.01"
                     value={milestoneForm.amountPaid}
-                    onChange={(e) => setMilestoneForm({ ...milestoneForm, amountPaid: Number(e.target.value) })}
+                    onChange={(e) => {
+                      const rm = Number(e.target.value);
+                      const claim = Number(milestoneForm.claimAmount || 0);
+                      const claimUsd = Number(milestoneForm.claimAmountUsd || 0);
+                      const usd = claim > 0 ? Number(((rm / claim) * claimUsd).toFixed(2)) : Number((rm / 4.45).toFixed(2));
+                      setMilestoneForm({
+                        ...milestoneForm,
+                        amountPaid: rm,
+                        amountPaidUsd: usd,
+                        paymentStatus: rm >= claim && claim > 0 ? 'PAID' : rm <= 0 && milestoneForm.paymentStatus === 'PAID' ? 'PENDING' : milestoneForm.paymentStatus,
+                      });
+                    }}
                     className="h-8 text-xs font-semibold text-emerald-600"
                   />
                 </div>
@@ -1130,7 +1204,19 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
                   <Label className="text-xs">Payment Status (INSKEN)</Label>
                   <select
                     value={milestoneForm.paymentStatus}
-                    onChange={(e) => setMilestoneForm({ ...milestoneForm, paymentStatus: e.target.value as any })}
+                    onChange={(e) => {
+                      const nextStatus = e.target.value as MilestonePaymentStatus;
+                      const isPaid = nextStatus === 'PAID';
+                      setMilestoneForm({
+                        ...milestoneForm,
+                        paymentStatus: nextStatus,
+                        amountPaid: isPaid ? Number(milestoneForm.claimAmount || 0) : 0,
+                        amountPaidUsd: isPaid ? Number(milestoneForm.claimAmountUsd || 0) : 0,
+                        paymentDate: isPaid
+                          ? (milestoneForm.paymentDate || new Date().toLocaleDateString('en-MY', { day: '2-digit', month: 'short', year: 'numeric' }))
+                          : '',
+                      });
+                    }}
                     className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs font-bold"
                   >
                     <option value="PAID">Sudah Dibayar (Paid)</option>

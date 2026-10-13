@@ -228,7 +228,7 @@ function calculateOverview(
   };
 }
 
-export async function GET() {
+async function syncFromDb(): Promise<boolean> {
   try {
     const latestConfig = await db.auditLog
       .findFirst({
@@ -246,6 +246,7 @@ export async function GET() {
         if (parsed.costs !== undefined) inMemoryState.costs = parsed.costs;
         if (parsed.netProfit !== undefined) inMemoryState.netProfit = parsed.netProfit;
         if (parsed.profitMarginPct !== undefined) inMemoryState.profitMarginPct = parsed.profitMarginPct;
+        return true;
       } catch {
         // fallback to memory
       }
@@ -253,6 +254,11 @@ export async function GET() {
   } catch (err) {
     console.warn('Finance config storage fallback:', err);
   }
+  return false;
+}
+
+export async function GET() {
+  const fromDb = await syncFromDb();
 
   const overview = calculateOverview(
     inMemoryState.programmes,
@@ -260,8 +266,9 @@ export async function GET() {
     inMemoryState.milestones
   );
 
-  return NextResponse.json<FinanceDataResponse>({
+  return NextResponse.json<FinanceDataResponse & { fromDb?: boolean }>({
     ok: true,
+    fromDb,
     overview,
     programmes: inMemoryState.programmes,
     internalDepartments: inMemoryState.internalDepartments,
@@ -271,6 +278,8 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    await syncFromDb();
+
     const body = await req.json();
     const { action, payload } = body;
 
@@ -284,13 +293,31 @@ export async function POST(req: NextRequest) {
     } else if (action === 'SAVE_MILESTONE') {
       const milestone = payload as MilestonePaymentRecord;
       const idx = inMemoryState.milestones.findIndex((m) => m.id === milestone.id);
-      
-      // Auto-recalc outstanding
-      const outstanding = Math.max(0, milestone.claimAmount - milestone.amountPaid);
+
+      const claimAmount = Number(milestone.claimAmount || 0);
+      const claimAmountUsd = Number(milestone.claimAmountUsd || 0);
+      const isPaid = milestone.paymentStatus === 'PAID';
+
+      const amountPaid = isPaid
+        ? (Number(milestone.amountPaid) > 0 ? Number(milestone.amountPaid) : claimAmount)
+        : (Number(milestone.amountPaid) < claimAmount ? Number(milestone.amountPaid || 0) : 0);
+
+      const amountPaidUsd = isPaid
+        ? (Number(milestone.amountPaidUsd) > 0 ? Number(milestone.amountPaidUsd) : claimAmountUsd)
+        : (Number(milestone.amountPaidUsd) < claimAmountUsd ? Number(milestone.amountPaidUsd || 0) : 0);
+
+      const outstanding = Math.max(0, claimAmount - amountPaid);
+      const outstandingUsd = Math.max(0, claimAmountUsd - amountPaidUsd);
+
       const updatedRecord: MilestonePaymentRecord = {
         ...milestone,
+        claimAmount,
+        claimAmountUsd,
+        amountPaid,
+        amountPaidUsd,
         outstanding,
-        paymentStatus: milestone.amountPaid >= milestone.claimAmount && milestone.claimAmount > 0 ? 'PAID' : milestone.paymentStatus,
+        outstandingUsd,
+        paymentStatus: milestone.paymentStatus || (amountPaid >= claimAmount && claimAmount > 0 ? 'PAID' : 'PENDING'),
       };
 
       if (idx >= 0) {
@@ -330,14 +357,18 @@ export async function POST(req: NextRequest) {
       inMemoryState.milestones = JSON.parse(JSON.stringify(DEFAULT_MILESTONES));
     }
 
-    // Persist to D1 / AuditLog
+    // Persist to D1 / AuditLog using valid schema fields
+    let savedToDb = false;
     await db.auditLog
       .create({
         data: {
           action: 'FINANCE_MILESTONES_CONFIG',
-          actor: 'admin',
+          participant: 'Admin (Finance)',
           detail: JSON.stringify(inMemoryState),
         },
+      })
+      .then(() => {
+        savedToDb = true;
       })
       .catch((err) => {
         console.warn('Could not persist finance config in DB:', err);
@@ -351,6 +382,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       ok: true,
+      fromDb: savedToDb,
       message: 'Finance & milestone configuration saved successfully.',
       overview,
       programmes: inMemoryState.programmes,
