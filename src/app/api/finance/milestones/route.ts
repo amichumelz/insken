@@ -204,9 +204,15 @@ function calculateOverview(
   const internalUtilizedTotal = internalDepts.reduce((sum, d) => sum + d.utilized, 0);
   const internalRemainingTotal = internalAllocationTotal - internalUtilizedTotal;
 
-  const totalClaimAmount = milestones.reduce((sum, m) => sum + m.claimAmount, 0);
-  const totalPaidAmount = milestones.reduce((sum, m) => sum + m.amountPaid, 0);
-  const totalOutstandingAmount = milestones.reduce((sum, m) => sum + m.outstanding, 0);
+  const totalClaimAmount = milestones.reduce((sum, m) => sum + (Number(m.claimAmount) || 0), 0);
+  const totalPaidAmount = milestones.reduce((sum, m) => {
+    const isPaid = m.paymentStatus === 'PAID';
+    const paid = isPaid
+      ? (Number(m.amountPaid) > 0 ? Number(m.amountPaid) : Number(m.claimAmount || 0))
+      : Number(m.amountPaid || 0);
+    return sum + paid;
+  }, 0);
+  const totalOutstandingAmount = Math.max(0, totalClaimAmount - totalPaidAmount);
   const completedMilestonesCount = milestones.filter((m) => m.milestoneStatus === 'COMPLETED').length;
 
   return {

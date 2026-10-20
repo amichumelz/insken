@@ -368,12 +368,27 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
   }, [data?.milestones, searchQuery, paymentFilter]);
 
   // Total USD Grant Sum
-  const totalUsdGrant = data?.milestones?.reduce((s, m) => s + (m.claimAmountUsd || 0), 0) || 36500;
-  const totalUsdPaid = data?.milestones?.reduce((s, m) => s + (m.amountPaidUsd || (m.paymentStatus === 'PAID' ? m.claimAmountUsd || 0 : 0)), 0) || 10950;
+  // Total USD Grant Sum (calculated strictly from milestones without hardcoded 30% fallbacks)
+  const totalUsdGrant = useMemo(() => {
+    if (!data?.milestones || data.milestones.length === 0) return 36500;
+    return data.milestones.reduce((s, m) => s + Number(m.claimAmountUsd || 0), 0);
+  }, [data?.milestones]);
+
+  const totalUsdPaid = useMemo(() => {
+    if (!data?.milestones) return 0;
+    return data.milestones.reduce((s, m) => {
+      const isPaid = m.paymentStatus === 'PAID';
+      const paid = isPaid
+        ? (Number(m.amountPaidUsd) > 0 ? Number(m.amountPaidUsd) : Number(m.claimAmountUsd || 0))
+        : Number(m.amountPaidUsd || 0);
+      return s + paid;
+    }, 0);
+  }, [data?.milestones]);
+
   const totalUsdOutstanding = Math.max(0, totalUsdGrant - totalUsdPaid);
 
-  const grantPctPaid = totalUsdGrant > 0 ? (totalUsdPaid / totalUsdGrant) * 100 : 30;
-  const grantPctRemaining = Math.max(0, 100 - grantPctPaid);
+  const grantPctPaid = totalUsdGrant > 0 ? Number(((totalUsdPaid / totalUsdGrant) * 100).toFixed(1)) : 0;
+  const grantPctRemaining = Number(Math.max(0, 100 - grantPctPaid).toFixed(1));
 
   if (loading && !data) {
     return (
@@ -589,7 +604,11 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
               {fmtUSD(totalUsdOutstanding)}
             </div>
             <p className="mt-1 text-[11px] text-amber-700/80 dark:text-amber-400/80">
-              Tranches 2 &amp; 3 ({fmtRM(overview.totalOutstandingAmount)})
+              {grantPctRemaining === 100
+                ? `All Tranches (${fmtRM(overview.totalOutstandingAmount)})`
+                : grantPctRemaining === 0
+                ? `Fully Disbursed (${fmtRM(overview.totalOutstandingAmount)})`
+                : `Remaining Tranches (${fmtRM(overview.totalOutstandingAmount)})`}
             </p>
           </CardContent>
         </Card>
@@ -701,20 +720,24 @@ export function FinanceMilestoneTracker({ refreshTick }: { refreshTick?: number 
 
             {/* Dual color progress bar (Green & Yellow) */}
             <div className="h-6 w-full rounded-md overflow-hidden bg-muted flex shadow-inner border">
-              <div
-                style={{ width: `${grantPctPaid}%` }}
-                className="h-full bg-[#16A34A] transition-all duration-500 flex items-center justify-center text-[10px] font-bold text-white shadow-sm"
-                title={`Disbursed: ${fmtUSD(totalUsdPaid)}`}
-              >
-                {grantPctPaid > 10 && `${grantPctPaid.toFixed(1)}%`}
-              </div>
-              <div
-                style={{ width: `${grantPctRemaining}%` }}
-                className="h-full bg-[#EAB308] transition-all duration-500 flex items-center justify-center text-[10px] font-bold text-amber-950 shadow-sm"
-                title={`Remaining: ${fmtUSD(totalUsdOutstanding)}`}
-              >
-                {grantPctRemaining > 10 && `${grantPctRemaining.toFixed(1)}%`}
-              </div>
+              {grantPctPaid > 0 && (
+                <div
+                  style={{ width: `${grantPctPaid}%` }}
+                  className="h-full bg-[#16A34A] transition-all duration-500 flex items-center justify-center text-[10px] font-bold text-white shadow-sm"
+                  title={`Disbursed: ${fmtUSD(totalUsdPaid)}`}
+                >
+                  {grantPctPaid >= 5 && `${grantPctPaid.toFixed(1)}%`}
+                </div>
+              )}
+              {grantPctRemaining > 0 && (
+                <div
+                  style={{ width: `${grantPctRemaining}%` }}
+                  className="h-full bg-[#EAB308] transition-all duration-500 flex items-center justify-center text-[10px] font-bold text-amber-950 shadow-sm"
+                  title={`Remaining: ${fmtUSD(totalUsdOutstanding)}`}
+                >
+                  {grantPctRemaining >= 5 && `${grantPctRemaining.toFixed(1)}%`}
+                </div>
+              )}
             </div>
           </div>
 
