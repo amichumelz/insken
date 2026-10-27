@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -48,8 +49,11 @@ export function RegistrationConsole() {
     phone: '',
     age: '',
     gender: '',
+    companyName: '',
     sector: '',
     otherSector: '',
+    businessLocation: '',
+    pdpaConsent: false,
     region: 'KL',
     preferredMode: 'Physical',
   });
@@ -92,14 +96,23 @@ export function RegistrationConsole() {
       !form.name.trim() ||
       !form.email.trim() ||
       !form.phone.trim() ||
+      !form.companyName.trim() ||
       !form.sector ||
+      !form.businessLocation.trim() ||
       !form.age ||
       !form.gender
     ) {
       toast.error(
         lang === 'ms'
-          ? 'Sila lengkapkan semua ruangan wajib termasuk Umur dan Jantina.'
-          : 'Please fill in all required fields including Age and Gender.'
+          ? 'Sila lengkapkan semua ruangan wajib termasuk Maklumat Perusahaan, Sektor, Lokasi, Umur dan Jantina.'
+          : 'Please fill in all required fields including Company Name, Sector, Location, Age and Gender.'
+      );
+      return;
+    }
+
+    if (!form.pdpaConsent) {
+      toast.error(
+        'Sila tandakan: Saya telah membaca dan bersetuju dengan Penyataan Perlindungan Data Peribadi – PDPA.'
       );
       return;
     }
@@ -142,8 +155,11 @@ export function RegistrationConsole() {
       phone: '',
       age: '',
       gender: '',
+      companyName: '',
       sector: '',
       otherSector: '',
+      businessLocation: '',
+      pdpaConsent: false,
       region: 'KL',
       preferredMode: 'Physical',
     });
@@ -302,41 +318,77 @@ export function RegistrationConsole() {
               </div>
             </div>
 
-            {/* Sector */}
-            <div className="space-y-1.5">
-              <Label htmlFor="sector" className="text-xs font-semibold">
-                {t.regSector} <span className="text-rose-500">*</span>
-              </Label>
-              <Select
-                value={form.sector}
-                onValueChange={(v) =>
-                  setForm({
-                    ...form,
-                    sector: v,
-                    otherSector: v === 'Others' ? form.otherSector : '',
-                  })
-                }
-              >
-                <SelectTrigger className="h-10 text-sm" id="sector">
-                  <SelectValue placeholder={t.regSelectSector} />
-                </SelectTrigger>
-                <SelectContent>
-                  {SECTORS.map((s) => (
-                    <SelectItem key={s} value={s} className="text-sm">
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {form.sector === 'Others' && (
+            {/* Enterprise Information Row: Left = Company Name, Middle = Sector, Right = Business Location */}
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+              {/* Left: Nama Perusahaan / Perniagaan / Perkhidmatan */}
+              <div className="space-y-1.5">
+                <Label htmlFor="companyName" className="text-xs font-semibold">
+                  Nama Perusahaan / Perniagaan / Perkhidmatan: <span className="text-rose-500">*</span>
+                </Label>
                 <Input
-                  value={form.otherSector}
-                  onChange={(e) => setForm({ ...form, otherSector: e.target.value })}
-                  placeholder="Sila nyatakan sektor perniagaan anda"
-                  className="mt-2 h-10 text-sm"
+                  id="companyName"
+                  value={form.companyName}
+                  onChange={(e) => setForm({ ...form, companyName: e.target.value })}
+                  placeholder="Cth: Luqman And Imran Ice Cream"
+                  className="h-10 text-sm"
                   required
                 />
-              )}
+              </div>
+
+              {/* Middle: Sector / Category */}
+              <div className="space-y-1.5">
+                <Label htmlFor="sector" className="text-xs font-semibold">
+                  {t.regSector} <span className="text-rose-500">*</span>
+                </Label>
+                <Select
+                  value={form.sector}
+                  onValueChange={(v) =>
+                    setForm({
+                      ...form,
+                      sector: v,
+                      otherSector: v === 'Others' ? form.otherSector : '',
+                    })
+                  }
+                >
+                  <SelectTrigger className="h-10 text-sm" id="sector">
+                    <SelectValue placeholder={t.regSelectSector} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SECTORS.map((s) => (
+                      <SelectItem key={s} value={s} className="text-sm">
+                        {s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {form.sector === 'Others' && (
+                  <Input
+                    value={form.otherSector}
+                    onChange={(e) => setForm({ ...form, otherSector: e.target.value })}
+                    placeholder="Sila nyatakan sektor perniagaan anda"
+                    className="mt-2 h-10 text-sm"
+                    required
+                  />
+                )}
+              </div>
+
+              {/* Right: Lokasi Perusahaan / Perniagaan / Perkhidmatan: Contoh: Cyberjaya, Putrajaya, Kuala Lumpur */}
+              <div className="space-y-1.5">
+                <Label htmlFor="businessLocation" className="text-xs font-semibold">
+                  Lokasi Perusahaan / Perniagaan / Perkhidmatan: <span className="text-rose-500">*</span>
+                </Label>
+                <Input
+                  id="businessLocation"
+                  value={form.businessLocation}
+                  onChange={(e) => setForm({ ...form, businessLocation: e.target.value })}
+                  placeholder="Contoh: Cyberjaya, Putrajaya, Kuala Lumpur"
+                  className="h-10 text-sm"
+                  required
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Contoh: Cyberjaya, Putrajaya, Kuala Lumpur
+                </p>
+              </div>
             </div>
 
             {/* Region */}
@@ -395,6 +447,28 @@ export function RegistrationConsole() {
               <p className="text-[11px] text-muted-foreground pt-0.5">
                 {form.preferredMode === 'Physical' ? t.regPhysicalDesc : t.regOnlineDesc}
               </p>
+            </div>
+
+            {/* Sila tandakan: Persetujuan PDPA & Pengesahan Maklumat Tepat */}
+            <div className="rounded-xl border border-primary/25 bg-primary/5 p-3.5 sm:p-4 transition-colors">
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  id="pdpaConsent"
+                  checked={form.pdpaConsent}
+                  onCheckedChange={(checked) =>
+                    setForm((prev) => ({ ...prev, pdpaConsent: checked === true }))
+                  }
+                  className="mt-0.5 border-primary/40 data-[state=checked]:bg-[#0B1F3A] data-[state=checked]:border-[#0B1F3A]"
+                  required
+                />
+                <label
+                  htmlFor="pdpaConsent"
+                  className="text-xs font-medium leading-relaxed text-foreground cursor-pointer select-none"
+                >
+                  <span className="font-bold text-primary">Sila tandakan: </span>
+                  Saya telah membaca dan bersetuju dengan Penyataan Perlindungan Data Peribadi – PDPA serta mengesahkan maklumat yang diberikan adalah tepat.
+                </label>
+              </div>
             </div>
 
             {/* Action Buttons */}
@@ -533,8 +607,14 @@ export function RegistrationConsole() {
                   <div className="font-semibold text-base text-white truncate">
                     {response.participant.name}
                   </div>
-                  <div className="text-xs text-white/70">
+                  {response.participant.companyName && (
+                    <div className="text-xs font-medium text-amber-200 truncate">
+                      🏢 {response.participant.companyName}
+                    </div>
+                  )}
+                  <div className="text-[11px] text-white/70">
                     {response.participant.region} · {response.participant.finalMode.replace('Registered_', '')}
+                    {response.participant.businessLocation && ` · ${response.participant.businessLocation}`}
                   </div>
                 </div>
 

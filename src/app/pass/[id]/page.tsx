@@ -233,10 +233,23 @@ export default function ParticipantPassPage() {
                   <h3 className="text-lg sm:text-xl font-bold text-white">
                     {data.participant.name}
                   </h3>
+                  {data.participant.companyName && (
+                    <div className="text-xs font-semibold text-amber-300">
+                      🏢 {data.participant.companyName}
+                    </div>
+                  )}
                   <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-white/80">
                     <span className="rounded bg-white/15 px-2 py-0.5 font-medium">
                       {data.participant.sector}
                     </span>
+                    {data.participant.businessLocation && (
+                      <>
+                        <span>·</span>
+                        <span className="rounded bg-white/15 px-2 py-0.5 font-medium">
+                          📍 {data.participant.businessLocation}
+                        </span>
+                      </>
+                    )}
                     <span>·</span>
                     <span className="rounded bg-white/15 px-2 py-0.5 font-medium">
                       {data.participant.regionName}

@@ -159,9 +159,9 @@ export function exportParticipantRegistryCsv(participants: Participant[]) {
   csv += `Generated On:,"${nowFormatted}"\n`;
   csv += `Total Records Exported:,${participants.length}\n\n`;
 
-  csv += `Participant ID,Full Name,Gender,Age,Email,National IC / Passport,Business Sector,Training Region,Preferred Mode,Final Mode,Status,Registered Date,Check-in Date\n`;
+  csv += `No.,Participant ID,Full Name,Gender,Age,Email,National IC / Passport,Nama Perusahaan / Perniagaan / Perkhidmatan,CATEGORY / Business Sector,Lokasi Perusahaan / Perniagaan / Perkhidmatan,Persetujuan PDPA,Training Region,Preferred Mode,Final Mode,Status,Registered Date,Check-in Date\n`;
 
-  for (const p of participants) {
+  participants.forEach((p, idx) => {
     const regDate = p.createdAt
       ? new Date(p.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
       : '—';
@@ -170,13 +170,17 @@ export function exportParticipantRegistryCsv(participants: Participant[]) {
       : '—';
 
     csv += [
+      idx + 1,
       escapeCsvCell(p.participantId),
       escapeCsvCell(p.name),
       escapeCsvCell(p.gender || '—'),
       p.age ? p.age : '—',
       escapeCsvCell(p.email || ''),
       escapeCsvCell(p.icNumber),
+      escapeCsvCell(p.companyName || '—'),
       escapeCsvCell(p.sector),
+      escapeCsvCell(p.businessLocation || '—'),
+      escapeCsvCell(p.pdpaConsent !== false ? 'Bersetuju (PDPA)' : 'Belum Bersetuju'),
       escapeCsvCell(p.region),
       escapeCsvCell(p.preferredMode),
       escapeCsvCell(p.finalMode.replace('Registered_', '')),
@@ -184,7 +188,7 @@ export function exportParticipantRegistryCsv(participants: Participant[]) {
       escapeCsvCell(regDate),
       escapeCsvCell(checkinDate),
     ].join(',') + '\n';
-  }
+  });
 
   downloadCsv(`Participant_Registry_Report_${timestamp}.csv`, csv);
 }

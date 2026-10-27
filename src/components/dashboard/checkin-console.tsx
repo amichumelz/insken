@@ -235,8 +235,14 @@ export function CheckinConsole() {
                     <Row label={t.regParticipantId} value={result.participant.participantId} mono />
                     <Row label={t.regFullName} value={result.participant.name} />
                     <Row label={t.regIcNumber} value={result.participant.icNumber} mono />
-                    <Row label={t.checkinRegion} value={result.participant.region} />
+                    {result.participant.companyName && (
+                      <Row label="Nama Perusahaan" value={result.participant.companyName} />
+                    )}
                     <Row label={t.checkinSector} value={result.participant.sector} />
+                    {result.participant.businessLocation && (
+                      <Row label="Lokasi Perusahaan" value={result.participant.businessLocation} />
+                    )}
+                    <Row label={t.checkinRegion} value={result.participant.region} />
                     <Row label={t.regAssignedMode} value={result.participant.finalMode.replace('Registered_', '')} />
                     {result.participant.checkInAt && (
                       <div className="sm:col-span-2">

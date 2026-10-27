@@ -22,6 +22,8 @@ export async function GET(req: NextRequest) {
         { icNumber: { contains: q } },
         { participantId: { contains: q } },
         { email: { contains: q } },
+        { companyName: { contains: q } },
+        { businessLocation: { contains: q } },
       ];
     }
     if (region && region !== 'all') where.region = region;
@@ -59,7 +61,10 @@ export async function GET(req: NextRequest) {
             phone: item.phone,
             age: item.age ?? null,
             gender: item.gender ?? null,
+            companyName: item.companyName ?? null,
             sector: item.sector,
+            businessLocation: item.businessLocation ?? null,
+            pdpaConsent: item.pdpaConsent ?? true,
             region: item.region,
             preferredMode: item.preferredMode,
             finalMode: item.finalMode,
@@ -80,7 +85,9 @@ export async function GET(req: NextRequest) {
         p.name.toLowerCase().includes(q) ||
         p.icNumber.toLowerCase().includes(q) ||
         p.participantId.toLowerCase().includes(q) ||
-        (p.email && p.email.toLowerCase().includes(q))
+        (p.email && p.email.toLowerCase().includes(q)) ||
+        (p.companyName && p.companyName.toLowerCase().includes(q)) ||
+        (p.businessLocation && p.businessLocation.toLowerCase().includes(q))
       );
     }
     if (region && region !== 'all') allMem = allMem.filter((p) => p.region === region);
@@ -100,17 +107,33 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const body = (await req.json()) as { id?: string; participantId?: string; sector?: string };
-    const { id, participantId, sector } = body;
+    const body = (await req.json()) as {
+      id?: string;
+      participantId?: string;
+      sector?: string;
+      companyName?: string;
+      businessLocation?: string;
+    };
+    const { id, participantId, sector, companyName, businessLocation } = body;
 
-    if ((!id && !participantId) || !sector || !sector.trim()) {
+    if (!id && !participantId) {
       return NextResponse.json(
-        { ok: false, error: 'Participant identification and sector are required.' },
+        { ok: false, error: 'Participant identification is required.' },
         { status: 400 },
       );
     }
 
-    const trimmedSector = sector.trim();
+    const updateData: any = {};
+    if (sector !== undefined) updateData.sector = sector.trim();
+    if (companyName !== undefined) updateData.companyName = companyName.trim();
+    if (businessLocation !== undefined) updateData.businessLocation = businessLocation.trim();
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json(
+        { ok: false, error: 'No fields provided to update.' },
+        { status: 400 },
+      );
+    }
 
     // Update in DB
     let updated: any = null;
@@ -118,12 +141,12 @@ export async function PATCH(req: NextRequest) {
       if (id) {
         updated = await db.participant.update({
           where: { id },
-          data: { sector: trimmedSector },
+          data: updateData,
         });
       } else if (participantId) {
         updated = await db.participant.update({
           where: { participantId },
-          data: { sector: trimmedSector },
+          data: updateData,
         });
       }
     } catch {
@@ -134,12 +157,12 @@ export async function PATCH(req: NextRequest) {
     const targetKey = participantId || updated?.participantId;
     if (targetKey && inMemoryParticipants.has(targetKey)) {
       const existing = inMemoryParticipants.get(targetKey)!;
-      inMemoryParticipants.set(targetKey, { ...existing, sector: trimmedSector });
+      inMemoryParticipants.set(targetKey, { ...existing, ...updateData });
     } else {
       // Look up by id in memory
       for (const [key, val] of inMemoryParticipants.entries()) {
         if (val.id === id) {
-          inMemoryParticipants.set(key, { ...val, sector: trimmedSector });
+          inMemoryParticipants.set(key, { ...val, ...updateData });
           break;
         }
       }

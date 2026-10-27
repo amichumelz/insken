@@ -14,7 +14,10 @@ interface RegisterPayload {
   phone: string;
   age?: number | string;
   gender?: string;
+  companyName?: string;
   sector: string;
+  businessLocation?: string;
+  pdpaConsent?: boolean;
   region: string;
   preferredMode: string;
 }
@@ -62,10 +65,25 @@ function buildWhatsAppPayload(opts: {
  */
 export async function POST(req: NextRequest) {
   const body = (await req.json()) as RegisterPayload;
-  const { icNumber, name, email, phone, age, gender, sector, region, preferredMode } = body;
+  const {
+    icNumber,
+    name,
+    email,
+    phone,
+    age,
+    gender,
+    companyName,
+    sector,
+    businessLocation,
+    pdpaConsent,
+    region,
+    preferredMode,
+  } = body;
 
   const parsedAge = age ? parseInt(String(age), 10) : null;
   const cleanGender = gender ? String(gender).trim() : null;
+  const cleanCompanyName = companyName ? String(companyName).trim() : null;
+  const cleanBusinessLocation = businessLocation ? String(businessLocation).trim() : null;
 
   const workflow: Array<{ phase: string; step: string; status: 'success' | 'rejected' | 'routed'; detail: string; timestamp: string }> = [];
   const t0 = new Date().toISOString();
@@ -73,15 +91,26 @@ export async function POST(req: NextRequest) {
     phase: 'Phase 1: Ingestion',
     step: 'Payload Extraction',
     status: 'success',
-    detail: `Extracted IC=${icNumber}, Name=${name}, Age=${parsedAge ?? 'N/A'}, Gender=${cleanGender ?? 'N/A'}, Region=${region}, Mode=${preferredMode}, Sector=${sector}`,
+    detail: `Extracted IC=${icNumber}, Name=${name}, Company=${cleanCompanyName ?? 'N/A'}, Location=${cleanBusinessLocation ?? 'N/A'}, Age=${parsedAge ?? 'N/A'}, Gender=${cleanGender ?? 'N/A'}, Region=${region}, Mode=${preferredMode}, Sector=${sector}`,
     timestamp: t0,
   });
-
 
   // Validate required fields
   if (!icNumber || !name || !email || !region || !sector) {
     return NextResponse.json(
       { ok: false, error: 'Missing required fields', workflow },
+      { status: 400 },
+    );
+  }
+
+  // Validate PDPA consent requirement
+  if (pdpaConsent === false) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: 'Sila tandakan: Saya telah membaca dan bersetuju dengan Penyataan Perlindungan Data Peribadi – PDPA.',
+        workflow,
+      },
       { status: 400 },
     );
   }
@@ -270,7 +299,10 @@ export async function POST(req: NextRequest) {
         phone,
         age: parsedAge,
         gender: cleanGender,
+        companyName: cleanCompanyName,
         sector,
+        businessLocation: cleanBusinessLocation,
+        pdpaConsent: pdpaConsent !== undefined ? Boolean(pdpaConsent) : true,
         region: regionCode,
         preferredMode,
         finalMode,
@@ -291,7 +323,10 @@ export async function POST(req: NextRequest) {
     phone,
     age: parsedAge,
     gender: cleanGender,
+    companyName: cleanCompanyName,
     sector,
+    businessLocation: cleanBusinessLocation,
+    pdpaConsent: pdpaConsent !== undefined ? Boolean(pdpaConsent) : true,
     region: regionCode,
     preferredMode,
     finalMode,

@@ -12,8 +12,17 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Participant } from '@/lib/types';
-import { Search, RefreshCw, Users, ChevronLeft, ChevronRight, Pencil, Check, X, Download } from 'lucide-react';
+import { Search, RefreshCw, Users, ChevronLeft, ChevronRight, Pencil, Check, X, Download, Building2, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useLanguage } from '@/lib/i18n';
@@ -39,10 +48,14 @@ export function ParticipantsTable() {
   const [page, setPage] = useState(0);
   const pageSize = 25;
 
-  // Inline sector editing state — only one row is editable at a time
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [tempSector, setTempSector] = useState<string>('');
-  const [savingSector, setSavingSector] = useState(false);
+  // Edit modal state for participant enterprise details
+  const [editingParticipant, setEditingParticipant] = useState<Participant | null>(null);
+  const [editForm, setEditForm] = useState({
+    companyName: '',
+    sector: '',
+    businessLocation: '',
+  });
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -94,48 +107,55 @@ export function ParticipantsTable() {
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-  // Begin inline-editing the sector for a participant
-  const startEditSector = (p: Participant) => {
-    setEditingId(p.id);
-    setTempSector(normalizeSectorName(p.sector));
+  // Open modal to view and edit participant details
+  const openEditModal = (p: Participant) => {
+    setEditingParticipant(p);
+    setEditForm({
+      companyName: p.companyName || '',
+      sector: normalizeSectorName(p.sector),
+      businessLocation: p.businessLocation || '',
+    });
   };
 
-  const cancelEditSector = () => {
-    setEditingId(null);
-    setTempSector('');
-  };
-
-  // Persist the new sector via PATCH /api/participants
-  const saveSector = async (p: Participant) => {
-    if (!tempSector.trim()) {
-      toast.error('Sector cannot be empty.');
-      return;
-    }
-    setSavingSector(true);
+  // Persist updated participant details via PATCH /api/participants
+  const handleSaveParticipantEdit = async () => {
+    if (!editingParticipant) return;
+    setSavingEdit(true);
     try {
       const res = await fetch('/api/participants', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: p.id, sector: tempSector }),
+        body: JSON.stringify({
+          id: editingParticipant.id,
+          participantId: editingParticipant.participantId,
+          companyName: editForm.companyName.trim(),
+          sector: editForm.sector.trim(),
+          businessLocation: editForm.businessLocation.trim(),
+        }),
       });
       const data = await res.json();
       if (data.ok) {
-        // Optimistically update the local row so the change is visible immediately
         setItems((prev) =>
           prev.map((item) =>
-            item.id === p.id ? { ...item, sector: tempSector } : item,
-          ),
+            item.id === editingParticipant.id
+              ? {
+                  ...item,
+                  companyName: editForm.companyName.trim(),
+                  sector: editForm.sector.trim(),
+                  businessLocation: editForm.businessLocation.trim(),
+                }
+              : item
+          )
         );
-        toast.success(`Sector updated to "${tempSector}" for ${p.name}.`);
-        setEditingId(null);
-        setTempSector('');
+        toast.success(`Maklumat peserta ${editingParticipant.name} berjaya dikemaskini.`);
+        setEditingParticipant(null);
       } else {
-        toast.error(data.error ?? 'Failed to update sector.');
+        toast.error(data.error ?? 'Gagal mengemaskini maklumat peserta.');
       }
     } catch {
-      toast.error('Network error — please retry.');
+      toast.error('Ralat rangkaian — sila cuba lagi.');
     } finally {
-      setSavingSector(false);
+      setSavingEdit(false);
     }
   };
 
@@ -214,46 +234,74 @@ export function ParticipantsTable() {
         <div className="overflow-x-auto scroll-styled">
           <table className="w-full text-xs min-w-[840px]">
             <thead className="border-y bg-muted/40">
-              <tr className="text-left text-muted-foreground">
-                <th className="px-3 sm:px-4 py-2.5 font-medium">{t.regParticipantId}</th>
-                <th className="px-3 sm:px-4 py-2.5 font-medium">{t.dashName}</th>
-                <th className="px-3 sm:px-4 py-2.5 font-medium">{lang === 'ms' ? 'Jantina' : 'Gender'}</th>
-                <th className="px-3 sm:px-4 py-2.5 font-medium">{lang === 'ms' ? 'Umur' : 'Age'}</th>
-                <th className="px-3 sm:px-4 py-2.5 font-medium">{t.dashEmail || 'Email'}</th>
-                <th className="hidden px-3 sm:px-4 py-2.5 font-medium md:table-cell">{t.regIcNumber}</th>
-                <th className="hidden px-3 sm:px-4 py-2.5 font-medium lg:table-cell">
-                  {t.regSector} <span className="ml-1 text-[9px] font-normal text-muted-foreground">(click to edit)</span>
+              <tr className="text-left text-muted-foreground text-[11px]">
+                <th className="w-10 px-2 sm:px-3 py-2.5 font-bold text-center">No.</th>
+                <th className="px-3 py-2.5 font-medium">{t.regParticipantId}</th>
+                <th className="px-3 py-2.5 font-medium">{t.dashName}</th>
+                <th className="px-2 sm:px-3 py-2.5 font-medium">{lang === 'ms' ? 'Jantina' : 'Gender'}</th>
+                <th className="px-2 sm:px-3 py-2.5 font-medium">{lang === 'ms' ? 'Umur' : 'Age'}</th>
+                <th className="px-3 py-2.5 font-medium">{t.dashEmail || 'Email'}</th>
+                <th className="hidden px-3 py-2.5 font-medium md:table-cell">{t.regIcNumber}</th>
+                {/* Enterprise Columns as requested by user */}
+                <th className="px-3 py-2.5 font-semibold text-foreground min-w-[200px]">
+                  Nama Perusahaan / Perniagaan / Perkhidmatan:
                 </th>
-                <th className="px-3 sm:px-4 py-2.5 font-medium">{t.checkinRegion}</th>
-                <th className="px-3 sm:px-4 py-2.5 font-medium">{t.dashStatus}</th>
-                <th className="hidden px-3 sm:px-4 py-2.5 font-medium md:table-cell">{t.dashRegisteredDate}</th>
-                <th className="hidden px-3 sm:px-4 py-2.5 font-medium sm:table-cell">{t.dashCheckinDate}</th>
+                <th className="px-3 py-2.5 font-semibold text-foreground min-w-[150px]">
+                  CATEGORY
+                </th>
+                <th className="px-3 py-2.5 font-semibold text-foreground min-w-[220px]">
+                  <div>Lokasi Perusahaan / Perniagaan / Perkhidmatan:</div>
+                  <div className="text-[9px] font-normal text-muted-foreground">
+                    Contoh: Cyberjaya, Putrajaya, Kuala Lumpur
+                  </div>
+                </th>
+                <th className="px-3 py-2.5 font-semibold text-foreground min-w-[150px]">
+                  <div>Sila tandakan:</div>
+                  <div className="text-[9px] font-normal text-muted-foreground">
+                    Persetujuan PDPA
+                  </div>
+                </th>
+                <th className="px-3 py-2.5 font-medium">{t.checkinRegion}</th>
+                <th className="px-3 py-2.5 font-medium">{t.dashStatus}</th>
+                <th className="hidden px-3 py-2.5 font-medium md:table-cell">{t.dashRegisteredDate}</th>
+                <th className="hidden px-3 py-2.5 font-medium sm:table-cell">{t.dashCheckinDate}</th>
+                <th className="px-3 py-2.5 font-medium text-center">Tindakan</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={11} className="px-3 py-8 text-center text-muted-foreground">
+                  <td colSpan={16} className="px-3 py-8 text-center text-muted-foreground">
                     Loading registry...
                   </td>
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="px-3 py-8 text-center text-muted-foreground">
+                  <td colSpan={16} className="px-3 py-8 text-center text-muted-foreground">
                     No participants found.
                   </td>
                 </tr>
               ) : (
-                items.map((p) => (
+                items.map((p, index) => (
                   <tr
                     key={p.id}
                     className="border-b transition-colors hover:bg-muted/30"
                   >
+                    {/* No. */}
+                    <td className="whitespace-nowrap px-2 sm:px-3 py-2 text-center font-mono text-[11px] font-bold text-muted-foreground">
+                      {page * pageSize + index + 1}
+                    </td>
+
+                    {/* Participant ID */}
                     <td className="whitespace-nowrap px-3 py-2 font-mono text-[11px] font-semibold text-primary">
                       {p.participantId}
                     </td>
+
+                    {/* Name */}
                     <td className="px-3 py-2 font-medium">{p.name}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-[11px]">
+
+                    {/* Gender */}
+                    <td className="whitespace-nowrap px-2 sm:px-3 py-2 text-[11px]">
                       {p.gender ? (
                         <Badge
                           variant="outline"
@@ -270,9 +318,13 @@ export function ParticipantsTable() {
                         <span className="text-muted-foreground">—</span>
                       )}
                     </td>
-                    <td className="whitespace-nowrap px-3 py-2 text-[11px] font-mono text-muted-foreground">
+
+                    {/* Age */}
+                    <td className="whitespace-nowrap px-2 sm:px-3 py-2 text-[11px] font-mono text-muted-foreground">
                       {p.age ? `${p.age} thn` : '—'}
                     </td>
+
+                    {/* Email */}
                     <td className="whitespace-nowrap px-3 py-2 text-[11px] text-muted-foreground">
                       {p.email ? (
                         <a
@@ -286,80 +338,100 @@ export function ParticipantsTable() {
                         '—'
                       )}
                     </td>
+
+                    {/* IC Number */}
                     <td className="hidden whitespace-nowrap px-3 py-2 font-mono text-[11px] text-muted-foreground md:table-cell">
                       {p.icNumber}
                     </td>
-                    <td className="hidden px-3 py-2 lg:table-cell">
-                      {editingId === p.id ? (
-                        // Inline editor — Select dropdown + Save/Cancel buttons
-                        <div className="flex items-center gap-1">
-                          <Select
-                            value={tempSector}
-                            onValueChange={(v) => setTempSector(v)}
-                          >
-                            <SelectTrigger className="h-7 w-[150px] text-[11px]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {SECTORS.map((s) => (
-                                <SelectItem key={s} value={s}>
-                                  {s}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <button
-                            type="button"
-                            onClick={() => saveSector(p)}
-                            disabled={savingSector}
-                            title="Save sector"
-                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-50"
-                          >
-                            <Check className="h-3 w-3" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={cancelEditSector}
-                            disabled={savingSector}
-                            title="Cancel"
-                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-muted text-muted-foreground hover:bg-muted/80 disabled:opacity-50"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </div>
-                      ) : (
-                        // Read-only display with hover-to-edit affordance
-                        <button
-                          type="button"
-                          onClick={() => startEditSector(p)}
-                          className="group inline-flex items-center gap-1 rounded text-[11px] text-muted-foreground transition-colors hover:text-foreground"
-                          title="Click to edit sector"
+
+                    {/* Nama Perusahaan / Perniagaan / Perkhidmatan (Left of Sector) */}
+                    <td className="px-3 py-2">
+                      <button
+                        type="button"
+                        onClick={() => openEditModal(p)}
+                        className="group flex items-center gap-1.5 text-left text-[11px] hover:text-primary transition-colors cursor-pointer w-full"
+                        title="Klik untuk kemaskini nama perusahaan"
+                      >
+                        <span className={cn('font-medium leading-tight', !p.companyName && 'text-muted-foreground/70 italic')}>
+                          {p.companyName || '— (Klik untuk isi)'}
+                        </span>
+                        <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-70 text-primary shrink-0" />
+                      </button>
+                    </td>
+
+                    {/* CATEGORY (Sector in the middle) */}
+                    <td className="px-3 py-2">
+                      <button
+                        type="button"
+                        onClick={() => openEditModal(p)}
+                        className="group flex items-center gap-1.5 text-left text-[11px] hover:text-primary transition-colors cursor-pointer w-full"
+                        title="Klik untuk kemaskini sektor"
+                      >
+                        <span className="font-medium text-foreground leading-tight">{p.sector}</span>
+                        <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-70 text-primary shrink-0" />
+                      </button>
+                    </td>
+
+                    {/* Lokasi Perusahaan / Perniagaan / Perkhidmatan (Right of Sector) */}
+                    <td className="px-3 py-2">
+                      <button
+                        type="button"
+                        onClick={() => openEditModal(p)}
+                        className="group flex items-center gap-1.5 text-left text-[11px] hover:text-primary transition-colors cursor-pointer w-full"
+                        title="Klik untuk kemaskini lokasi perusahaan"
+                      >
+                        <span className={cn('leading-tight', !p.businessLocation && 'text-muted-foreground/70 italic')}>
+                          {p.businessLocation || '— (Klik untuk isi)'}
+                        </span>
+                        <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-70 text-primary shrink-0" />
+                      </button>
+                    </td>
+
+                    {/* Sila tandakan: Persetujuan PDPA */}
+                    <td className="px-3 py-2">
+                      {p.pdpaConsent !== false ? (
+                        <Badge
+                          variant="outline"
+                          className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/50 gap-1 px-1.5 py-0.5 whitespace-nowrap"
+                          title="Saya telah membaca dan bersetuju dengan Penyataan Perlindungan Data Peribadi – PDPA."
                         >
-                          <span>{p.sector}</span>
-                          <Pencil className="h-2.5 w-2.5 opacity-0 transition-opacity group-hover:opacity-70" />
-                        </button>
+                          <Check className="h-2.5 w-2.5 text-emerald-600" />
+                          <span>Bersetuju (PDPA)</span>
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] bg-rose-50 text-rose-700 border-rose-200 whitespace-nowrap">
+                          Belum Bersetuju
+                        </Badge>
                       )}
                     </td>
+
+                    {/* Region */}
                     <td className="px-3 py-2">
                       <span className="inline-flex items-center gap-1 rounded bg-foreground/5 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground/70">
                         {p.region}
                       </span>
                     </td>
+
+                    {/* Status */}
                     <td className="px-3 py-2">
                       <span
                         className={cn(
-                          'inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold',
+                          'inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold whitespace-nowrap',
                           STATUS_TONE[p.status] ?? 'bg-muted text-muted-foreground',
                         )}
                       >
                         {p.status.replace(/_/g, ' ')}
                       </span>
                     </td>
+
+                    {/* Registered Date */}
                     <td className="hidden whitespace-nowrap px-3 py-2 text-[11px] font-mono text-muted-foreground md:table-cell">
                       {p.createdAt
                         ? new Date(p.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
                         : '—'}
                     </td>
+
+                    {/* Checkin Date */}
                     <td className="hidden whitespace-nowrap px-3 py-2 text-[11px] font-mono sm:table-cell">
                       {p.checkInAt ? (
                         <span className="font-semibold text-emerald-600 dark:text-emerald-400">
@@ -368,6 +440,20 @@ export function ParticipantsTable() {
                       ) : (
                         <span className="text-muted-foreground/60">—</span>
                       )}
+                    </td>
+
+                    {/* Actions: Edit Modal Trigger */}
+                    <td className="px-3 py-2 text-center whitespace-nowrap">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEditModal(p)}
+                        className="h-7 px-2 text-[11px] gap-1 hover:bg-primary/10 text-primary font-semibold"
+                        title="Kemaskini Maklumat Perusahaan, Sektor & Lokasi"
+                      >
+                        <Pencil className="h-3 w-3" />
+                        <span>Kemaskini</span>
+                      </Button>
                     </td>
                   </tr>
                 ))
@@ -407,6 +493,113 @@ export function ParticipantsTable() {
           </div>
         </div>
       </CardContent>
+
+      {/* Edit Participant Enterprise & Details Modal */}
+      <Dialog
+        open={!!editingParticipant}
+        onOpenChange={(open) => {
+          if (!open) setEditingParticipant(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto overscroll-contain">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
+              <Pencil className="h-4 w-4 text-primary" />
+              Kemaskini Maklumat Peserta
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              {editingParticipant?.name} ({editingParticipant?.participantId}) · IC: {editingParticipant?.icNumber}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2 text-xs">
+            {/* Nama Perusahaan / Perniagaan / Perkhidmatan */}
+            <div className="space-y-1.5">
+              <Label htmlFor="editCompanyName" className="text-xs font-semibold">
+                Nama Perusahaan / Perniagaan / Perkhidmatan:
+              </Label>
+              <Input
+                id="editCompanyName"
+                value={editForm.companyName}
+                onChange={(e) => setEditForm({ ...editForm, companyName: e.target.value })}
+                placeholder="Cth: Luqman And Imran Ice Cream (LQCC)"
+                className="h-9 text-xs"
+              />
+            </div>
+
+            {/* Sektor Perniagaan / Category */}
+            <div className="space-y-1.5">
+              <Label htmlFor="editSector" className="text-xs font-semibold">
+                CATEGORY / Sektor Perniagaan:
+              </Label>
+              <Select
+                value={editForm.sector}
+                onValueChange={(v) => setEditForm({ ...editForm, sector: v })}
+              >
+                <SelectTrigger id="editSector" className="h-9 text-xs">
+                  <SelectValue placeholder="Pilih Sektor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SECTORS.map((s) => (
+                    <SelectItem key={s} value={s} className="text-xs">
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Lokasi Perusahaan / Perniagaan / Perkhidmatan */}
+            <div className="space-y-1.5">
+              <Label htmlFor="editBusinessLocation" className="text-xs font-semibold">
+                Lokasi Perusahaan / Perniagaan / Perkhidmatan:
+              </Label>
+              <Input
+                id="editBusinessLocation"
+                value={editForm.businessLocation}
+                onChange={(e) => setEditForm({ ...editForm, businessLocation: e.target.value })}
+                placeholder="Contoh: Cyberjaya, Putrajaya, Kuala Lumpur"
+                className="h-9 text-xs"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Contoh: Cyberjaya, Putrajaya, Kuala Lumpur
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter className="flex flex-row items-center justify-end gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setEditingParticipant(null)}
+              disabled={savingEdit}
+              className="text-xs h-9"
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleSaveParticipantEdit}
+              disabled={savingEdit}
+              className="text-xs h-9 font-semibold gap-1.5 bg-[#0B1F3A] hover:bg-[#1E3A8A] text-white"
+            >
+              {savingEdit ? (
+                <>
+                  <RefreshCw className="h-3 w-3 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                <>
+                  <Check className="h-3.5 w-3.5" />
+                  Simpan Perubahan
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

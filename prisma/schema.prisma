@@ -21,7 +21,10 @@ model Participant {
   phone          String
   age            Int?
   gender         String?  // Male | Female
-  sector         String   // Retail, F&B, Professional Services, Tech, Manufacturing, Agriculture
+  companyName    String?  // Nama Perusahaan / Perniagaan / Perkhidmatan
+  sector         String   // Category / Sector
+  businessLocation String? // Lokasi Perusahaan / Perniagaan / Perkhidmatan
+  pdpaConsent    Boolean? @default(true) // Sila tandakan: PDPA Consent
   region         String   // KL, JHR, PNG, SBH, SWK
   preferredMode  String   // Physical | Online
   finalMode      String   // Registered_Physical | Registered_Online

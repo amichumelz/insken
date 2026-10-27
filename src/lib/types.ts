@@ -83,7 +83,10 @@ export interface Participant {
   phone: string;
   age?: number | null;
   gender?: string | null;
+  companyName?: string | null;
   sector: string;
+  businessLocation?: string | null;
+  pdpaConsent?: boolean | null;
   region: string;
   preferredMode: string;
   finalMode: string;
