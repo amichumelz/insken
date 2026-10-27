@@ -321,25 +321,29 @@ export function RegistrationConsole() {
             {/* Enterprise Information Row: Left = Company Name, Middle = Sector, Right = Business Location */}
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               {/* Left: Nama Perusahaan / Perniagaan / Perkhidmatan */}
-              <div className="space-y-1.5">
-                <Label htmlFor="companyName" className="text-xs font-semibold">
-                  Nama Perusahaan / Perniagaan / Perkhidmatan: <span className="text-rose-500">*</span>
-                </Label>
+              <div className="min-w-0 space-y-1.5 flex flex-col justify-between">
+                <div className="min-h-[2.5rem] flex items-end">
+                  <Label htmlFor="companyName" className="text-xs font-semibold leading-snug">
+                    Nama Perusahaan / Perniagaan: <span className="text-rose-500">*</span>
+                  </Label>
+                </div>
                 <Input
                   id="companyName"
                   value={form.companyName}
                   onChange={(e) => setForm({ ...form, companyName: e.target.value })}
-                  placeholder="Cth: Luqman And Imran Ice Cream"
-                  className="h-10 text-sm"
+                  placeholder="Cth: Luqman Ice Cream"
+                  className="h-10 text-xs sm:text-sm w-full min-w-0"
                   required
                 />
               </div>
 
               {/* Middle: Sector / Category */}
-              <div className="space-y-1.5">
-                <Label htmlFor="sector" className="text-xs font-semibold">
-                  {t.regSector} <span className="text-rose-500">*</span>
-                </Label>
+              <div className="min-w-0 space-y-1.5 flex flex-col justify-between">
+                <div className="min-h-[2.5rem] flex items-end">
+                  <Label htmlFor="sector" className="text-xs font-semibold leading-snug">
+                    CATEGORY / Sektor: <span className="text-rose-500">*</span>
+                  </Label>
+                </div>
                 <Select
                   value={form.sector}
                   onValueChange={(v) =>
@@ -350,8 +354,8 @@ export function RegistrationConsole() {
                     })
                   }
                 >
-                  <SelectTrigger className="h-10 text-sm" id="sector">
-                    <SelectValue placeholder={t.regSelectSector} />
+                  <SelectTrigger className="h-10 text-xs sm:text-sm w-full min-w-0 max-w-full truncate" id="sector">
+                    <SelectValue placeholder="Pilih Sektor" />
                   </SelectTrigger>
                   <SelectContent>
                     {SECTORS.map((s) => (
@@ -366,28 +370,32 @@ export function RegistrationConsole() {
                     value={form.otherSector}
                     onChange={(e) => setForm({ ...form, otherSector: e.target.value })}
                     placeholder="Sila nyatakan sektor perniagaan anda"
-                    className="mt-2 h-10 text-sm"
+                    className="mt-2 h-10 text-xs sm:text-sm w-full min-w-0"
                     required
                   />
                 )}
               </div>
 
               {/* Right: Lokasi Perusahaan / Perniagaan / Perkhidmatan: Contoh: Cyberjaya, Putrajaya, Kuala Lumpur */}
-              <div className="space-y-1.5">
-                <Label htmlFor="businessLocation" className="text-xs font-semibold">
-                  Lokasi Perusahaan / Perniagaan / Perkhidmatan: <span className="text-rose-500">*</span>
-                </Label>
-                <Input
-                  id="businessLocation"
-                  value={form.businessLocation}
-                  onChange={(e) => setForm({ ...form, businessLocation: e.target.value })}
-                  placeholder="Contoh: Cyberjaya, Putrajaya, Kuala Lumpur"
-                  className="h-10 text-sm"
-                  required
-                />
-                <p className="text-[10px] text-muted-foreground">
-                  Contoh: Cyberjaya, Putrajaya, Kuala Lumpur
-                </p>
+              <div className="min-w-0 space-y-1.5 flex flex-col justify-between">
+                <div className="min-h-[2.5rem] flex items-end">
+                  <Label htmlFor="businessLocation" className="text-xs font-semibold leading-snug">
+                    Lokasi Perusahaan: <span className="text-rose-500">*</span>
+                  </Label>
+                </div>
+                <div>
+                  <Input
+                    id="businessLocation"
+                    value={form.businessLocation}
+                    onChange={(e) => setForm({ ...form, businessLocation: e.target.value })}
+                    placeholder="Cth: Cyberjaya, Putrajaya, KL"
+                    className="h-10 text-xs sm:text-sm w-full min-w-0"
+                    required
+                  />
+                  <p className="text-[10px] text-muted-foreground pt-1 truncate" title="Contoh: Cyberjaya, Putrajaya, Kuala Lumpur">
+                    Contoh: Cyberjaya, Putrajaya, KL
+                  </p>
+                </div>
               </div>
             </div>
 
